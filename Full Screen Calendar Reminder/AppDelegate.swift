@@ -12,7 +12,7 @@ import Combine
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
-    private var popover: NSPopover?
+    private var panel: NSPanel?
     private var eventMonitor: Any?
     var modelContainer: ModelContainer!
     
@@ -56,15 +56,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         if let button = statusItem?.button {
             updateMenuBarIcon()
-            button.action = #selector(togglePopover)
+            button.action = #selector(togglePanel)
             button.target = self
         }
-        
-        // Setup popover
-        popover = NSPopover()
-        popover?.contentSize = NSSize(width: 350, height: 500)
-        popover?.behavior = .transient
-        popover?.contentViewController = NSHostingController(rootView: MenuBarView())
+
+        // Setup panel
+        let contentSize = NSSize(width: 350, height: 500)
+        let panel = NSPanel(
+            contentRect: NSRect(origin: .zero, size: contentSize),
+            styleMask: [.nonactivatingPanel, .fullSizeContentView],
+            backing: .buffered,
+            defer: true
+        )
+        panel.isFloatingPanel = true
+        panel.level = .popUpMenu
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = true
+
+        let hostingView = NSHostingView(rootView:
+            MenuBarView()
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+        )
+        hostingView.frame = NSRect(origin: .zero, size: contentSize)
+        panel.contentView = hostingView
+        self.panel = panel
         
         // Observe dismiss popover requests
         NotificationCenter.default.addObserver(
@@ -101,32 +118,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc private func handleDismissPopover() {
-        closePopover()
+        closePanel()
     }
 
-    @objc private func togglePopover() {
-        guard let button = statusItem?.button else { return }
+    @objc private func togglePanel() {
+        guard let panel = panel, let button = statusItem?.button else { return }
 
-        if let popover = popover {
-            if popover.isShown {
-                closePopover()
-            } else {
-                popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-                popover.contentViewController?.view.window?.makeKey()
-                startEventMonitor()
-            }
+        if panel.isVisible {
+            closePanel()
+        } else {
+            let buttonFrame = button.window!.convertToScreen(button.convert(button.bounds, to: nil))
+            let panelSize = panel.frame.size
+            let x = buttonFrame.midX - panelSize.width / 2
+            let y = buttonFrame.minY - panelSize.height - 4
+            panel.setFrameOrigin(NSPoint(x: x, y: y))
+            panel.orderFrontRegardless()
+            startEventMonitor()
         }
     }
 
-    private func closePopover() {
-        popover?.performClose(nil)
+    private func closePanel() {
+        panel?.orderOut(nil)
         stopEventMonitor()
     }
 
     private func startEventMonitor() {
         stopEventMonitor()
         eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
-            self?.closePopover()
+            self?.closePanel()
         }
     }
 

@@ -22,10 +22,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Hide dock icon
         NSApp.setActivationPolicy(.accessory)
         
-        // Get model container from the app
-        if let app = NSApp.delegate as? AppDelegate,
-           let container = try? ModelContainer(for: Schema([CustomReminder.self])) {
-            self.modelContainer = container
+        // Setup model container
+        do {
+            let schema = Schema([CustomReminder.self])
+            let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+            self.modelContainer = try ModelContainer(for: schema, configurations: [config])
+        } catch {
+            fatalError("Could not create ModelContainer: \(error)")
         }
         
         // Setup menu bar
@@ -41,12 +44,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         
         // Setup reminder service with model context
-        if let container = modelContainer {
-            Task { @MainActor in
-                let context = container.mainContext
-                ReminderService.shared.setModelContext(context)
-            }
-        }
+        let context = modelContainer.mainContext
+        ReminderService.shared.setModelContext(context)
     }
     
     // MARK: - Menu Bar Setup

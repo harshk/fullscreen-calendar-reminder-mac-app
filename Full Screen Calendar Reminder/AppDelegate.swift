@@ -13,6 +13,7 @@ import Combine
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
+    private var eventMonitor: Any?
     var modelContainer: ModelContainer!
     
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -65,6 +66,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         popover?.behavior = .transient
         popover?.contentViewController = NSHostingController(rootView: MenuBarView())
         
+        // Observe dismiss popover requests
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleDismissPopover),
+            name: .dismissPopover,
+            object: nil
+        )
+
         // Observe pause state changes to update icon
         NotificationCenter.default.addObserver(
             self,
@@ -91,16 +100,40 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
+    @objc private func handleDismissPopover() {
+        closePopover()
+    }
+
     @objc private func togglePopover() {
         guard let button = statusItem?.button else { return }
-        
+
         if let popover = popover {
             if popover.isShown {
-                popover.performClose(nil)
+                closePopover()
             } else {
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
                 popover.contentViewController?.view.window?.makeKey()
+                startEventMonitor()
             }
+        }
+    }
+
+    private func closePopover() {
+        popover?.performClose(nil)
+        stopEventMonitor()
+    }
+
+    private func startEventMonitor() {
+        stopEventMonitor()
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            self?.closePopover()
+        }
+    }
+
+    private func stopEventMonitor() {
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+            eventMonitor = nil
         }
     }
 }

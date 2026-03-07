@@ -348,6 +348,7 @@ struct EventRow: View {
         }
         .contextMenu {
             Button("Preview Full Screen Alert") {
+                NotificationCenter.default.post(name: .dismissPopover, object: nil)
                 AlertCoordinator.shared.showPreviewAlert(for: event)
             }
         }
@@ -358,6 +359,12 @@ struct EventRow: View {
         formatter.timeStyle = .short
         return formatter.string(from: date)
     }
+}
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let dismissPopover = Notification.Name("DismissPopover")
 }
 
 // MARK: - Preview

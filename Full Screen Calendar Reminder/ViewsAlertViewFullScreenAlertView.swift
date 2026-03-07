@@ -19,10 +19,8 @@ struct FullScreenAlertView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background — tap anywhere on it to dismiss
+                // Background
                 backgroundView
-                    .contentShape(Rectangle())
-                    .onTapGesture { onDismiss() }
 
                 if isPrimaryScreen {
                     // Full content on primary screen
@@ -163,7 +161,7 @@ struct FullScreenAlertView: View {
                 x: geometry.size.width * style.positionX,
                 y: geometry.size.height * style.positionY
             )
-            .allowsHitTesting(false) // Let taps pass through to background
+            .allowsHitTesting(false)
     }
     
     // MARK: - Join Meeting Button

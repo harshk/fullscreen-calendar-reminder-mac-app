@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"/Users/harshk/xcode-projects/Full Screen Calendar Reminder\" && xcodebuild -project \"Full Screen Calendar Reminder.xcodeproj\" -scheme \"Full Screen Calendar Reminder\" -destination 'platform=macOS' build 2>&1 | tail -5)",
+      "Bash(cd \"/Users/harshk/xcode-projects/Full Screen Calendar Reminder\" && xcodebuild -project \"Full Screen Calendar Reminder.xcodeproj\" -scheme \"Full Screen Calendar Reminder\" -destination 'platform=macOS' build 2>&1 | grep -E \"\\(error:|warning:|BUILD\\)\")"
+    ]
+  }
+}

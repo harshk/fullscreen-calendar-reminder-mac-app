@@ -10,22 +10,30 @@ import SwiftData
 
 @main
 struct Full_Screen_Calendar_ReminderApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            CustomReminder.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            let container = try ModelContainer(for: schema, configurations: [modelConfiguration])
+            return container
         } catch {
             fatalError("Could not create ModelContainer: \(error)")
         }
     }()
 
+    init() {
+        print(">>> APP INIT - Full Screen Calendar Reminder started")
+    }
+
     var body: some Scene {
-        WindowGroup {
-            ContentView()
+        // No window needed - we're a menu bar only app
+        Settings {
+            EmptyView()
         }
         .modelContainer(sharedModelContainer)
     }

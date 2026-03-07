@@ -1,0 +1,30 @@
+# Xcode
+#
+# gitignore contributors: https://github.com
+#
+## Build generated
+build/
+DerivedData/
+
+## Xcode temporary files
+*.xcuserstate
+*.xcassets/
+xcuserdata/
+
+## Carthage
+Carthage/Build/
+
+## CocoaPods
+Pods/
+
+## Swift Package Manager
+.swiftpm/build/
+
+## Playgrounds
+*.playground/
+*.playground/Documentation/
+*.playground/Sources/
+
+## Other
+.DS_Store
+

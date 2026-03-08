@@ -144,14 +144,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        return false
+    }
+
     @objc private func windowDidClose(_ notification: Notification) {
-        // If no visible windows remain, go back to accessory mode (hide dock icon)
-        DispatchQueue.main.async {
-            let hasVisibleWindows = NSApp.windows.contains { $0.isVisible && $0 != self.panel }
-            if !hasVisibleWindows {
-                NSApp.setActivationPolicy(.accessory)
-            }
-        }
+        guard let closedWindow = notification.object as? NSWindow,
+              closedWindow == settingsWindow else { return }
+        settingsWindow = nil
+        NSApp.setActivationPolicy(.accessory)
     }
 
     @objc private func openSettings() {

@@ -47,8 +47,12 @@ struct MenuBarView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Settings gear in top-right
+            // App name and settings gear
             HStack {
+                Text("Full Screen Calendar Reminder")
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .padding(.leading, 12)
                 Spacer()
                 Button(action: { openSettings() }) {
                     Image(systemName: "gearshape.fill")

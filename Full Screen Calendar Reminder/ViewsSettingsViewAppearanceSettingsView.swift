@@ -61,15 +61,16 @@ struct AppearanceSettingsView: View {
             
             Divider()
             
-            // Preview
+            // Preview - render at actual screen size and scale down to fit
             GeometryReader { geometry in
-                let scale: CGFloat = 0.4
-                let previewWidth = geometry.size.width / scale
-                let previewHeight = geometry.size.height / scale
-                
+                let screenSize = NSScreen.main?.frame.size ?? CGSize(width: 1440, height: 900)
+                let scaleX = geometry.size.width / screenSize.width
+                let scaleY = geometry.size.height / screenSize.height
+                let scale = min(scaleX, scaleY)
+
                 ZStack {
                     Color.black.opacity(0.9)
-                    
+
                     FullScreenAlertView(
                         alertItem: .calendarEvent(CalendarEvent.mock()),
                         theme: workingTheme,
@@ -79,7 +80,7 @@ struct AppearanceSettingsView: View {
                         onDismiss: {},
                         onJoinMeeting: { _ in }
                     )
-                    .frame(width: previewWidth, height: previewHeight)
+                    .frame(width: screenSize.width, height: screenSize.height)
                     .scaleEffect(scale)
                     .frame(width: geometry.size.width, height: geometry.size.height)
                 }

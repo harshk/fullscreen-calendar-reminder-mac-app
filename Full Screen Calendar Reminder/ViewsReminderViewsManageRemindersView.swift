@@ -176,14 +176,12 @@ struct ReminderRow: View {
             HStack(spacing: 8) {
                 Button(action: onEdit) {
                     Image(systemName: "pencil")
-                        .font(.caption)
                 }
                 .buttonStyle(.borderless)
                 .help("Edit")
-                
+
                 Button(action: onDelete) {
                     Image(systemName: "trash")
-                        .font(.caption)
                         .foregroundColor(.red)
                 }
                 .buttonStyle(.borderless)

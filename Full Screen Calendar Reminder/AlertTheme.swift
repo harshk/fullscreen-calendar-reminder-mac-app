@@ -104,8 +104,8 @@ struct AlertTheme: Codable, Identifiable {
                     fontWeight: .regular,
                     fontColor: CodableColor(Color.white.opacity(0.7)),
                     textAlignment: .center,
-                    positionX: 0.95,
-                    positionY: 0.05,
+                    positionX: 0.05,
+                    positionY: 0.12,
                     maxWidthPercentage: 0.1,
                     iconSize: 32,
                     iconColor: CodableColor(Color.white.opacity(0.7))

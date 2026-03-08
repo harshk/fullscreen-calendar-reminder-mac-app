@@ -196,18 +196,23 @@ struct FullScreenAlertView: View {
     private func dismissButton(style: AlertElementStyle, geometry: GeometryProxy) -> some View {
         Button(action: onDismiss) {
             Image(systemName: "xmark")
-                .font(.system(size: style.iconSize ?? 32, weight: .regular))
-                .foregroundColor(style.iconColor?.color ?? .white.opacity(0.7))
-                .frame(width: 60, height: 60)
-                .contentShape(Rectangle())
+                .font(.system(size: (style.iconSize ?? 32) * 0.5, weight: .semibold))
+                .foregroundColor(style.iconColor?.color ?? .white.opacity(0.9))
+                .frame(width: style.iconSize ?? 32, height: style.iconSize ?? 32)
+                .background(
+                    Circle()
+                        .fill(style.buttonBackgroundColor?.color ?? Color.white.opacity(0.2))
+                )
+                .clipShape(Circle())
+                .contentShape(Circle())
         }
         .buttonStyle(.plain)
         .position(
             x: geometry.size.width * style.positionX,
-            y: geometry.size.height * style.positionY
+            y: (style.iconSize ?? 32) * 2 + (style.iconSize ?? 32) / 2
         )
     }
-    
+
     // MARK: - Computed Properties
     
     private var formattedTime: String {

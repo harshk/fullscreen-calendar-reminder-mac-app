@@ -50,7 +50,7 @@ struct AlertTheme: Codable, Identifiable {
                     fontColor: CodableColor(.white),
                     textAlignment: .center,
                     positionX: 0.5,
-                    positionY: 0.35,
+                    positionY: 0.2,
                     maxWidthPercentage: 0.8
                 ),
                 .startTime: AlertElementStyle(
@@ -60,7 +60,7 @@ struct AlertTheme: Codable, Identifiable {
                     fontColor: CodableColor(Color(red: 1.0, green: 0.27, blue: 0.58)),
                     textAlignment: .center,
                     positionX: 0.5,
-                    positionY: 0.45,
+                    positionY: 0.3,
                     maxWidthPercentage: 0.6
                 ),
                 .location: AlertElementStyle(
@@ -70,7 +70,7 @@ struct AlertTheme: Codable, Identifiable {
                     fontColor: CodableColor(Color.white.opacity(0.8)),
                     textAlignment: .center,
                     positionX: 0.5,
-                    positionY: 0.55,
+                    positionY: 0.42,
                     maxWidthPercentage: 0.7
                 ),
                 .calendarName: AlertElementStyle(
@@ -80,7 +80,7 @@ struct AlertTheme: Codable, Identifiable {
                     fontColor: CodableColor(Color.white.opacity(0.6)),
                     textAlignment: .center,
                     positionX: 0.5,
-                    positionY: 0.63,
+                    positionY: 0.72,
                     maxWidthPercentage: 0.5
                 ),
                 .joinButton: AlertElementStyle(
@@ -90,7 +90,7 @@ struct AlertTheme: Codable, Identifiable {
                     fontColor: CodableColor(.white),
                     textAlignment: .center,
                     positionX: 0.5,
-                    positionY: 0.75,
+                    positionY: 0.82,
                     maxWidthPercentage: 0.4,
                     buttonBackgroundColor: CodableColor(Color(red: 1.0, green: 0.27, blue: 0.58)),
                     buttonTextColor: CodableColor(.white),

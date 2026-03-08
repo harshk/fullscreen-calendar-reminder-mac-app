@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct FullScreenAlertView: View {
     let alertItem: AlertItem
@@ -64,64 +65,89 @@ struct FullScreenAlertView: View {
     @ViewBuilder
     private func primaryScreenContent(geometry: GeometryProxy) -> some View {
         ZStack {
-            // Title
-            if let style = theme.elementStyles[.title] {
-                styledText(
-                    text: alertItem.title,
-                    style: style,
-                    geometry: geometry
-                )
+            // Main content in a VStack so elements never overlap
+            VStack(spacing: 12) {
+                Spacer()
+
+                // Title
+                if let style = theme.elementStyles[.title] {
+                    Text(alertItem.title)
+                        .font(style.font)
+                        .foregroundColor(style.fontColor.color)
+                        .multilineTextAlignment(style.textAlignment)
+                        .frame(maxWidth: geometry.size.width * style.maxWidthPercentage)
+                }
+
+                // Start Time
+                if let style = theme.elementStyles[.startTime] {
+                    Text(formattedTime)
+                        .font(style.font)
+                        .foregroundColor(style.fontColor.color)
+                        .multilineTextAlignment(style.textAlignment)
+                }
+
+                // Location with Map
+                if let location = locationText,
+                   let style = theme.elementStyles[.location] {
+                    VStack(spacing: 8) {
+                        Text(location)
+                            .font(style.font)
+                            .foregroundColor(style.fontColor.color)
+                            .multilineTextAlignment(style.textAlignment)
+                            .frame(maxWidth: geometry.size.width * style.maxWidthPercentage)
+
+                        LocationMapView(address: location)
+                            .frame(width: 266, height: 160)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .allowsHitTesting(false)
+                    }
+                }
+
+                // Calendar Name
+                if let style = theme.elementStyles[.calendarName] {
+                    Text(calendarNameText)
+                        .font(style.font)
+                        .foregroundColor(style.fontColor.color)
+                        .multilineTextAlignment(style.textAlignment)
+                }
+
+                // Join Meeting Button
+                if let videoURL = videoConferenceURL,
+                   let style = theme.elementStyles[.joinButton] {
+                    Button(action: { onJoinMeeting(videoURL) }) {
+                        VStack(spacing: 4) {
+                            Text("Join Meeting")
+                                .font(style.font)
+                            if let serviceName = videoConferenceServiceName(for: videoURL) {
+                                Text(serviceName)
+                                    .font(.system(size: style.fontSize * 0.5, weight: .medium))
+                                    .opacity(0.8)
+                            }
+                        }
+                        .foregroundColor(style.buttonTextColor?.color ?? .white)
+                        .padding(.horizontal, style.buttonPaddingHorizontal ?? 24)
+                        .padding(.vertical, style.buttonPaddingVertical ?? 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: style.buttonCornerRadius ?? 12)
+                                .fill(style.buttonBackgroundColor?.color ?? Color(hex: "#FF1493"))
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                // Queue Counter
+                if queueTotal > 1,
+                   let style = theme.elementStyles[.queueCounter] {
+                    Text("\(queuePosition) of \(queueTotal)")
+                        .font(style.font)
+                        .foregroundColor(style.fontColor.color)
+                }
+
+                Spacer()
             }
-            
-            // Start Time
-            if let style = theme.elementStyles[.startTime] {
-                styledText(
-                    text: formattedTime,
-                    style: style,
-                    geometry: geometry
-                )
-            }
-            
-            // Location
-            if let location = locationText,
-               let style = theme.elementStyles[.location] {
-                styledText(
-                    text: location,
-                    style: style,
-                    geometry: geometry
-                )
-            }
-            
-            // Calendar Name
-            if let style = theme.elementStyles[.calendarName] {
-                styledText(
-                    text: calendarNameText,
-                    style: style,
-                    geometry: geometry
-                )
-            }
-            
-            // Join Meeting Button
-            if let videoURL = videoConferenceURL,
-               let style = theme.elementStyles[.joinButton] {
-                joinMeetingButton(
-                    url: videoURL,
-                    style: style,
-                    geometry: geometry
-                )
-            }
-            
-            // Queue Counter
-            if queueTotal > 1,
-               let style = theme.elementStyles[.queueCounter] {
-                styledText(
-                    text: "\(queuePosition) of \(queueTotal)",
-                    style: style,
-                    geometry: geometry
-                )
-            }
-            
-            // Dismiss Button
+            .frame(maxWidth: .infinity)
+
+            // Dismiss Button (stays in ZStack for absolute positioning)
             if let style = theme.elementStyles[.dismissButton] {
                 dismissButton(style: style, geometry: geometry)
             }
@@ -162,39 +188,6 @@ struct FullScreenAlertView: View {
                 y: geometry.size.height * style.positionY
             )
             .allowsHitTesting(false)
-    }
-    
-    // MARK: - Join Meeting Button
-    
-    @ViewBuilder
-    private func joinMeetingButton(
-        url: URL,
-        style: AlertElementStyle,
-        geometry: GeometryProxy
-    ) -> some View {
-        Button(action: { onJoinMeeting(url) }) {
-            VStack(spacing: 4) {
-                Text("Join Meeting")
-                    .font(style.font)
-                if let serviceName = videoConferenceServiceName(for: url) {
-                    Text(serviceName)
-                        .font(.system(size: style.fontSize * 0.5, weight: .medium))
-                        .opacity(0.8)
-                }
-            }
-            .foregroundColor(style.buttonTextColor?.color ?? .white)
-            .padding(.horizontal, style.buttonPaddingHorizontal ?? 24)
-            .padding(.vertical, style.buttonPaddingVertical ?? 12)
-            .background(
-                RoundedRectangle(cornerRadius: style.buttonCornerRadius ?? 12)
-                    .fill(style.buttonBackgroundColor?.color ?? Color(hex: "#FF1493"))
-            )
-        }
-        .buttonStyle(.plain)
-        .position(
-            x: geometry.size.width * style.positionX,
-            y: geometry.size.height * style.positionY
-        )
     }
     
     // MARK: - Dismiss Button
@@ -292,6 +285,43 @@ extension AlertElementStyle {
         
         // Apply weight
         return baseFont.weight(fontWeight)
+    }
+}
+
+// MARK: - Location Map View
+
+struct LocationMapView: View {
+    let address: String
+    @State private var region = MKCoordinateRegion(
+        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
+        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+    )
+    @State private var annotationItems: [MapAnnotationItem] = []
+    @State private var didGeocode = false
+
+    struct MapAnnotationItem: Identifiable {
+        let id = UUID()
+        let coordinate: CLLocationCoordinate2D
+    }
+
+    var body: some View {
+        Map(coordinateRegion: $region, annotationItems: annotationItems) { item in
+            MapMarker(coordinate: item.coordinate, tint: .red)
+        }
+        .onAppear {
+            guard !didGeocode else { return }
+            didGeocode = true
+            let geocoder = CLGeocoder()
+            geocoder.geocodeAddressString(address) { placemarks, _ in
+                if let coordinate = placemarks?.first?.location?.coordinate {
+                    region = MKCoordinateRegion(
+                        center: coordinate,
+                        span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
+                    )
+                    annotationItems = [MapAnnotationItem(coordinate: coordinate)]
+                }
+            }
+        }
     }
 }
 

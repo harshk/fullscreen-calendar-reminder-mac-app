@@ -18,6 +18,7 @@ struct AppearanceSettingsView: View {
     @State private var workingTheme: AlertTheme
     @State private var showingResetConfirmation = false
     @State private var showingImagePicker = false
+    @State private var showingSavedConfirmation = false
     
     init() {
         _workingTheme = State(initialValue: ThemeService.shared.getTheme(for: "default"))
@@ -118,36 +119,43 @@ struct AppearanceSettingsView: View {
     // MARK: - Editor Pane
     
     private var editorPane: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Element selector
-                elementSelector
-                
-                Divider()
-                
-                // Background properties (when no element selected)
-                if selectedElement == nil {
-                    backgroundProperties
-                } else if let element = selectedElement {
-                    // Element properties
-                    elementProperties(for: element)
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Element selector
+                    elementSelector
+
+                    Divider()
+
+                    // Background properties (when no element selected)
+                    if selectedElement == nil {
+                        backgroundProperties
+                    } else if let element = selectedElement {
+                        // Element properties
+                        elementProperties(for: element)
+                    }
                 }
-                
+                .padding()
+            }
+
+            Divider()
+
+            // Save/Cancel buttons pinned to bottom
+            HStack(spacing: 12) {
+                Button("Revert Changes") {
+                    loadTheme(for: selectedCalendarID)
+                }
+
                 Spacer()
-                
-                // Save/Cancel buttons
-                HStack(spacing: 12) {
-                    Button("Revert Changes") {
-                        loadTheme(for: selectedCalendarID)
+
+                Button(showingSavedConfirmation ? "Saved!" : "Save Theme") {
+                    saveTheme()
+                    showingSavedConfirmation = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        showingSavedConfirmation = false
                     }
-                    
-                    Spacer()
-                    
-                    Button("Save Theme") {
-                        saveTheme()
-                    }
-                    .buttonStyle(.borderedProminent)
                 }
+                .buttonStyle(.borderedProminent)
             }
             .padding()
         }
@@ -338,62 +346,6 @@ struct AppearanceSettingsView: View {
                     Text("Right").tag(TextAlignment.trailing)
                 }
                 .pickerStyle(.segmented)
-                
-                // Position
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Position")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                    
-                    HStack {
-                        Text("X:")
-                        Slider(
-                            value: Binding(
-                                get: { style.positionX },
-                                set: { newValue in
-                                    style.positionX = newValue
-                                    workingTheme.elementStyles[element] = style
-                                }
-                            ),
-                            in: 0...1,
-                            step: 0.01
-                        )
-                        Text("\(Int(style.positionX * 100))%")
-                            .frame(width: 40, alignment: .trailing)
-                    }
-                    
-                    HStack {
-                        Text("Y:")
-                        Slider(
-                            value: Binding(
-                                get: { style.positionY },
-                                set: { newValue in
-                                    style.positionY = newValue
-                                    workingTheme.elementStyles[element] = style
-                                }
-                            ),
-                            in: 0...1,
-                            step: 0.01
-                        )
-                        Text("\(Int(style.positionY * 100))%")
-                            .frame(width: 40, alignment: .trailing)
-                    }
-                }
-                
-                // Max Width
-                Slider(
-                    value: Binding(
-                        get: { style.maxWidthPercentage },
-                        set: { newValue in
-                            style.maxWidthPercentage = newValue
-                            workingTheme.elementStyles[element] = style
-                        }
-                    ),
-                    in: 0.1...1.0,
-                    step: 0.05
-                ) {
-                    Text("Max Width: \(Int(style.maxWidthPercentage * 100))%")
-                }
                 
                 // Button-specific properties
                 if element == .joinButton {

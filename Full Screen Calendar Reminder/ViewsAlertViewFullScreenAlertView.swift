@@ -75,7 +75,7 @@ struct FullScreenAlertView: View {
                         .font(style.font)
                         .foregroundColor(style.fontColor.color)
                         .multilineTextAlignment(style.textAlignment)
-                        .frame(maxWidth: geometry.size.width * style.maxWidthPercentage)
+                        .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
 
                 // Start Time
@@ -84,6 +84,7 @@ struct FullScreenAlertView: View {
                         .font(style.font)
                         .foregroundColor(style.fontColor.color)
                         .multilineTextAlignment(style.textAlignment)
+                        .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
 
                 // Location with Map
@@ -94,13 +95,14 @@ struct FullScreenAlertView: View {
                             .font(style.font)
                             .foregroundColor(style.fontColor.color)
                             .multilineTextAlignment(style.textAlignment)
-                            .frame(maxWidth: geometry.size.width * style.maxWidthPercentage)
+                            .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
 
                         LocationMapView(address: location)
                             .frame(width: 266, height: 160)
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                             .allowsHitTesting(false)
                     }
+                    .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
 
                 // Calendar Name
@@ -109,6 +111,7 @@ struct FullScreenAlertView: View {
                         .font(style.font)
                         .foregroundColor(style.fontColor.color)
                         .multilineTextAlignment(style.textAlignment)
+                        .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
 
                 // Join Meeting Button
@@ -133,6 +136,7 @@ struct FullScreenAlertView: View {
                         )
                     }
                     .buttonStyle(.plain)
+                    .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
 
                 // Queue Counter
@@ -141,6 +145,7 @@ struct FullScreenAlertView: View {
                     Text("\(queuePosition) of \(queueTotal)")
                         .font(style.font)
                         .foregroundColor(style.fontColor.color)
+                        .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
 
                 Spacer()
@@ -182,7 +187,7 @@ struct FullScreenAlertView: View {
             .font(style.font)
             .foregroundColor(style.fontColor.color)
             .multilineTextAlignment(style.textAlignment)
-            .frame(maxWidth: geometry.size.width * style.maxWidthPercentage)
+            .frame(maxWidth: geometry.size.width * 0.9)
             .position(
                 x: geometry.size.width * style.positionX,
                 y: geometry.size.height * style.positionY
@@ -275,16 +280,24 @@ struct FullScreenAlertView: View {
 extension AlertElementStyle {
     var font: Font {
         let baseFont: Font
-        
+
         // Try to use custom font family
         if fontFamily != "SF Pro" && fontFamily != "System" {
             baseFont = .custom(fontFamily, size: fontSize)
         } else {
             baseFont = .system(size: fontSize)
         }
-        
+
         // Apply weight
         return baseFont.weight(fontWeight)
+    }
+
+    var frameAlignment: Alignment {
+        switch textAlignment {
+        case .leading: return .leading
+        case .center: return .center
+        case .trailing: return .trailing
+        }
     }
 }
 

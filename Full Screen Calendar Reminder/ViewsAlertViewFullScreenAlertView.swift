@@ -173,15 +173,22 @@ struct FullScreenAlertView: View {
         geometry: GeometryProxy
     ) -> some View {
         Button(action: { onJoinMeeting(url) }) {
-            Text("Join Meeting")
-                .font(style.font)
-                .foregroundColor(style.buttonTextColor?.color ?? .white)
-                .padding(.horizontal, style.buttonPaddingHorizontal ?? 24)
-                .padding(.vertical, style.buttonPaddingVertical ?? 12)
-                .background(
-                    RoundedRectangle(cornerRadius: style.buttonCornerRadius ?? 12)
-                        .fill(style.buttonBackgroundColor?.color ?? Color(hex: "#FF1493"))
-                )
+            VStack(spacing: 4) {
+                Text("Join Meeting")
+                    .font(style.font)
+                if let serviceName = videoConferenceServiceName(for: url) {
+                    Text(serviceName)
+                        .font(.system(size: style.fontSize * 0.5, weight: .medium))
+                        .opacity(0.8)
+                }
+            }
+            .foregroundColor(style.buttonTextColor?.color ?? .white)
+            .padding(.horizontal, style.buttonPaddingHorizontal ?? 24)
+            .padding(.vertical, style.buttonPaddingVertical ?? 12)
+            .background(
+                RoundedRectangle(cornerRadius: style.buttonCornerRadius ?? 12)
+                    .fill(style.buttonBackgroundColor?.color ?? Color(hex: "#FF1493"))
+            )
         }
         .buttonStyle(.plain)
         .position(
@@ -225,7 +232,17 @@ struct FullScreenAlertView: View {
     private var locationText: String? {
         switch alertItem {
         case .calendarEvent(let event):
-            return event.location
+            guard let location = event.location, !location.isEmpty else { return nil }
+            // Don't show the location if it's just a video conference URL
+            if let url = URL(string: location), CalendarEvent.isVideoConferenceURL(url) {
+                return nil
+            }
+            // Also check if the location contains a video conference URL as part of the text
+            if CalendarEvent.findVideoConferenceURL(in: location) != nil,
+               location.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("http") {
+                return nil
+            }
+            return location
         case .customReminder:
             return nil
         }
@@ -247,6 +264,16 @@ struct FullScreenAlertView: View {
         case .customReminder:
             return nil
         }
+    }
+
+    private func videoConferenceServiceName(for url: URL) -> String? {
+        let host = url.host?.lowercased() ?? ""
+        if host.contains("zoom.us") { return "Zoom" }
+        if host.contains("meet.google.com") { return "Google Meet" }
+        if host.contains("teams.microsoft.com") { return "Microsoft Teams" }
+        if host.contains("webex.com") { return "Webex" }
+        if url.scheme == "facetime" { return "FaceTime" }
+        return nil
     }
 }
 

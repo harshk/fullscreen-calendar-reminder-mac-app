@@ -133,7 +133,7 @@ struct CalendarEvent: Identifiable, Equatable {
         return nil
     }
     
-    private static func findVideoConferenceURL(in text: String) -> URL? {
+    static func findVideoConferenceURL(in text: String) -> URL? {
         let patterns = [
             "https?://[^\\s]*zoom\\.us/[^\\s]+",
             "https?://[^\\s]*meet\\.google\\.com/[^\\s]+",
@@ -154,7 +154,7 @@ struct CalendarEvent: Identifiable, Equatable {
         return nil
     }
     
-    private static func isVideoConferenceURL(_ url: URL) -> Bool {
+    static func isVideoConferenceURL(_ url: URL) -> Bool {
         let host = url.host?.lowercased() ?? ""
         return host.contains("zoom.us") ||
                host.contains("meet.google.com") ||

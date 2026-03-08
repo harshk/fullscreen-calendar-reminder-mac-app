@@ -48,7 +48,9 @@ struct FullScreenAlertView: View {
                let nsImage = NSImage(data: imageData) {
                 Image(nsImage: nsImage)
                     .resizable()
-                    .aspectRatio(contentMode: .fit)
+                    .aspectRatio(contentMode: .fill)
+                    .ignoresSafeArea()
+                    .clipped()
                     .overlay(
                         theme.overlayColor.color
                             .opacity(theme.overlayOpacity)

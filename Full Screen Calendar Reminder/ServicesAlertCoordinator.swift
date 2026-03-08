@@ -290,6 +290,11 @@ class AlertCoordinator: ObservableObject {
         showPreviewAlert(theme: theme, item: .calendarEvent(event))
     }
 
+    func showPreviewAlert(for reminder: CustomReminder) {
+        let theme = ThemeService.shared.getTheme(for: nil)
+        showPreviewAlert(theme: theme, item: .customReminder(reminder))
+    }
+
     func showPreviewAlert(theme: AlertTheme) {
         let mockEvent = CalendarEvent.mock()
         let item = AlertItem.calendarEvent(mockEvent)

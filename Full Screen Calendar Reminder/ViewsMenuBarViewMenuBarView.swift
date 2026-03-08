@@ -400,7 +400,7 @@ struct EventRow: View {
             CalendarService.shared.openEventInCalendarApp(event)
         }
         .contextMenu {
-            Button("Preview Full Screen Alert") {
+            Button("Preview this Reminder") {
                 NotificationCenter.default.post(name: .dismissPopover, object: nil)
                 AlertCoordinator.shared.showPreviewAlert(for: event)
             }
@@ -445,6 +445,12 @@ struct MenuBarReminderRow: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .contentShape(Rectangle())
+        .contextMenu {
+            Button("Preview this Reminder") {
+                NotificationCenter.default.post(name: .dismissPopover, object: nil)
+                AlertCoordinator.shared.showPreviewAlert(for: reminder)
+            }
+        }
     }
 
     private func formatTime(_ date: Date) -> String {

@@ -119,25 +119,32 @@ struct FullScreenAlertView: View {
                 // Join Meeting Button
                 if let videoURL = videoConferenceURL,
                    let style = theme.elementStyles[.joinButton] {
-                    Button(action: { onJoinMeeting(videoURL) }) {
-                        VStack(spacing: 4) {
-                            Text("Join Meeting")
-                                .font(style.font)
-                            if let serviceName = videoConferenceServiceName(for: videoURL) {
-                                Text(serviceName)
-                                    .font(.system(size: style.fontSize * 0.5, weight: .medium))
-                                    .opacity(0.8)
-                            }
+                    VStack(spacing: 4) {
+                        Text("Join Meeting")
+                            .font(style.font)
+                        if let serviceName = videoConferenceServiceName(for: videoURL) {
+                            Text(serviceName)
+                                .font(.system(size: style.fontSize * 0.5, weight: .medium))
+                                .opacity(0.8)
                         }
-                        .foregroundColor(style.buttonTextColor?.color ?? .white)
-                        .padding(.horizontal, style.buttonPaddingHorizontal ?? 24)
-                        .padding(.vertical, style.buttonPaddingVertical ?? 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: style.buttonCornerRadius ?? 12)
-                                .fill(style.buttonBackgroundColor?.color ?? Color(hex: "#FF1493"))
-                        )
                     }
-                    .buttonStyle(.plain)
+                    .foregroundColor(style.buttonTextColor?.color ?? .white)
+                    .padding(.horizontal, style.buttonPaddingHorizontal ?? 24)
+                    .padding(.vertical, style.buttonPaddingVertical ?? 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: style.buttonCornerRadius ?? 12)
+                            .fill(style.buttonBackgroundColor?.color ?? Color(hex: "#FF1493"))
+                    )
+                    .contentShape(RoundedRectangle(cornerRadius: style.buttonCornerRadius ?? 12))
+                    .onTapGesture {
+                        DispatchQueue.main.async {
+                            NSWorkspace.shared.open(videoURL)
+                        }
+                        onDismiss()
+                    }
+                    .onHover { hovering in
+                        if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                    }
                     .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
 

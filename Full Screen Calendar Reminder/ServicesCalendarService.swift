@@ -9,6 +9,7 @@ import Foundation
 import EventKit
 import Combine
 import AppKit
+import UniformTypeIdentifiers
 
 @MainActor
 class CalendarService: ObservableObject {
@@ -280,16 +281,13 @@ class CalendarService: ObservableObject {
     // MARK: - Calendar App Integration
     
     func openEventInCalendarApp(_ event: CalendarEvent) {
-        guard let ekEvent = eventStore.event(withIdentifier: event.id) else { return }
-        
-        if let url = ekEvent.url {
-            NSWorkspace.shared.open(url)
-        } else {
-            // Construct calshow URL
-            let urlString = "calshow://\(event.startDate.timeIntervalSinceReferenceDate)"
-            if let url = URL(string: urlString) {
-                NSWorkspace.shared.open(url)
-            }
+        // Open the user's default calendar app (whatever handles .ics files)
+        if let defaultApp = NSWorkspace.shared.urlForApplication(toOpen: .calendarEvent) {
+            let config = NSWorkspace.OpenConfiguration()
+            NSWorkspace.shared.openApplication(at: defaultApp, configuration: config)
+        } else if let fallback = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.iCal") {
+            let config = NSWorkspace.OpenConfiguration()
+            NSWorkspace.shared.openApplication(at: fallback, configuration: config)
         }
     }
 }

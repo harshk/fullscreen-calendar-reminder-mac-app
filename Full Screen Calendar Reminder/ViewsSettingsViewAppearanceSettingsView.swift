@@ -176,9 +176,10 @@ struct AppearanceSettingsView: View {
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(selectedElement == nil ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: 1)
                     )
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                
+
                 ForEach(AlertElementIdentifier.allCases, id: \.self) { element in
                     Button(action: { selectedElement = element }) {
                         VStack {
@@ -194,6 +195,7 @@ struct AppearanceSettingsView: View {
                             RoundedRectangle(cornerRadius: 8)
                                 .stroke(selectedElement == element ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: 1)
                         )
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }

@@ -8,8 +8,37 @@
 import SwiftUI
 import AppKit
 
+// MARK: - Menu Bar List Item
+
+enum MenuBarListItem: Identifiable {
+    case calendarEvent(CalendarEvent)
+    case customReminder(CustomReminder)
+
+    var id: String {
+        switch self {
+        case .calendarEvent(let e): return "event-\(e.id)"
+        case .customReminder(let r): return "reminder-\(r.id.uuidString)"
+        }
+    }
+
+    var startDate: Date {
+        switch self {
+        case .calendarEvent(let e): return e.startDate
+        case .customReminder(let r): return r.scheduledDate
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .calendarEvent(let e): return e.title
+        case .customReminder(let r): return r.title
+        }
+    }
+}
+
 struct MenuBarView: View {
     @ObservedObject var calendarService = CalendarService.shared
+    @ObservedObject var reminderService = ReminderService.shared
     @ObservedObject var settings = AppSettings.shared
     
     @State private var showingAddReminder = false
@@ -139,10 +168,10 @@ struct MenuBarView: View {
     private var upcomingEventsSection: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
-                if calendarService.upcomingEvents.isEmpty {
+                if groupedItems.isEmpty {
                     noUpcomingEventsView
                 } else {
-                    eventsList
+                    itemsList
                 }
             }
         }
@@ -163,8 +192,8 @@ struct MenuBarView: View {
         .padding()
     }
     
-    private var eventsList: some View {
-        ForEach(groupedEvents, id: \.date) { group in
+    private var itemsList: some View {
+        ForEach(groupedItems, id: \.date) { group in
             VStack(alignment: .leading, spacing: 0) {
                 // Date Header
                 Text(formatDateHeader(group.date))
@@ -175,10 +204,15 @@ struct MenuBarView: View {
                     .padding(.vertical, 6)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color.secondary.opacity(0.1))
-                
-                // Events for this date
-                ForEach(group.events) { event in
-                    EventRow(event: event)
+
+                // Items for this date
+                ForEach(group.items) { item in
+                    switch item {
+                    case .calendarEvent(let event):
+                        EventRow(event: event)
+                    case .customReminder(let reminder):
+                        MenuBarReminderRow(reminder: reminder)
+                    }
                 }
             }
         }
@@ -247,13 +281,16 @@ struct MenuBarView: View {
     
     // MARK: - Helper Functions
     
-    private var groupedEvents: [(date: Date, events: [CalendarEvent])] {
-        let calendar = Calendar.current
-        let grouped = Dictionary(grouping: calendarService.upcomingEvents) { event in
-            calendar.startOfDay(for: event.startDate)
+    private var groupedItems: [(date: Date, items: [MenuBarListItem])] {
+        let cal = Calendar.current
+        var allItems: [MenuBarListItem] = calendarService.upcomingEvents.map { .calendarEvent($0) }
+        allItems += reminderService.upcomingReminders.map { .customReminder($0) }
+        allItems.sort { $0.startDate < $1.startDate }
+
+        let grouped = Dictionary(grouping: allItems) { item in
+            cal.startOfDay(for: item.startDate)
         }
-        
-        return grouped.sorted { $0.key < $1.key }.map { (date: $0.key, events: $0.value) }
+        return grouped.sorted { $0.key < $1.key }.map { (date: $0.key, items: $0.value) }
     }
     
     private func formatDateHeader(_ date: Date) -> String {
@@ -370,6 +407,46 @@ struct EventRow: View {
         }
     }
     
+    private func formatTime(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - Menu Bar Reminder Row
+
+struct MenuBarReminderRow: View {
+    let reminder: CustomReminder
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(formatTime(reminder.scheduledDate))
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(width: 50, alignment: .trailing)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(reminder.title)
+                    .font(.subheadline)
+                    .lineLimit(2)
+
+                HStack(spacing: 4) {
+                    Image(systemName: "bell.fill")
+                        .font(.caption2)
+                    Text("Reminder")
+                        .font(.caption)
+                }
+                .foregroundColor(.orange)
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
+    }
+
     private func formatTime(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.timeStyle = .short

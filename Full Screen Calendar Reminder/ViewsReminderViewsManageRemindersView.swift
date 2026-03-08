@@ -34,17 +34,13 @@ struct ManageRemindersView: View {
             Divider()
             
             // Content
-            if reminderService.upcomingReminders.isEmpty && reminderService.pastReminders.isEmpty {
+            if reminderService.upcomingReminders.isEmpty {
                 emptyStateView
             } else {
                 ScrollView {
                     LazyVStack(alignment: .leading, spacing: 0) {
                         if !reminderService.upcomingReminders.isEmpty {
                             upcomingSection
-                        }
-                        
-                        if !reminderService.pastReminders.isEmpty {
-                            pastSection
                         }
                     }
                 }
@@ -111,34 +107,6 @@ struct ManageRemindersView: View {
                         showingDeleteConfirmation = true
                     }
                 )
-            }
-        }
-    }
-    
-    // MARK: - Past Section
-    
-    private var pastSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("Past")
-                .font(.headline)
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.secondary.opacity(0.1))
-            
-            ForEach(reminderService.pastReminders) { reminder in
-                ReminderRow(
-                    reminder: reminder,
-                    onEdit: {
-                        selectedReminder = reminder
-                        showingEditSheet = true
-                    },
-                    onDelete: {
-                        selectedReminder = reminder
-                        showingDeleteConfirmation = true
-                    }
-                )
-                .opacity(0.6)
             }
         }
     }

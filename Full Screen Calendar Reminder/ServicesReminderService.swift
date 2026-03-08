@@ -14,7 +14,6 @@ class ReminderService: ObservableObject {
     static let shared = ReminderService()
     
     @Published var upcomingReminders: [CustomReminder] = []
-    @Published var pastReminders: [CustomReminder] = []
     
     private var modelContext: ModelContext?
     private var pollingTimer: Timer?
@@ -40,7 +39,6 @@ class ReminderService: ObservableObject {
         do {
             let allReminders = try context.fetch(descriptor)
             upcomingReminders = allReminders.filter { $0.isUpcoming }
-            pastReminders = allReminders.filter { !$0.isUpcoming }
         } catch {
             print("Failed to load reminders: \(error)")
         }
@@ -114,14 +112,14 @@ class ReminderService: ObservableObject {
         
         for reminder in remindersToFire {
             firedReminderIDs.insert(reminder.id)
-            reminder.hasFired = true
-            
-            try? modelContext?.save()
-            
+
             AlertCoordinator.shared.queueAlert(for: reminder)
+
+            modelContext?.delete(reminder)
         }
-        
+
         if !remindersToFire.isEmpty {
+            try? modelContext?.save()
             loadReminders()
         }
     }

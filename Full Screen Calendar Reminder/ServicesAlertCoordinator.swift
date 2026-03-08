@@ -86,7 +86,6 @@ class AlertCoordinator: ObservableObject {
     
     private var alertWindows: [NSWindow] = []
     private var globalKeyMonitor: Any?
-    private var autoDismissTimer: Timer?
 
     private init() {
         setupKeyMonitor()
@@ -159,7 +158,6 @@ class AlertCoordinator: ObservableObject {
         } else {
             isShowingAlert = false
             removeGlobalKeyMonitor()
-            stopAutoDismissTimer()
             // Restore accessory mode so the dock icon is hidden
             NSApp.setActivationPolicy(.accessory)
         }
@@ -198,7 +196,6 @@ class AlertCoordinator: ObservableObject {
         alertWindows.first?.makeKeyAndOrderFront(nil)
 
         installGlobalKeyMonitor()
-        startAutoDismissTimer()
     }
 
     private func createAlertWindow(
@@ -274,15 +271,7 @@ class AlertCoordinator: ObservableObject {
             }
         }
         if globalKeyMonitor == nil {
-            // Accessibility permissions not granted — global Escape won't work.
-            // Shorten auto-dismiss as a safety net.
-            print("⚠️ Global key monitor unavailable (Accessibility permissions needed). Using shorter auto-dismiss.")
-            autoDismissTimer?.invalidate()
-            autoDismissTimer = Timer.scheduledTimer(withTimeInterval: 15, repeats: false) { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    self?.dismissCurrentAlert()
-                }
-            }
+            print("⚠️ Global key monitor unavailable (Accessibility permissions needed).")
         }
     }
 
@@ -293,20 +282,6 @@ class AlertCoordinator: ObservableObject {
         }
     }
 
-    /// Safety net: auto-dismiss after 60 seconds so the user is never permanently locked out.
-    private func startAutoDismissTimer() {
-        autoDismissTimer?.invalidate()
-        autoDismissTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: false) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                self?.dismissCurrentAlert()
-            }
-        }
-    }
-
-    private func stopAutoDismissTimer() {
-        autoDismissTimer?.invalidate()
-        autoDismissTimer = nil
-    }
     
     // MARK: - Testing/Preview
     

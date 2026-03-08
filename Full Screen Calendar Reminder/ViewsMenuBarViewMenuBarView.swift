@@ -13,6 +13,7 @@ struct MenuBarView: View {
     @ObservedObject var settings = AppSettings.shared
     
     @State private var showingAddReminder = false
+    @State private var showingAddReminderInfo = false
     @State private var showingManageReminders = false
     
     var body: some View {
@@ -187,10 +188,25 @@ struct MenuBarView: View {
     
     private var menuActions: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Button("Add Full Screen Reminder") {
-                showingAddReminder = true
+            HStack {
+                Button("Add Full Screen Reminder") {
+                    showingAddReminder = true
+                }
+                .buttonStyle(.plain)
+
+                Button(action: { showingAddReminderInfo.toggle() }) {
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: $showingAddReminderInfo) {
+                    Text("Adds a Full Screen reminder without having to add an event to your calendar.")
+                        .font(.caption)
+                        .padding(8)
+                        .frame(width: 200)
+                }
             }
-            .buttonStyle(.plain)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .leading)

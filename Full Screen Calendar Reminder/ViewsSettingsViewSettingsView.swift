@@ -8,16 +8,14 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @Environment(\.dismiss) private var dismiss
-    
     enum SettingsTab: Hashable {
         case general
         case calendars
         case appearance
     }
-    
+
     @State private var selectedTab: SettingsTab = .general
-    
+
     var body: some View {
         TabView(selection: $selectedTab) {
             GeneralSettingsView()
@@ -25,13 +23,13 @@ struct SettingsView: View {
                     Label("General", systemImage: "gear")
                 }
                 .tag(SettingsTab.general)
-            
+
             CalendarsSettingsView()
                 .tabItem {
                     Label("Calendars", systemImage: "calendar")
                 }
                 .tag(SettingsTab.calendars)
-            
+
             AppearanceSettingsView()
                 .tabItem {
                     Label("Appearance", systemImage: "paintbrush")

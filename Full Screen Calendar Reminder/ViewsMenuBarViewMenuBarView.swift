@@ -14,10 +14,22 @@ struct MenuBarView: View {
     
     @State private var showingAddReminder = false
     @State private var showingManageReminders = false
-    @State private var showingSettings = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            // Settings gear in top-right
+            HStack {
+                Spacer()
+                Button(action: { openSettings() }) {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, 12)
+            }
+            .frame(height: 32)
+
             if !calendarService.hasAccess {
                 noAccessView
             } else if settings.selectedCalendarIdentifiers.isEmpty {
@@ -25,9 +37,9 @@ struct MenuBarView: View {
             } else {
                 upcomingEventsSection
             }
-            
+
             Divider()
-            
+
             menuActions
         }
         .frame(width: 350)
@@ -113,15 +125,12 @@ struct MenuBarView: View {
                 .foregroundColor(.secondary)
             
             Button("Open Settings") {
-                showingSettings = true
+                openSettings()
             }
             .buttonStyle(.borderedProminent)
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .sheet(isPresented: $showingSettings) {
-            SettingsView()
-        }
     }
     
     // MARK: - Upcoming Events Section
@@ -200,8 +209,6 @@ struct MenuBarView: View {
                 ManageRemindersView()
             }
             
-            Divider()
-            
             Button(settings.isPaused ? "Unpause Full Screen Reminders" : "Pause Full Screen Reminders") {
                 settings.isPaused.toggle()
             }
@@ -211,19 +218,8 @@ struct MenuBarView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             
             Divider()
-            
-            Button("Settings") {
-                showingSettings = true
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .sheet(isPresented: $showingSettings) {
-                SettingsView()
-            }
-            
-            Button("Quit Full Screen Calendar Reminder") {
+
+            Button("Quit") {
                 NSApplication.shared.terminate(nil)
             }
             .buttonStyle(.plain)
@@ -263,7 +259,11 @@ struct MenuBarView: View {
         formatter.dateFormat = "MMMM d"
         return formatter.string(from: date)
     }
-    
+
+    private func openSettings() {
+        NotificationCenter.default.post(name: .openSettings, object: nil)
+    }
+
     private func openSystemSettingsCalendarPrivacy() {
         // Try modern macOS Ventura+ URL scheme first
         if #available(macOS 13.0, *) {
@@ -365,6 +365,7 @@ struct EventRow: View {
 
 extension Notification.Name {
     static let dismissPopover = Notification.Name("DismissPopover")
+    static let openSettings = Notification.Name("OpenSettings")
 }
 
 // MARK: - Preview

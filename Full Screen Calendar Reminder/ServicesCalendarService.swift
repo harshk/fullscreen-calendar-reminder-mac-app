@@ -184,6 +184,16 @@ class CalendarService: ObservableObject {
                 }
             }
             .store(in: &cancellables)
+
+        // Re-fetch when number of events setting changes
+        AppSettings.shared.$numberOfEventsInMenuBar
+            .dropFirst()
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    await self?.fetchUpcomingEvents()
+                }
+            }
+            .store(in: &cancellables)
     }
     
     // MARK: - Polling

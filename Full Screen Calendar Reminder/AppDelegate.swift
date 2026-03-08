@@ -13,6 +13,7 @@ import Combine
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var panel: NSPanel?
+    private var settingsWindow: NSWindow?
     private var eventMonitor: Any?
     var modelContainer: ModelContainer!
     
@@ -73,15 +74,42 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         panel.backgroundColor = .clear
         panel.hasShadow = true
 
+        let visualEffect = NSVisualEffectView(frame: NSRect(origin: .zero, size: contentSize))
+        visualEffect.material = .menu
+        visualEffect.state = .active
+        visualEffect.blendingMode = .behindWindow
+        visualEffect.wantsLayer = true
+        visualEffect.layer?.cornerRadius = 10
+        visualEffect.layer?.masksToBounds = true
+
         let hostingView = NSHostingView(rootView:
             MenuBarView()
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         )
-        hostingView.frame = NSRect(origin: .zero, size: contentSize)
-        panel.contentView = hostingView
+        hostingView.frame = visualEffect.bounds
+        hostingView.autoresizingMask = [.width, .height]
+        hostingView.layer?.backgroundColor = .clear
+        visualEffect.addSubview(hostingView)
+
+        panel.contentView = visualEffect
         self.panel = panel
         
+        // Hide dock icon when settings window closes
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(windowDidClose),
+            name: NSWindow.willCloseNotification,
+            object: nil
+        )
+
+        // Observe open settings requests
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(openSettings),
+            name: .openSettings,
+            object: nil
+        )
+
         // Observe dismiss popover requests
         NotificationCenter.default.addObserver(
             self,
@@ -116,6 +144,42 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
+    @objc private func windowDidClose(_ notification: Notification) {
+        // If no visible windows remain, go back to accessory mode (hide dock icon)
+        DispatchQueue.main.async {
+            let hasVisibleWindows = NSApp.windows.contains { $0.isVisible && $0 != self.panel }
+            if !hasVisibleWindows {
+                NSApp.setActivationPolicy(.accessory)
+            }
+        }
+    }
+
+    @objc private func openSettings() {
+        closePanel()
+
+        if let settingsWindow = settingsWindow, settingsWindow.isVisible {
+            settingsWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 800, height: 600),
+            styleMask: [.titled, .closable, .miniaturizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Settings"
+        window.contentView = NSHostingView(rootView: SettingsView())
+        window.center()
+        window.isReleasedWhenClosed = false
+        self.settingsWindow = window
+
+        NSApp.setActivationPolicy(.regular)
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
     @objc private func handleDismissPopover() {
         closePanel()
     }
@@ -129,7 +193,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let buttonFrame = button.window!.convertToScreen(button.convert(button.bounds, to: nil))
             let panelSize = panel.frame.size
             let x = buttonFrame.midX - panelSize.width / 2
-            let y = buttonFrame.minY - panelSize.height - 4
+            let y = buttonFrame.minY - panelSize.height
             panel.setFrameOrigin(NSPoint(x: x, y: y))
             panel.orderFrontRegardless()
             startEventMonitor()

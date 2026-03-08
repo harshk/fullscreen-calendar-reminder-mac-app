@@ -31,7 +31,6 @@ struct Full_Screen_Calendar_ReminderApp: App {
     }
 
     var body: some Scene {
-        // No window needed - we're a menu bar only app
         Settings {
             EmptyView()
         }

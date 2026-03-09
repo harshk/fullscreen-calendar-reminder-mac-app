@@ -9,7 +9,6 @@ import Foundation
 import AppKit
 import SwiftUI
 import Combine
-import QuartzCore
 
 // MARK: - Pre-Alert Manager
 
@@ -19,10 +18,8 @@ class PreAlertManager: ObservableObject {
 
     @Published var isShowingPreAlert = false
 
-    private var glowWindows: [NSPanel] = []
     private var bannerWindow: NSPanel?
     private var countdownTimer: Timer?
-    private var autoDismissTimer: Timer?
     private var preAlertEventIDs = Set<String>()
 
     private var currentEvent: CalendarEvent?
@@ -39,7 +36,6 @@ class PreAlertManager: ObservableObject {
         currentEvent = event
         isShowingPreAlert = true
 
-        showGlow(for: event)
         showBanner(for: event)
     }
 
@@ -47,12 +43,9 @@ class PreAlertManager: ObservableObject {
     func dismiss() {
         guard isShowingPreAlert else { return }
 
-        dismissGlow()
         dismissBanner()
         countdownTimer?.invalidate()
         countdownTimer = nil
-        autoDismissTimer?.invalidate()
-        autoDismissTimer = nil
         currentEvent = nil
         isShowingPreAlert = false
     }
@@ -78,91 +71,7 @@ class PreAlertManager: ObservableObject {
         // Don't track test events so they can be re-triggered
         currentEvent = event
         isShowingPreAlert = true
-        showGlow(for: event)
         showBanner(for: event)
-    }
-
-    // MARK: - Screen Border Glow
-
-    private func showGlow(for event: CalendarEvent) {
-        dismissGlow()
-
-        let glowColor = glowNSColor(for: event)
-        let duration = AppSettings.shared.preAlertDuration
-
-        for screen in NSScreen.screens {
-            let window = createGlowWindow(for: screen, color: glowColor)
-            glowWindows.append(window)
-            window.orderFrontRegardless()
-        }
-
-        // Auto-dismiss glow after configured duration (0 = persist until event starts)
-        if duration > 0 {
-            autoDismissTimer?.invalidate()
-            autoDismissTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
-                DispatchQueue.main.async { self?.dismissGlow() }
-            }
-        }
-    }
-
-    private func createGlowWindow(for screen: NSScreen, color: NSColor) -> NSPanel {
-        // Use NSPanel + .nonactivatingPanel — the same pattern the full-screen
-        // alert uses.  Plain NSWindow with .borderless confuses AppKit's event
-        // routing in .accessory apps and causes objc_release crashes during
-        // mouse hit-testing.
-        let panel = NSPanel(
-            contentRect: screen.frame,
-            styleMask: [.borderless, .nonactivatingPanel],
-            backing: .buffered,
-            defer: false,
-            screen: screen
-        )
-        panel.isFloatingPanel = true
-        panel.level = .floating
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        panel.isOpaque = false
-        panel.backgroundColor = .clear
-        panel.ignoresMouseEvents = true
-        panel.hasShadow = false
-        panel.hidesOnDeactivate = false
-
-        let glowView = GlowBorderView(frame: NSRect(origin: .zero, size: screen.frame.size))
-        glowView.glowColor = color
-        glowView.autoresizingMask = [.width, .height]
-        panel.contentView = glowView
-
-        // Start pulsing animation
-        glowView.startPulsing()
-
-        return panel
-    }
-
-    private func dismissGlow() {
-        // Capture windows, then clear the array so nothing references them
-        // during the current run loop pass.  Use orderOut (not close) to
-        // remove from the screen without triggering deallocation cascades
-        // that crash when the window server is still hit-testing for mouse
-        // events.  Defer the actual teardown to the next run loop pass.
-        let windows = glowWindows
-        glowWindows.removeAll()
-        for window in windows {
-            (window.contentView as? GlowBorderView)?.stopPulsing()
-            window.contentView = nil
-            window.orderOut(nil)
-        }
-        DispatchQueue.main.async {
-            for window in windows { window.close() }
-        }
-    }
-
-    private func glowNSColor(for event: CalendarEvent) -> NSColor {
-        let theme = ThemeService.shared.getTheme(for: event.calendar.identifier)
-        if let glowStyle = theme.elementStyles[.preAlertGlow] {
-            let c = glowStyle.fontColor
-            return NSColor(red: c.red, green: c.green, blue: c.blue, alpha: c.opacity)
-        }
-        // Default warm amber
-        return NSColor(red: 1.0, green: 0.6, blue: 0.0, alpha: 1.0)
     }
 
     // MARK: - Floating Banner
@@ -234,72 +143,6 @@ class PreAlertManager: ObservableObject {
         DispatchQueue.main.async {
             panel.close()
         }
-    }
-}
-
-// MARK: - Glow Border View (Core Animation)
-
-class GlowBorderView: NSView {
-    var glowColor: NSColor = NSColor(red: 1.0, green: 0.6, blue: 0.0, alpha: 1.0)
-    private var borderLayer: CAShapeLayer?
-    private var pulseAnimation: CABasicAnimation?
-
-    override init(frame: NSRect) {
-        super.init(frame: frame)
-        wantsLayer = true
-        layer?.backgroundColor = NSColor.clear.cgColor
-    }
-
-    required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        wantsLayer = true
-    }
-
-    override func layout() {
-        super.layout()
-        updateBorderLayer()
-    }
-
-    private func updateBorderLayer() {
-        borderLayer?.removeFromSuperlayer()
-
-        let borderWidth: CGFloat = 10
-        let inset = borderWidth / 2
-        let path = CGPath(
-            rect: bounds.insetBy(dx: inset, dy: inset),
-            transform: nil
-        )
-
-        let shape = CAShapeLayer()
-        shape.path = path
-        shape.fillColor = nil
-        shape.strokeColor = glowColor.cgColor
-        shape.lineWidth = borderWidth
-        shape.shadowColor = glowColor.cgColor
-        shape.shadowRadius = 20
-        shape.shadowOpacity = 1.0
-        shape.shadowOffset = .zero
-
-        layer?.addSublayer(shape)
-        borderLayer = shape
-    }
-
-    func startPulsing() {
-        updateBorderLayer()
-
-        let anim = CABasicAnimation(keyPath: "opacity")
-        anim.fromValue = 0.4
-        anim.toValue = 0.9
-        anim.duration = 1.5
-        anim.autoreverses = true
-        anim.repeatCount = .infinity
-        anim.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-        borderLayer?.add(anim, forKey: "pulse")
-        pulseAnimation = anim
-    }
-
-    func stopPulsing() {
-        borderLayer?.removeAnimation(forKey: "pulse")
     }
 }
 

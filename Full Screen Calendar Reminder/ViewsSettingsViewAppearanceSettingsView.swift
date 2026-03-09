@@ -50,7 +50,7 @@ struct AppearanceSettingsView: View {
             // Calendar selector
             HStack {
                 Picker("Editing Theme For:", selection: $selectedCalendarID) {
-                    Text("Default Style").tag("default")
+                    Text("Default Theme").tag("default")
                     
                     if !calendarService.availableCalendars.isEmpty {
                         Divider()
@@ -102,11 +102,23 @@ struct AppearanceSettingsView: View {
                 Spacer()
                 
                 Menu("More") {
-                    Button("Duplicate From...") {
-                        // Show submenu with other calendars
+                    Menu("Duplicate From...") {
+                        if selectedCalendarID != "default" {
+                            Button("Default Theme") {
+                                duplicateTheme(from: "default")
+                            }
+                        }
+
+                        ForEach(calendarService.availableCalendars, id: \.calendarIdentifier) { calendar in
+                            if calendar.calendarIdentifier != selectedCalendarID {
+                                Button(calendar.title) {
+                                    duplicateTheme(from: calendar.calendarIdentifier)
+                                }
+                            }
+                        }
                     }
-                    
-                    Button("Reset to Defaults") {
+
+                    Button("Reset to Default Theme") {
                         showingResetConfirmation = true
                     }
                 }
@@ -120,7 +132,7 @@ struct AppearanceSettingsView: View {
                 resetTheme()
             }
         } message: {
-            Text("This will reset all customizations for this theme to factory defaults.")
+            Text("This will reset all customizations for this theme to the default theme.")
         }
     }
     
@@ -469,7 +481,6 @@ struct AppearanceSettingsView: View {
         case .joinButton: return "video.fill"
         case .queueCounter: return "number"
         case .dismissButton: return "xmark"
-        case .preAlertGlow: return "sparkles"
         }
     }
 
@@ -482,7 +493,6 @@ struct AppearanceSettingsView: View {
         case .joinButton: return "Join Button"
         case .queueCounter: return "Counter"
         case .dismissButton: return "Dismiss"
-        case .preAlertGlow: return "Pre-Alert Glow"
         }
     }
     
@@ -498,6 +508,10 @@ struct AppearanceSettingsView: View {
     private func resetTheme() {
         themeService.resetTheme(for: selectedCalendarID)
         loadTheme(for: selectedCalendarID)
+    }
+
+    private func duplicateTheme(from sourceID: String) {
+        workingTheme = themeService.getTheme(for: sourceID)
     }
     
     private func showImagePicker() {

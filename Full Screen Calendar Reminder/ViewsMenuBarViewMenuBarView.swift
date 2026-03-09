@@ -404,11 +404,11 @@ struct EventRow: View {
             CalendarService.shared.openEventInCalendarApp(event)
         }
         .contextMenu {
-            Button("Preview this Reminder") {
+            Button("Show Preview: Full Screen Alert") {
                 NotificationCenter.default.post(name: .dismissPopover, object: nil)
                 AlertCoordinator.shared.showPreviewAlert(for: event)
             }
-            Button("Test Pre-Alert") {
+            Button("Show Preview: Pre-Alert") {
                 NotificationCenter.default.post(name: .dismissPopover, object: nil)
                 PreAlertManager.shared.showTestPreAlert(for: event)
             }
@@ -454,7 +454,7 @@ struct MenuBarReminderRow: View {
         .padding(.vertical, 8)
         .contentShape(Rectangle())
         .contextMenu {
-            Button("Preview this Reminder") {
+            Button("Show Preview: Full Screen Alert") {
                 NotificationCenter.default.post(name: .dismissPopover, object: nil)
                 AlertCoordinator.shared.showPreviewAlert(for: reminder)
             }

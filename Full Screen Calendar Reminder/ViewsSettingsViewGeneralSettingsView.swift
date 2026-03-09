@@ -39,6 +39,38 @@ struct GeneralSettingsView: View {
             }
 
             Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Snooze Durations")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+
+                    Text("Choose which snooze options appear on the full-screen alert.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                ForEach(snoozeOptions, id: \.value) { option in
+                    Toggle(option.label, isOn: Binding(
+                        get: { settings.snoozeDurations.contains(option.value) },
+                        set: { enabled in
+                            if enabled {
+                                if !settings.snoozeDurations.contains(option.value) {
+                                    settings.snoozeDurations.append(option.value)
+                                    settings.snoozeDurations.sort()
+                                }
+                            } else {
+                                settings.snoozeDurations.removeAll { $0 == option.value }
+                            }
+                        }
+                    ))
+                }
+            } header: {
+                Text("Snooze")
+                    .font(.headline)
+            }
+
+            Section {
                 Toggle("Enable Pre-Alert", isOn: $settings.preAlertEnabled)
 
                 if settings.preAlertEnabled {
@@ -58,7 +90,7 @@ struct GeneralSettingsView: View {
                         Text("30 seconds").tag(30.0)
                     }
 
-                    Button("Test Pre-Alert") {
+                    Button("Show Preview: Pre-Alert") {
                         PreAlertManager.shared.showTestPreAlert()
                     }
                 }
@@ -71,6 +103,14 @@ struct GeneralSettingsView: View {
         .padding()
     }
 }
+
+private let snoozeOptions: [(label: String, value: Double)] = [
+    ("1 minute", 60),
+    ("5 minutes", 300),
+    ("10 minutes", 600),
+    ("15 minutes", 900),
+    ("30 minutes", 1800),
+]
 
 #Preview {
     GeneralSettingsView()

@@ -92,9 +92,10 @@ class AlertCoordinator: ObservableObject {
     
     @Published var alertQueue: [AlertItem] = []
     @Published var isShowingAlert = false
-    
+
     private var alertWindows: [NSWindow] = []
     private var globalKeyMonitor: Any?
+    private var snoozeTimers: [Timer] = []
 
     private init() {
         setupKeyMonitor()
@@ -149,6 +150,44 @@ class AlertCoordinator: ObservableObject {
         displayFullScreenAlert(for: alertItem)
     }
     
+    func snoozeCurrentAlert(for duration: TimeInterval) {
+        guard !alertQueue.isEmpty else { return }
+        let snoozedItem = alertQueue[0]
+
+        // Close windows and remove from queue (same as dismiss)
+        for window in alertWindows {
+            window.close()
+        }
+        alertWindows.removeAll()
+        alertQueue.removeFirst()
+
+        // Schedule the snoozed alert to re-appear after the duration
+        let timer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] timer in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                self.snoozeTimers.removeAll { $0 === timer }
+                // Append (not insert at 0) — the currently displayed alert
+                // occupies position 0, and dismissCurrentAlert removes [0].
+                // Inserting at 0 would cause dismiss to remove the snoozed
+                // item instead of the one being displayed.
+                self.alertQueue.append(snoozedItem)
+                if !self.isShowingAlert {
+                    self.showNextAlert()
+                }
+            }
+        }
+        snoozeTimers.append(timer)
+
+        // Show next alert or clean up
+        if !alertQueue.isEmpty {
+            showNextAlert()
+        } else {
+            isShowingAlert = false
+            removeGlobalKeyMonitor()
+            NSApp.setActivationPolicy(.accessory)
+        }
+    }
+
     func dismissCurrentAlert() {
         // Close all alert windows
         for window in alertWindows {
@@ -239,6 +278,9 @@ class AlertCoordinator: ObservableObject {
             isPrimaryScreen: isPrimary,
             onDismiss: { [weak self] in
                 self?.dismissCurrentAlert()
+            },
+            onSnooze: { [weak self] duration in
+                self?.snoozeCurrentAlert(for: duration)
             },
             onJoinMeeting: { url in
                 NSWorkspace.shared.open(url)
@@ -389,6 +431,9 @@ class AlertCoordinator: ObservableObject {
             queueTotal: 1,
             isPrimaryScreen: isPrimary,
             onDismiss: { [weak window] in
+                window?.close()
+            },
+            onSnooze: { [weak window] _ in
                 window?.close()
             },
             onJoinMeeting: { _ in }

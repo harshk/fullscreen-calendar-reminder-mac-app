@@ -55,6 +55,11 @@ class AppSettings: ObservableObject {
         didSet { UserDefaults.standard.set(preAlertDuration, forKey: "preAlertDuration") }
     }
 
+    /// Snooze durations in seconds offered on the full-screen alert (default: 1m, 5m, 15m).
+    @Published var snoozeDurations: [Double] {
+        didSet { UserDefaults.standard.set(snoozeDurations, forKey: "snoozeDurations") }
+    }
+
     private init() {
         self.launchAtLogin = UserDefaults.standard.bool(forKey: "launchAtLogin")
         let storedEventCount = UserDefaults.standard.integer(forKey: "numberOfEventsInMenuBar")
@@ -73,6 +78,11 @@ class AppSettings: ObservableObject {
             self.preAlertDuration = storedDuration
         } else {
             self.preAlertDuration = 0 // persist until event starts
+        }
+        if let storedSnooze = UserDefaults.standard.array(forKey: "snoozeDurations") as? [Double], !storedSnooze.isEmpty {
+            self.snoozeDurations = storedSnooze
+        } else {
+            self.snoozeDurations = [60, 300, 900] // 1m, 5m, 15m
         }
         
         // Load selected calendar identifiers

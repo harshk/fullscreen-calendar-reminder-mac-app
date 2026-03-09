@@ -85,6 +85,7 @@ struct AppearanceSettingsView: View {
                         queueTotal: 3,
                         isPrimaryScreen: true,
                         onDismiss: {},
+                        onSnooze: { _ in },
                         onJoinMeeting: { _ in }
                     )
                     .frame(width: screenSize.width, height: screenSize.height)

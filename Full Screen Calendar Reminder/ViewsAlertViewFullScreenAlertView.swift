@@ -15,6 +15,7 @@ struct FullScreenAlertView: View {
     let queueTotal: Int
     let isPrimaryScreen: Bool
     let onDismiss: () -> Void
+    let onSnooze: (TimeInterval) -> Void
     let onJoinMeeting: (URL) -> Void
     
     var body: some View {
@@ -157,6 +158,9 @@ struct FullScreenAlertView: View {
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
 
+                // Snooze buttons
+                snoozeButtons
+
                 Spacer()
             }
             .frame(maxWidth: .infinity)
@@ -225,6 +229,45 @@ struct FullScreenAlertView: View {
             x: geometry.size.width * style.positionX,
             y: (style.iconSize ?? 32) * 2 + (style.iconSize ?? 32) / 2
         )
+    }
+
+    // MARK: - Snooze Buttons
+
+    private var snoozeButtons: some View {
+        HStack(spacing: 12) {
+            ForEach(AppSettings.shared.snoozeDurations, id: \.self) { duration in
+                Text(snoozeLabel(for: duration))
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.9))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.white.opacity(0.15))
+                    )
+                    .contentShape(RoundedRectangle(cornerRadius: 8))
+                    .onTapGesture {
+                        onSnooze(duration)
+                    }
+                    .onHover { hovering in
+                        if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                    }
+            }
+        }
+    }
+
+    private func snoozeLabel(for seconds: TimeInterval) -> String {
+        let minutes = Int(seconds) / 60
+        if minutes < 60 {
+            return "Snooze \(minutes)m"
+        } else {
+            let hours = minutes / 60
+            let remainingMinutes = minutes % 60
+            if remainingMinutes == 0 {
+                return "Snooze \(hours)h"
+            }
+            return "Snooze \(hours)h \(remainingMinutes)m"
+        }
     }
 
     // MARK: - Computed Properties
@@ -362,6 +405,7 @@ struct LocationMapView: View {
         queueTotal: 1,
         isPrimaryScreen: true,
         onDismiss: {},
+        onSnooze: { _ in },
         onJoinMeeting: { _ in }
     )
 }

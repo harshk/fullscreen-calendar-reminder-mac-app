@@ -469,9 +469,10 @@ struct AppearanceSettingsView: View {
         case .joinButton: return "video.fill"
         case .queueCounter: return "number"
         case .dismissButton: return "xmark"
+        case .preAlertGlow: return "sparkles"
         }
     }
-    
+
     private func labelForElement(_ element: AlertElementIdentifier) -> String {
         switch element {
         case .title: return "Title"
@@ -481,6 +482,7 @@ struct AppearanceSettingsView: View {
         case .joinButton: return "Join Button"
         case .queueCounter: return "Counter"
         case .dismissButton: return "Dismiss"
+        case .preAlertGlow: return "Pre-Alert Glow"
         }
     }
     

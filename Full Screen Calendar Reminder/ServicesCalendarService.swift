@@ -147,10 +147,15 @@ class CalendarService: ObservableObject {
                 end: endDate,
                 calendars: selectedCalendars
             )
-            return store.events(matching: predicate)
+            let mapped = store.events(matching: predicate)
                 .map { CalendarEvent(from: $0) }
                 .filter { $0.shouldTriggerAlert }
                 .sorted { $0.startDate < $1.startDate }
+
+            // Deduplicate — EventKit can return the same Google Calendar
+            // event multiple times. Keep the first occurrence of each ID.
+            var seen = Set<String>()
+            return mapped.filter { seen.insert($0.id).inserted }
         }.value
 
         upcomingEvents = Array(events.prefix(limit))
@@ -233,16 +238,32 @@ class CalendarService: ObservableObject {
     
     func checkForEventsToFire() {
         guard !AppSettings.shared.isPaused else { return }
-        
+
         let now = Date()
+
+        // Pre-alert check: fire pre-alert for events approaching within lead time
+        if AppSettings.shared.preAlertEnabled {
+            let leadTime = AppSettings.shared.preAlertLeadTime
+            for event in upcomingEvents {
+                let timeUntilStart = event.startDate.timeIntervalSince(now)
+                // Fire pre-alert when event is within lead time but hasn't started yet
+                if timeUntilStart > 0 && timeUntilStart <= leadTime &&
+                   !firedEventIDs.contains(event.id) {
+                    PreAlertManager.shared.showPreAlert(for: event)
+                }
+            }
+        }
+
         let eventsToFire = upcomingEvents.filter { event in
             !firedEventIDs.contains(event.id) &&
             event.startDate <= now &&
             event.startDate.timeIntervalSince(now) > -120 // Within 2 minutes
         }
-        
+
         for event in eventsToFire {
             firedEventIDs.insert(event.id)
+            // Dismiss any active pre-alert when the full-screen alert fires
+            PreAlertManager.shared.dismiss()
             AlertCoordinator.shared.queueAlert(for: event)
         }
     }
@@ -257,6 +278,7 @@ class CalendarService: ObservableObject {
         // Recalculate all upcoming events
         await fetchUpcomingEvents()
         firedEventIDs.removeAll()
+        PreAlertManager.shared.resetTracking()
     }
     
     private func handleWakeFromSleep() async {

@@ -30,12 +30,47 @@ struct GeneralSettingsView: View {
                     Text("Pause Behavior")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                    
+
                     Text("When full-screen reminders are paused, alerts are silently skipped rather than queued. Events that would have fired during the pause period will not trigger alerts when you unpause.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+            }
+
+            Section {
+                Toggle("Enable Pre-Alert", isOn: $settings.preAlertEnabled)
+
+                if settings.preAlertEnabled {
+                    Picker("Lead Time", selection: $settings.preAlertLeadTime) {
+                        Text("30 seconds").tag(30.0)
+                        Text("1 minute").tag(60.0)
+                        Text("2 minutes").tag(120.0)
+                        Text("3 minutes").tag(180.0)
+                        Text("5 minutes").tag(300.0)
+                    }
+
+                    Picker("Glow Duration", selection: $settings.preAlertGlowDuration) {
+                        Text("5 seconds").tag(5.0)
+                        Text("10 seconds").tag(10.0)
+                        Text("15 seconds").tag(15.0)
+                        Text("30 seconds").tag(30.0)
+                    }
+
+                    Picker("Banner Duration", selection: $settings.preAlertBannerDuration) {
+                        Text("Until event starts").tag(0.0)
+                        Text("10 seconds").tag(10.0)
+                        Text("20 seconds").tag(20.0)
+                        Text("30 seconds").tag(30.0)
+                    }
+
+                    Button("Test Pre-Alert") {
+                        PreAlertManager.shared.showTestPreAlert()
+                    }
+                }
+            } header: {
+                Text("Pre-Alert")
+                    .font(.headline)
             }
         }
         .formStyle(.grouped)

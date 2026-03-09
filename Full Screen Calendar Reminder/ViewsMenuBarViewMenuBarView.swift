@@ -408,6 +408,10 @@ struct EventRow: View {
                 NotificationCenter.default.post(name: .dismissPopover, object: nil)
                 AlertCoordinator.shared.showPreviewAlert(for: event)
             }
+            Button("Test Pre-Alert") {
+                NotificationCenter.default.post(name: .dismissPopover, object: nil)
+                PreAlertManager.shared.showTestPreAlert(for: event)
+            }
         }
     }
     

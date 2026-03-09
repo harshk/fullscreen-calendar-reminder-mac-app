@@ -28,7 +28,11 @@ struct CalendarEvent: Identifiable, Equatable {
     }
     
     init(from ekEvent: EKEvent) {
-        self.id = ekEvent.eventIdentifier
+        // eventIdentifier is Optional and can be shared across recurring
+        // occurrences.  Combine with startDate for uniqueness, and fall back
+        // to a UUID when the identifier is nil.
+        let eid = ekEvent.eventIdentifier ?? UUID().uuidString
+        self.id = "\(eid)_\(ekEvent.startDate.timeIntervalSinceReferenceDate)"
         self.title = ekEvent.title ?? "Untitled Event"
         self.startDate = ekEvent.startDate
         self.endDate = ekEvent.endDate

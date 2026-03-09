@@ -119,6 +119,16 @@ struct AlertTheme: Codable, Identifiable {
                     positionX: 0.5,
                     positionY: 0.9,
                     maxWidthPercentage: 0.3
+                ),
+                .preAlertGlow: AlertElementStyle(
+                    fontFamily: "SF Pro",
+                    fontSize: 14,
+                    fontWeight: .regular,
+                    fontColor: CodableColor(Color(red: 1.0, green: 0.6, blue: 0.0)),
+                    textAlignment: .center,
+                    positionX: 0.5,
+                    positionY: 0.5,
+                    maxWidthPercentage: 1.0
                 )
             ]
         )
@@ -135,7 +145,8 @@ enum AlertElementIdentifier: String, CaseIterable, Codable {
     case joinButton
     case dismissButton
     case queueCounter
-    
+    case preAlertGlow
+
     var displayName: String {
         switch self {
         case .title: return "Event Title"
@@ -145,6 +156,7 @@ enum AlertElementIdentifier: String, CaseIterable, Codable {
         case .joinButton: return "Join Meeting Button"
         case .dismissButton: return "Dismiss Button (X)"
         case .queueCounter: return "Queue Counter"
+        case .preAlertGlow: return "Pre-Alert Glow Color"
         }
     }
 }

@@ -39,12 +39,45 @@ class AppSettings: ObservableObject {
             NotificationCenter.default.post(name: NSNotification.Name("PauseStateChanged"), object: nil)
         }
     }
-    
+
+    /// Whether the pre-alert system (glow + banner) is enabled.
+    @Published var preAlertEnabled: Bool {
+        didSet { UserDefaults.standard.set(preAlertEnabled, forKey: "preAlertEnabled") }
+    }
+
+    /// How many seconds before the event the pre-alert fires (default 60).
+    @Published var preAlertLeadTime: Double {
+        didSet { UserDefaults.standard.set(preAlertLeadTime, forKey: "preAlertLeadTime") }
+    }
+
+    /// How many seconds the screen-edge glow stays visible (default 10).
+    @Published var preAlertGlowDuration: Double {
+        didSet { UserDefaults.standard.set(preAlertGlowDuration, forKey: "preAlertGlowDuration") }
+    }
+
+    /// How many seconds the floating banner stays visible. 0 = persist until event starts.
+    @Published var preAlertBannerDuration: Double {
+        didSet { UserDefaults.standard.set(preAlertBannerDuration, forKey: "preAlertBannerDuration") }
+    }
+
     private init() {
         self.launchAtLogin = UserDefaults.standard.bool(forKey: "launchAtLogin")
         let storedEventCount = UserDefaults.standard.integer(forKey: "numberOfEventsInMenuBar")
         self.numberOfEventsInMenuBar = storedEventCount == 0 ? 10 : storedEventCount
         self.isPaused = UserDefaults.standard.bool(forKey: "isPaused")
+
+        // Pre-alert defaults
+        if UserDefaults.standard.object(forKey: "preAlertEnabled") != nil {
+            self.preAlertEnabled = UserDefaults.standard.bool(forKey: "preAlertEnabled")
+        } else {
+            self.preAlertEnabled = true
+        }
+        let storedLeadTime = UserDefaults.standard.double(forKey: "preAlertLeadTime")
+        self.preAlertLeadTime = storedLeadTime > 0 ? storedLeadTime : 60
+        let storedGlowDuration = UserDefaults.standard.double(forKey: "preAlertGlowDuration")
+        self.preAlertGlowDuration = storedGlowDuration > 0 ? storedGlowDuration : 10
+        let storedBannerDuration = UserDefaults.standard.double(forKey: "preAlertBannerDuration")
+        self.preAlertBannerDuration = storedBannerDuration >= 0 ? storedBannerDuration : 0
         
         // Load selected calendar identifiers
         if let data = UserDefaults.standard.data(forKey: "selectedCalendarIdentifiers"),

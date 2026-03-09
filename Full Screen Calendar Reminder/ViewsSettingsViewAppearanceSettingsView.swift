@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AppKit
 import EventKit
 import UniformTypeIdentifiers
 
@@ -19,7 +20,13 @@ struct AppearanceSettingsView: View {
     @State private var showingResetConfirmation = false
     @State private var showingImagePicker = false
     @State private var showingSavedConfirmation = false
-    
+    @State private var fontSearchText = ""
+
+    private static let availableFonts: [String] = {
+        let families = NSFontManager.shared.availableFontFamilies.sorted()
+        return ["System"] + families
+    }()
+
     init() {
         _workingTheme = State(initialValue: ThemeService.shared.getTheme(for: "default"))
     }
@@ -288,13 +295,19 @@ struct AppearanceSettingsView: View {
                     .font(.headline)
                 
                 // Font Family
-                TextField("Font Family", text: Binding(
+                Picker("Font Family", selection: Binding(
                     get: { style.fontFamily },
                     set: { newValue in
                         style.fontFamily = newValue
                         workingTheme.elementStyles[element] = style
                     }
-                ))
+                )) {
+                    ForEach(Self.availableFonts, id: \.self) { font in
+                        Text(font)
+                            .font(.custom(font, size: 13))
+                            .tag(font)
+                    }
+                }
                 
                 // Font Size
                 Stepper(

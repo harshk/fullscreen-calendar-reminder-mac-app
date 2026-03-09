@@ -40,7 +40,16 @@ enum AlertItem: Identifiable {
             return reminder.scheduledDate
         }
     }
-    
+
+    var endDate: Date? {
+        switch self {
+        case .calendarEvent(let event):
+            return event.endDate
+        case .customReminder:
+            return nil
+        }
+    }
+
     var calendarIdentifier: String? {
         switch self {
         case .calendarEvent(let event):

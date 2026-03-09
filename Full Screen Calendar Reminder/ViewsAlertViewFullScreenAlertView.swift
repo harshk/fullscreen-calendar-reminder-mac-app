@@ -233,7 +233,12 @@ struct FullScreenAlertView: View {
         let formatter = DateFormatter()
         formatter.timeStyle = .short
         formatter.dateStyle = .none
-        return formatter.string(from: alertItem.startDate)
+        let start = formatter.string(from: alertItem.startDate)
+        if let endDate = alertItem.endDate {
+            let end = formatter.string(from: endDate)
+            return "\(start) – \(end)"
+        }
+        return start
     }
     
     private var locationText: String? {
@@ -258,7 +263,7 @@ struct FullScreenAlertView: View {
     private var calendarNameText: String {
         switch alertItem {
         case .calendarEvent(let event):
-            return event.calendar.title
+            return "Calendar: \(event.calendar.title)"
         case .customReminder:
             return "Custom Reminder"
         }

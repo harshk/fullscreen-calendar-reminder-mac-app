@@ -50,14 +50,9 @@ class AppSettings: ObservableObject {
         didSet { UserDefaults.standard.set(preAlertLeadTime, forKey: "preAlertLeadTime") }
     }
 
-    /// How many seconds the screen-edge glow stays visible (default 10).
-    @Published var preAlertGlowDuration: Double {
-        didSet { UserDefaults.standard.set(preAlertGlowDuration, forKey: "preAlertGlowDuration") }
-    }
-
-    /// How many seconds the floating banner stays visible. 0 = persist until event starts.
-    @Published var preAlertBannerDuration: Double {
-        didSet { UserDefaults.standard.set(preAlertBannerDuration, forKey: "preAlertBannerDuration") }
+    /// How many seconds the pre-alert (glow + banner) stays visible. 0 = persist until event starts.
+    @Published var preAlertDuration: Double {
+        didSet { UserDefaults.standard.set(preAlertDuration, forKey: "preAlertDuration") }
     }
 
     private init() {
@@ -74,10 +69,11 @@ class AppSettings: ObservableObject {
         }
         let storedLeadTime = UserDefaults.standard.double(forKey: "preAlertLeadTime")
         self.preAlertLeadTime = storedLeadTime > 0 ? storedLeadTime : 60
-        let storedGlowDuration = UserDefaults.standard.double(forKey: "preAlertGlowDuration")
-        self.preAlertGlowDuration = storedGlowDuration > 0 ? storedGlowDuration : 10
-        let storedBannerDuration = UserDefaults.standard.double(forKey: "preAlertBannerDuration")
-        self.preAlertBannerDuration = storedBannerDuration >= 0 ? storedBannerDuration : 0
+        if let storedDuration = UserDefaults.standard.object(forKey: "preAlertDuration") as? Double {
+            self.preAlertDuration = storedDuration
+        } else {
+            self.preAlertDuration = 0 // persist until event starts
+        }
         
         // Load selected calendar identifiers
         if let data = UserDefaults.standard.data(forKey: "selectedCalendarIdentifiers"),

@@ -88,7 +88,7 @@ class PreAlertManager: ObservableObject {
         dismissGlow()
 
         let glowColor = glowNSColor(for: event)
-        let duration = AppSettings.shared.preAlertGlowDuration
+        let duration = AppSettings.shared.preAlertDuration
 
         for screen in NSScreen.screens {
             let window = createGlowWindow(for: screen, color: glowColor)
@@ -96,10 +96,12 @@ class PreAlertManager: ObservableObject {
             window.orderFrontRegardless()
         }
 
-        // Auto-dismiss glow after configured duration
-        autoDismissTimer?.invalidate()
-        autoDismissTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
-            DispatchQueue.main.async { self?.dismissGlow() }
+        // Auto-dismiss glow after configured duration (0 = persist until event starts)
+        if duration > 0 {
+            autoDismissTimer?.invalidate()
+            autoDismissTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
+                DispatchQueue.main.async { self?.dismissGlow() }
+            }
         }
     }
 
@@ -214,7 +216,7 @@ class PreAlertManager: ObservableObject {
         panel.orderFrontRegardless()
 
         // Auto-dismiss banner if configured
-        let bannerDuration = AppSettings.shared.preAlertBannerDuration
+        let bannerDuration = AppSettings.shared.preAlertDuration
         if bannerDuration > 0 {
             // 0 means persist until event starts
             countdownTimer?.invalidate()

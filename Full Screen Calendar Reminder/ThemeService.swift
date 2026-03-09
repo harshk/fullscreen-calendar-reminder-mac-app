@@ -63,29 +63,44 @@ class ThemeService: ObservableObject {
         }
     }
     
-    // MARK: - Persistence
-    
+    // MARK: - Persistence (file-based to avoid UserDefaults 4MB limit)
+
+    private var themesFileURL: URL {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let appDir = appSupport.appendingPathComponent("Full Screen Calendar Reminder", isDirectory: true)
+        try? FileManager.default.createDirectory(at: appDir, withIntermediateDirectories: true)
+        return appDir.appendingPathComponent("themes.json")
+    }
+
     private func loadThemes() {
-        guard let data = UserDefaults.standard.data(forKey: themesKey),
+        // Migrate from UserDefaults if file doesn't exist yet
+        if !FileManager.default.fileExists(atPath: themesFileURL.path),
+           let legacyData = UserDefaults.standard.data(forKey: themesKey),
+           let decoded = try? JSONDecoder().decode([String: AlertTheme].self, from: legacyData) {
+            themes = decoded
+            saveThemes()
+            UserDefaults.standard.removeObject(forKey: themesKey)
+            return
+        }
+
+        guard let data = try? Data(contentsOf: themesFileURL),
               let decoded = try? JSONDecoder().decode([String: AlertTheme].self, from: data) else {
-            // Create default theme if none exists
             themes["default"] = AlertTheme.defaultTheme()
             saveThemes()
             return
         }
-        
+
         themes = decoded
-        
-        // Ensure default theme exists
+
         if themes["default"] == nil {
             themes["default"] = AlertTheme.defaultTheme()
             saveThemes()
         }
     }
-    
+
     func saveThemes() {
         if let encoded = try? JSONEncoder().encode(themes) {
-            UserDefaults.standard.set(encoded, forKey: themesKey)
+            try? encoded.write(to: themesFileURL, options: .atomic)
         }
     }
 }

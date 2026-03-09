@@ -50,17 +50,11 @@ struct GeneralSettingsView: View {
                         Text("5 minutes").tag(300.0)
                     }
 
-                    Picker("Glow Duration", selection: $settings.preAlertGlowDuration) {
+                    Picker("Duration", selection: $settings.preAlertDuration) {
+                        Text("Until event starts").tag(0.0)
                         Text("5 seconds").tag(5.0)
                         Text("10 seconds").tag(10.0)
                         Text("15 seconds").tag(15.0)
-                        Text("30 seconds").tag(30.0)
-                    }
-
-                    Picker("Banner Duration", selection: $settings.preAlertBannerDuration) {
-                        Text("Until event starts").tag(0.0)
-                        Text("10 seconds").tag(10.0)
-                        Text("20 seconds").tag(20.0)
                         Text("30 seconds").tag(30.0)
                     }
 

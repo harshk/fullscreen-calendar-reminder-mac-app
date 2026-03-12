@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import MapKit
+// import MapKit  // Removed: MapKit uses too much memory for a menu bar app
 
 struct FullScreenAlertView: View {
     let alertItem: AlertItem
@@ -90,22 +90,27 @@ struct FullScreenAlertView: View {
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
 
-                // Location with Map
+                // Location (clickable — opens in Apple Maps)
                 if let location = locationText,
                    let style = theme.elementStyles[.location] {
-                    VStack(spacing: 8) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "mappin.and.ellipse")
+                            .font(.system(size: style.fontSize * 0.8))
                         Text(location)
                             .font(style.font)
-                            .foregroundColor(style.fontColor.color)
-                            .multilineTextAlignment(style.textAlignment)
-                            .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
-
-                        LocationMapView(address: location)
-                            .frame(width: 266, height: 160)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                            .allowsHitTesting(false)
                     }
+                    .foregroundColor(style.fontColor.color)
+                    .multilineTextAlignment(style.textAlignment)
                     .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
+                    .onTapGesture {
+                        if let encoded = location.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+                           let url = URL(string: "maps://?q=\(encoded)") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .onHover { hovering in
+                        if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                    }
                 }
 
                 // Calendar Name
@@ -358,42 +363,6 @@ extension AlertElementStyle {
     }
 }
 
-// MARK: - Location Map View
-
-struct LocationMapView: View {
-    let address: String
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-    )
-    @State private var annotationItems: [MapAnnotationItem] = []
-    @State private var didGeocode = false
-
-    struct MapAnnotationItem: Identifiable {
-        let id = UUID()
-        let coordinate: CLLocationCoordinate2D
-    }
-
-    var body: some View {
-        Map(coordinateRegion: $region, annotationItems: annotationItems) { item in
-            MapMarker(coordinate: item.coordinate, tint: .red)
-        }
-        .onAppear {
-            guard !didGeocode else { return }
-            didGeocode = true
-            let geocoder = CLGeocoder()
-            geocoder.geocodeAddressString(address) { placemarks, _ in
-                if let coordinate = placemarks?.first?.location?.coordinate {
-                    region = MKCoordinateRegion(
-                        center: coordinate,
-                        span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
-                    )
-                    annotationItems = [MapAnnotationItem(coordinate: coordinate)]
-                }
-            }
-        }
-    }
-}
 
 // MARK: - Preview
 

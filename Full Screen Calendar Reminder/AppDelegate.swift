@@ -56,8 +56,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         if let button = statusItem?.button {
             updateMenuBarIcon()
-            button.action = #selector(togglePanel)
+            button.action = #selector(handleStatusItemClick)
             button.target = self
+            button.sendAction(on: [.leftMouseUp, .rightMouseUp])
         }
 
         // Setup panel
@@ -183,6 +184,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func handleDismissPopover() {
         closePanel()
+    }
+
+    @objc private func handleStatusItemClick() {
+        guard let event = NSApp.currentEvent else { return }
+        if event.type == .rightMouseUp {
+            showRightClickMenu()
+            return
+        }
+        togglePanel()
+    }
+
+    private func showRightClickMenu() {
+        let menu = NSMenu()
+        let pauseTitle = AppSettings.shared.isPaused ? "Unpause Full Screen Reminders" : "Pause Full Screen Reminders"
+        menu.addItem(NSMenuItem(title: pauseTitle, action: #selector(togglePause), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ""))
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: ""))
+        statusItem?.menu = menu
+        statusItem?.button?.performClick(nil)
+        statusItem?.menu = nil  // Reset so left-click still shows the panel
+    }
+
+    @objc private func togglePause() {
+        AppSettings.shared.isPaused.toggle()
     }
 
     @objc private func togglePanel() {

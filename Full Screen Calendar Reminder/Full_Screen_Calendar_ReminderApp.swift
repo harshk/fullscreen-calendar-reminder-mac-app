@@ -27,6 +27,8 @@ struct Full_Screen_Calendar_ReminderApp: App {
     }()
 
     init() {
+        // Disable automatic SF Symbol icons in menus (macOS Tahoe+)
+        UserDefaults.standard.set(false, forKey: "NSMenuEnableActionImages")
         print(">>> APP INIT - Full Screen Calendar Reminder started")
     }
 

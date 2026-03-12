@@ -73,6 +73,7 @@ struct MenuBarView: View {
             }
 
             Divider()
+                .padding(.horizontal, 10)
 
             menuActions
         }
@@ -269,7 +270,10 @@ struct MenuBarView: View {
             .sheet(isPresented: $showingManageReminders) {
                 ManageRemindersView()
             }
-            
+
+            Divider()
+                .padding(.horizontal, 10)
+
             Button(settings.isPaused ? "Unpause Full Screen Reminders" : "Pause Full Screen Reminders") {
                 settings.isPaused.toggle()
             }
@@ -279,6 +283,7 @@ struct MenuBarView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             
             Divider()
+                .padding(.horizontal, 10)
 
             Button("Quit") {
                 NSApplication.shared.terminate(nil)

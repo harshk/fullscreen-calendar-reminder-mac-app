@@ -160,7 +160,8 @@ struct AlertElementStyle: Codable {
     var positionX: Double // 0.0 to 1.0 (percentage of screen width)
     var positionY: Double // 0.0 to 1.0 (percentage of screen height)
     var maxWidthPercentage: Double // 0.0 to 1.0
-    
+    var uppercased: Bool?
+
     // Button-specific properties
     var buttonBackgroundColor: CodableColor?
     var buttonTextColor: CodableColor?

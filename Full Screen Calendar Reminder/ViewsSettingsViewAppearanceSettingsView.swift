@@ -373,7 +373,18 @@ struct AppearanceSettingsView: View {
                     Text("Right").tag(TextAlignment.trailing)
                 }
                 .pickerStyle(.segmented)
-                
+
+                // Uppercase toggle (for text elements only)
+                if element != .dismissButton {
+                    Toggle("Uppercase", isOn: Binding(
+                        get: { style.uppercased ?? false },
+                        set: { newValue in
+                            style.uppercased = newValue
+                            workingTheme.elementStyles[element] = style
+                        }
+                    ))
+                }
+
                 // Button-specific properties
                 if element == .joinButton {
                     Divider()

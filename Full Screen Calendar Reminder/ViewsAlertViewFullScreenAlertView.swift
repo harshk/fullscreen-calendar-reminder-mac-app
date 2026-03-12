@@ -77,6 +77,7 @@ struct FullScreenAlertView: View {
                     Text(alertItem.title)
                         .font(style.font)
                         .foregroundColor(style.fontColor.color)
+                        .textCase(style.uppercased == true ? .uppercase : nil)
                         .multilineTextAlignment(style.textAlignment)
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
@@ -86,6 +87,7 @@ struct FullScreenAlertView: View {
                     Text(formattedTime)
                         .font(style.font)
                         .foregroundColor(style.fontColor.color)
+                        .textCase(style.uppercased == true ? .uppercase : nil)
                         .multilineTextAlignment(style.textAlignment)
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
@@ -98,6 +100,7 @@ struct FullScreenAlertView: View {
                             .font(.system(size: style.fontSize * 0.8))
                         Text(location)
                             .font(style.font)
+                            .textCase(style.uppercased == true ? .uppercase : nil)
                     }
                     .foregroundColor(style.fontColor.color)
                     .multilineTextAlignment(style.textAlignment)
@@ -118,6 +121,7 @@ struct FullScreenAlertView: View {
                     Text(calendarNameText)
                         .font(style.font)
                         .foregroundColor(style.fontColor.color)
+                        .textCase(style.uppercased == true ? .uppercase : nil)
                         .multilineTextAlignment(style.textAlignment)
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
@@ -128,6 +132,7 @@ struct FullScreenAlertView: View {
                     VStack(spacing: 4) {
                         Text("Join Meeting")
                             .font(style.font)
+                            .textCase(style.uppercased == true ? .uppercase : nil)
                         if let serviceName = videoConferenceServiceName(for: videoURL) {
                             Text(serviceName)
                                 .font(.system(size: style.fontSize * 0.5, weight: .medium))
@@ -160,6 +165,7 @@ struct FullScreenAlertView: View {
                     Text("\(queuePosition) of \(queueTotal)")
                         .font(style.font)
                         .foregroundColor(style.fontColor.color)
+                        .textCase(style.uppercased == true ? .uppercase : nil)
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
 

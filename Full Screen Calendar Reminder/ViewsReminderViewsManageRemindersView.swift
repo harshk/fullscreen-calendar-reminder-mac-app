@@ -88,13 +88,6 @@ struct ManageRemindersView: View {
     
     private var upcomingSection: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Upcoming")
-                .font(.headline)
-                .padding(.horizontal)
-                .padding(.vertical, 8)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.secondary.opacity(0.1))
-            
             ForEach(reminderService.upcomingReminders) { reminder in
                 ReminderRow(
                     reminder: reminder,
@@ -129,32 +122,34 @@ struct ReminderRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(reminder.title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
-                Text(formatDateTime(reminder.scheduledDate))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            
-            Spacer()
-            
-            HStack(spacing: 8) {
+            HStack(spacing: 10) {
                 Button(action: onEdit) {
                     Image(systemName: "pencil")
+                        .font(.system(size: 16))
                 }
                 .buttonStyle(.borderless)
                 .help("Edit")
 
                 Button(action: onDelete) {
                     Image(systemName: "trash")
+                        .font(.system(size: 16))
                         .foregroundColor(.red)
                 }
                 .buttonStyle(.borderless)
                 .help("Delete")
             }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(reminder.title)
+                    .font(.body)
+                    .fontWeight(.medium)
+
+                Text(formatDateTime(reminder.scheduledDate))
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+
+            Spacer()
         }
         .padding(.horizontal)
         .padding(.vertical, 12)

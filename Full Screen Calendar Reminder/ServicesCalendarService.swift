@@ -270,6 +270,17 @@ class CalendarService: ObservableObject {
     
     func markEventAsFired(_ eventID: String) {
         firedEventIDs.insert(eventID)
+        objectWillChange.send()
+    }
+
+    func isEventDisabled(_ eventID: String) -> Bool {
+        firedEventIDs.contains(eventID)
+    }
+
+    func reEnableEvent(_ eventID: String) {
+        firedEventIDs.remove(eventID)
+        PreAlertManager.shared.reEnablePreAlert(eventID)
+        objectWillChange.send()
     }
     
     // MARK: - System Event Handlers

@@ -361,15 +361,44 @@ struct MenuBarView: View {
 
 struct EventRow: View {
     let event: CalendarEvent
-    
+    @ObservedObject private var calendarService = CalendarService.shared
+    @State private var showingDisabledPopover = false
+
+    private var isDisabled: Bool {
+        calendarService.isEventDisabled(event.id)
+    }
+
     var body: some View {
         HStack(spacing: 8) {
+            // Disabled indicator
+            if isDisabled {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 14))
+                    .foregroundColor(.red.opacity(0.7))
+                    .popover(isPresented: $showingDisabledPopover) {
+                        VStack(spacing: 8) {
+                            Text("Alerts for this event have been disabled.")
+                                .font(.caption)
+                            Button(AppStrings.reEnableAlertsForEvent) {
+                                CalendarService.shared.reEnableEvent(event.id)
+                                showingDisabledPopover = false
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                        }
+                        .padding(10)
+                    }
+                    .onTapGesture {
+                        showingDisabledPopover.toggle()
+                    }
+            }
+
             // Time
             Text(formatTime(event.startDate))
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .frame(width: 50, alignment: .trailing)
-            
+
             // Event details
             VStack(alignment: .leading, spacing: 2) {
                 Text(event.title)
@@ -423,6 +452,17 @@ struct EventRow: View {
             Button("Show Preview: Pre-Alert") {
                 NotificationCenter.default.post(name: .dismissPopover, object: nil)
                 PreAlertManager.shared.showTestPreAlert(for: event)
+            }
+            Divider()
+            if isDisabled {
+                Button(AppStrings.reEnableAlertsForEvent) {
+                    CalendarService.shared.reEnableEvent(event.id)
+                }
+            } else {
+                Button(AppStrings.disableAlertsForEvent) {
+                    CalendarService.shared.markEventAsFired(event.id)
+                    PreAlertManager.shared.markAsPreAlerted(event.id)
+                }
             }
         }
     }

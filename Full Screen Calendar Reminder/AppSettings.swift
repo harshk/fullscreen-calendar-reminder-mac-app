@@ -9,6 +9,11 @@ import Foundation
 import Combine
 import ServiceManagement
 
+enum AppStrings {
+    static let disableAlertsForEvent = "Disable alerts for this event"
+    static let reEnableAlertsForEvent = "Re-enable alerts for this event"
+}
+
 class AppSettings: ObservableObject {
     static let shared = AppSettings()
     

@@ -31,7 +31,7 @@ class PreAlertManager: ObservableObject {
         guard !preAlertEventIDs.contains(event.id) else { return }
         preAlertEventIDs.insert(event.id)
         isShowingPreAlert = true
-        showBanner(title: event.title, startDate: event.startDate, color: event.calendar.color, videoURL: event.videoConferenceURL)
+        showBanner(eventID: event.id, title: event.title, startDate: event.startDate, color: event.calendar.color, videoURL: event.videoConferenceURL)
     }
 
     /// Show pre-alert for an upcoming custom reminder.
@@ -40,7 +40,7 @@ class PreAlertManager: ObservableObject {
         guard !preAlertEventIDs.contains(id) else { return }
         preAlertEventIDs.insert(id)
         isShowingPreAlert = true
-        showBanner(title: reminder.title, startDate: reminder.scheduledDate, color: .orange, videoURL: nil)
+        showBanner(eventID: id, title: reminder.title, startDate: reminder.scheduledDate, color: .orange, videoURL: nil)
     }
 
     /// Dismiss everything and clean up.
@@ -58,6 +58,11 @@ class PreAlertManager: ObservableObject {
         preAlertEventIDs.insert(eventID)
     }
 
+    /// Re-enable pre-alerts for an event.
+    func reEnablePreAlert(_ eventID: String) {
+        preAlertEventIDs.remove(eventID)
+    }
+
     /// Reset tracking (e.g. on clock change).
     func resetTracking() {
         preAlertEventIDs.removeAll()
@@ -72,12 +77,12 @@ class PreAlertManager: ObservableObject {
     func showTestPreAlert(for event: CalendarEvent) {
         dismiss()
         isShowingPreAlert = true
-        showBanner(title: event.title, startDate: event.startDate, color: event.calendar.color, videoURL: event.videoConferenceURL)
+        showBanner(eventID: event.id, title: event.title, startDate: event.startDate, color: event.calendar.color, videoURL: event.videoConferenceURL)
     }
 
     // MARK: - Floating Banner
 
-    private func showBanner(title: String, startDate: Date, color: Color, videoURL: URL?) {
+    private func showBanner(eventID: String, title: String, startDate: Date, color: Color, videoURL: URL?) {
         dismissBanner()
 
         guard let screen = NSScreen.main else { return }
@@ -115,6 +120,13 @@ class PreAlertManager: ObservableObject {
             },
             onJoin: { url in
                 DispatchQueue.main.async { NSWorkspace.shared.open(url) }
+            },
+            onDisableAlerts: { [weak self] in
+                DispatchQueue.main.async {
+                    CalendarService.shared.markEventAsFired(eventID)
+                    self?.markAsPreAlerted(eventID)
+                    self?.dismiss()
+                }
             }
         )
 
@@ -157,6 +169,7 @@ struct PreAlertBannerView: View {
     let videoURL: URL?
     let onDismiss: () -> Void
     let onJoin: (URL) -> Void
+    let onDisableAlerts: () -> Void
 
     @State private var countdown: String = ""
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -168,12 +181,26 @@ struct PreAlertBannerView: View {
                 .fill(color)
                 .frame(width: 10, height: 10)
 
-            // Title
-            Text(title)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white)
-                .lineLimit(1)
-                .truncationMode(.tail)
+            // Title and disable button
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+
+                Text(AppStrings.disableAlertsForEvent)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(.white.opacity(0.9))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Color.red.opacity(0.8))
+                    .cornerRadius(4)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        onDisableAlerts()
+                    }
+            }
 
             Spacer()
 

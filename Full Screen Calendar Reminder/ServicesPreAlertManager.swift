@@ -22,8 +22,6 @@ class PreAlertManager: ObservableObject {
     private var countdownTimer: Timer?
     private var preAlertEventIDs = Set<String>()
 
-    private var currentEvent: CalendarEvent?
-
     private init() {}
 
     // MARK: - Public API
@@ -32,11 +30,17 @@ class PreAlertManager: ObservableObject {
     func showPreAlert(for event: CalendarEvent) {
         guard !preAlertEventIDs.contains(event.id) else { return }
         preAlertEventIDs.insert(event.id)
-
-        currentEvent = event
         isShowingPreAlert = true
+        showBanner(title: event.title, startDate: event.startDate, color: event.calendar.color, videoURL: event.videoConferenceURL)
+    }
 
-        showBanner(for: event)
+    /// Show pre-alert for an upcoming custom reminder.
+    func showPreAlert(for reminder: CustomReminder) {
+        let id = reminder.id.uuidString
+        guard !preAlertEventIDs.contains(id) else { return }
+        preAlertEventIDs.insert(id)
+        isShowingPreAlert = true
+        showBanner(title: reminder.title, startDate: reminder.scheduledDate, color: .orange, videoURL: nil)
     }
 
     /// Dismiss everything and clean up.
@@ -46,7 +50,6 @@ class PreAlertManager: ObservableObject {
         dismissBanner()
         countdownTimer?.invalidate()
         countdownTimer = nil
-        currentEvent = nil
         isShowingPreAlert = false
     }
 
@@ -68,15 +71,13 @@ class PreAlertManager: ObservableObject {
     /// Test/preview the pre-alert with a specific event.
     func showTestPreAlert(for event: CalendarEvent) {
         dismiss()
-        // Don't track test events so they can be re-triggered
-        currentEvent = event
         isShowingPreAlert = true
-        showBanner(for: event)
+        showBanner(title: event.title, startDate: event.startDate, color: event.calendar.color, videoURL: event.videoConferenceURL)
     }
 
     // MARK: - Floating Banner
 
-    private func showBanner(for event: CalendarEvent) {
+    private func showBanner(title: String, startDate: Date, color: Color, videoURL: URL?) {
         dismissBanner()
 
         guard let screen = NSScreen.main else { return }
@@ -87,8 +88,6 @@ class PreAlertManager: ObservableObject {
         let menuBarHeight: CGFloat = NSApplication.shared.mainMenu?.menuBarHeight ?? 24
         let yVisible = screen.frame.maxY - menuBarHeight - bannerHeight - 12
 
-        // NSPanel + .nonactivatingPanel: the same pattern the full-screen alert
-        // uses.  Properly integrates with AppKit event routing in .accessory apps.
         let panel = NSPanel(
             contentRect: NSRect(x: x, y: yVisible, width: bannerWidth, height: bannerHeight),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -107,7 +106,10 @@ class PreAlertManager: ObservableObject {
         panel.acceptsMouseMovedEvents = true
 
         let bannerContent = PreAlertBannerView(
-            event: event,
+            title: title,
+            startDate: startDate,
+            color: color,
+            videoURL: videoURL,
             onDismiss: { [weak self] in
                 DispatchQueue.main.async { self?.dismiss() }
             },
@@ -149,7 +151,10 @@ class PreAlertManager: ObservableObject {
 // MARK: - SwiftUI Banner View
 
 struct PreAlertBannerView: View {
-    let event: CalendarEvent
+    let title: String
+    let startDate: Date
+    let color: Color
+    let videoURL: URL?
     let onDismiss: () -> Void
     let onJoin: (URL) -> Void
 
@@ -158,13 +163,13 @@ struct PreAlertBannerView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Calendar color dot
+            // Color dot
             Circle()
-                .fill(event.calendar.color)
+                .fill(color)
                 .frame(width: 10, height: 10)
 
-            // Event title
-            Text(event.title)
+            // Title
+            Text(title)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white)
                 .lineLimit(1)
@@ -178,7 +183,7 @@ struct PreAlertBannerView: View {
                 .foregroundColor(.white.opacity(0.8))
 
             // Join button (conditional)
-            if let videoURL = event.videoConferenceURL {
+            if let videoURL {
                 Text("Join")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.white)
@@ -219,7 +224,7 @@ struct PreAlertBannerView: View {
     }
 
     private func updateCountdown() {
-        let remaining = event.startDate.timeIntervalSinceNow
+        let remaining = startDate.timeIntervalSinceNow
         if remaining <= 0 {
             countdown = "Now"
         } else {

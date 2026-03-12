@@ -102,8 +102,21 @@ class ReminderService: ObservableObject {
     
     func checkForRemindersToFire() {
         guard !AppSettings.shared.isPaused else { return }
-        
+
         let now = Date()
+
+        // Pre-alert check: fire pre-alert for reminders approaching within lead time
+        if AppSettings.shared.preAlertEnabled {
+            let leadTime = AppSettings.shared.preAlertLeadTime
+            for reminder in upcomingReminders {
+                let timeUntilStart = reminder.scheduledDate.timeIntervalSince(now)
+                if timeUntilStart > 0 && timeUntilStart <= leadTime &&
+                   !firedReminderIDs.contains(reminder.id) {
+                    PreAlertManager.shared.showPreAlert(for: reminder)
+                }
+            }
+        }
+
         let remindersToFire = upcomingReminders.filter { reminder in
             !firedReminderIDs.contains(reminder.id) &&
             reminder.scheduledDate <= now &&
@@ -113,6 +126,7 @@ class ReminderService: ObservableObject {
         for reminder in remindersToFire {
             firedReminderIDs.insert(reminder.id)
 
+            PreAlertManager.shared.dismiss()
             AlertCoordinator.shared.queueAlert(for: reminder)
 
             modelContext?.delete(reminder)

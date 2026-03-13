@@ -17,12 +17,16 @@ struct FullScreenAlertView: View {
     let onDismiss: () -> Void
     let onSnooze: (TimeInterval) -> Void
     let onJoinMeeting: (URL) -> Void
+    var onElementTap: ((AlertElementIdentifier?) -> Void)? = nil
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 // Background
                 backgroundView
+                    .onTapGesture {
+                        onElementTap?(nil) // nil = background selected
+                    }
 
                 if isPrimaryScreen {
                     // Full content on primary screen
@@ -83,6 +87,8 @@ struct FullScreenAlertView: View {
                         .minimumScaleFactor(0.5)
                         .truncationMode(.tail)
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
+                        .contentShape(Rectangle())
+                        .onTapGesture { onElementTap?(.title) }
                 }
 
                 // Start Time
@@ -94,6 +100,8 @@ struct FullScreenAlertView: View {
                         .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
                         .multilineTextAlignment(style.textAlignment)
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
+                        .contentShape(Rectangle())
+                        .onTapGesture { onElementTap?(.startTime) }
                 }
 
                 // Location (clickable — opens in Apple Maps)
@@ -110,14 +118,19 @@ struct FullScreenAlertView: View {
                     .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
                     .multilineTextAlignment(style.textAlignment)
                     .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
+                    .contentShape(Rectangle())
                     .onTapGesture {
-                        if let encoded = location.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+                        if let onElementTap = onElementTap {
+                            onElementTap(.location)
+                        } else if let encoded = location.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
                            let url = URL(string: "maps://?q=\(encoded)") {
                             NSWorkspace.shared.open(url)
                         }
                     }
                     .onHover { hovering in
-                        if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                        if onElementTap == nil {
+                            if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                        }
                     }
                 }
 
@@ -130,6 +143,8 @@ struct FullScreenAlertView: View {
                         .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
                         .multilineTextAlignment(style.textAlignment)
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
+                        .contentShape(Rectangle())
+                        .onTapGesture { onElementTap?(.calendarName) }
                 }
 
                 // Join Meeting Button
@@ -148,13 +163,19 @@ struct FullScreenAlertView: View {
                     )
                     .contentShape(RoundedRectangle(cornerRadius: style.buttonCornerRadius ?? 12))
                     .onTapGesture {
-                        DispatchQueue.main.async {
-                            NSWorkspace.shared.open(videoURL)
+                        if let onElementTap = onElementTap {
+                            onElementTap(.joinButton)
+                        } else {
+                            DispatchQueue.main.async {
+                                NSWorkspace.shared.open(videoURL)
+                            }
+                            onDismiss()
                         }
-                        onDismiss()
                     }
                     .onHover { hovering in
-                        if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                        if onElementTap == nil {
+                            if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                        }
                     }
                     .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
@@ -168,6 +189,8 @@ struct FullScreenAlertView: View {
                         .textCase(style.uppercased == true ? .uppercase : nil)
                         .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
+                        .contentShape(Rectangle())
+                        .onTapGesture { onElementTap?(.queueCounter) }
                 }
 
                 // Snooze buttons
@@ -224,7 +247,7 @@ struct FullScreenAlertView: View {
     
     @ViewBuilder
     private func dismissButton(style: AlertElementStyle, geometry: GeometryProxy) -> some View {
-        Button(action: onDismiss) {
+        Button(action: { if let onElementTap = onElementTap { onElementTap(.dismissButton) } else { onDismiss() } }) {
             Image(systemName: "xmark")
                 .font(.system(size: (style.iconSize ?? 32) * 0.5, weight: .semibold))
                 .foregroundColor(style.iconColor?.color ?? .white.opacity(0.9))
@@ -262,10 +285,16 @@ struct FullScreenAlertView: View {
                     )
                     .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
                     .onTapGesture {
-                        onSnooze(duration)
+                        if let onElementTap = onElementTap {
+                            onElementTap(.snoozeButton)
+                        } else {
+                            onSnooze(duration)
+                        }
                     }
                     .onHover { hovering in
-                        if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                        if onElementTap == nil {
+                            if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
+                        }
                     }
             }
         }

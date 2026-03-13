@@ -86,7 +86,10 @@ struct AppearanceSettingsView: View {
                         isPrimaryScreen: true,
                         onDismiss: {},
                         onSnooze: { _ in },
-                        onJoinMeeting: { _ in }
+                        onJoinMeeting: { _ in },
+                        onElementTap: { element in
+                            selectedElement = element
+                        }
                     )
                     .frame(width: screenSize.width, height: screenSize.height)
                     .scaleEffect(scale)

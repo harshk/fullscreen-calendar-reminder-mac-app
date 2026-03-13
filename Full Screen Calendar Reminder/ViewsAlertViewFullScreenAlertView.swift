@@ -80,6 +80,7 @@ struct FullScreenAlertView: View {
                 if let style = theme.elementStyles[.title] {
                     Text(alertItem.title)
                         .font(style.font)
+                        .tracking(style.letterSpacing ?? 0)
                         .foregroundColor(style.fontColor.color)
                         .textCase(style.uppercased == true ? .uppercase : nil)
                         .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
@@ -95,6 +96,7 @@ struct FullScreenAlertView: View {
                 if let style = theme.elementStyles[.startTime] {
                     Text(formattedTime)
                         .font(style.font)
+                        .tracking(style.letterSpacing ?? 0)
                         .foregroundColor(style.fontColor.color)
                         .textCase(style.uppercased == true ? .uppercase : nil)
                         .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
@@ -112,6 +114,7 @@ struct FullScreenAlertView: View {
                             .font(.system(size: style.fontSize * 0.8))
                         Text(location)
                             .font(style.font)
+                            .tracking(style.letterSpacing ?? 0)
                             .textCase(style.uppercased == true ? .uppercase : nil)
                     }
                     .foregroundColor(style.fontColor.color)
@@ -139,6 +142,7 @@ struct FullScreenAlertView: View {
                 if let style = theme.elementStyles[.calendarName] {
                     Text(calendarNameText)
                         .font(style.font)
+                        .tracking(style.letterSpacing ?? 0)
                         .foregroundColor(style.fontColor.color)
                         .textCase(style.uppercased == true ? .uppercase : nil)
                         .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
@@ -154,6 +158,7 @@ struct FullScreenAlertView: View {
                    let style = theme.elementStyles[.joinButton] {
                     Text(joinMeetingLabel(for: videoURL))
                         .font(style.font)
+                        .tracking(style.letterSpacing ?? 0)
                         .textCase(style.uppercased == true ? .uppercase : nil)
                         .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
                     .foregroundColor(style.fontColor.color)
@@ -188,6 +193,7 @@ struct FullScreenAlertView: View {
                    let style = theme.elementStyles[.queueCounter] {
                     Text("\(queuePosition) of \(queueTotal)")
                         .font(style.font)
+                        .tracking(style.letterSpacing ?? 0)
                         .foregroundColor(style.fontColor.color)
                         .textCase(style.uppercased == true ? .uppercase : nil)
                         .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
@@ -275,17 +281,26 @@ struct FullScreenAlertView: View {
     private var snoozeButtons: some View {
         let style = theme.elementStyles[.snoozeButton]
         let cornerRadius = theme.elementStyles[.joinButton]?.buttonCornerRadius ?? 12
+        let font = style?.font ?? .system(size: 14, weight: .medium)
+        let tracking = style?.letterSpacing ?? 0
+        let textColor = style?.fontColor.color ?? .white.opacity(0.9)
+        let bgColor = style?.buttonBackgroundColor?.color ?? Color.white.opacity(0.15)
+        let hPad = style?.buttonPaddingHorizontal ?? 16
+        let vPad = style?.buttonPaddingVertical ?? 8
+        let isUppercased = style?.uppercased == true
+
         return HStack(spacing: 12) {
             ForEach(AppSettings.shared.snoozeDurations, id: \.self) { duration in
                 Text(snoozeLabel(for: duration))
-                    .font(style?.font ?? .system(size: 14, weight: .medium))
-                    .textCase(style?.uppercased == true ? .uppercase : nil)
-                    .foregroundColor(style?.fontColor.color ?? .white.opacity(0.9))
-                    .padding(.horizontal, style?.buttonPaddingHorizontal ?? 16)
-                    .padding(.vertical, style?.buttonPaddingVertical ?? 8)
+                    .font(font)
+                    .tracking(tracking)
+                    .textCase(isUppercased ? .uppercase : nil)
+                    .foregroundColor(textColor)
+                    .padding(.horizontal, hPad)
+                    .padding(.vertical, vPad)
                     .background(
                         RoundedRectangle(cornerRadius: cornerRadius)
-                            .fill(style?.buttonBackgroundColor?.color ?? Color.white.opacity(0.15))
+                            .fill(bgColor)
                     )
                     .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
                     .onTapGesture {

@@ -314,6 +314,7 @@ struct AlertElementStyle: Codable {
     var maxWidthPercentage: Double // 0.0 to 1.0
     var uppercased: Bool?
     var verticalScale: CGFloat? // 1.0 = normal, >1.0 = taller, <1.0 = shorter
+    var letterSpacing: CGFloat? // nil or 0 = default, positive = wider, negative = tighter
 
     // Button-specific properties
     var buttonBackgroundColor: CodableColor?

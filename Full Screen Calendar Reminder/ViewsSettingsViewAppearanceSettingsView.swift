@@ -55,7 +55,7 @@ struct AppearanceSettingsView: View {
             // Calendar selector
             HStack {
                 Picker("Editing Theme For:", selection: $selectedCalendarID) {
-                    Text("Default Theme").tag("default")
+                    Text("Default").tag("default")
                     
                     if !calendarService.availableCalendars.isEmpty {
                         Divider()
@@ -419,7 +419,21 @@ struct AppearanceSettingsView: View {
                         Text("Bold").tag(Font.Weight.bold)
                     }
                 }
-                
+
+                // Letter Spacing
+                Stepper(
+                    "Letter Spacing: \(String(format: "%.1f", style.letterSpacing ?? 0))pt",
+                    value: Binding(
+                        get: { style.letterSpacing ?? 0 },
+                        set: { newValue in
+                            style.letterSpacing = newValue
+                            workingTheme.elementStyles[element] = style
+                        }
+                    ),
+                    in: -15...30,
+                    step: 0.5
+                )
+
                 // Font Color (+ Background Color for buttons)
                 HStack {
                     ColorPicker("Text Color", selection: Binding(

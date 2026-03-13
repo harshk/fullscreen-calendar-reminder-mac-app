@@ -401,17 +401,21 @@ struct FullScreenAlertView: View {
 
 extension AlertElementStyle {
     var font: Font {
-        let baseFont: Font
-
-        // Try to use custom font family
         if fontFamily != "SF Pro" && fontFamily != "System" {
-            baseFont = .custom(fontFamily, size: fontSize)
-        } else {
-            baseFont = .system(size: fontSize)
+            // For custom fonts, find the specific variant matching the requested weight
+            if let nsFont = NSFontManager.shared.font(
+                withFamily: fontFamily,
+                traits: [],
+                weight: fontWeight.nsFontWeight,
+                size: fontSize
+            ) {
+                return Font(nsFont)
+            }
+            // Fallback: use .custom which only gives the regular weight
+            return .custom(fontFamily, size: fontSize)
         }
 
-        // Apply weight
-        return baseFont.weight(fontWeight)
+        return .system(size: fontSize).weight(fontWeight)
     }
 
     var frameAlignment: Alignment {
@@ -419,6 +423,24 @@ extension AlertElementStyle {
         case .leading: return .leading
         case .center: return .center
         case .trailing: return .trailing
+        }
+    }
+}
+
+extension Font.Weight {
+    /// Map SwiftUI Font.Weight to NSFontManager weight (0–15 scale).
+    var nsFontWeight: Int {
+        switch self {
+        case .ultraLight: return 1
+        case .thin:       return 2
+        case .light:      return 3
+        case .regular:    return 5
+        case .medium:     return 6
+        case .semibold:   return 8
+        case .bold:       return 12
+        case .heavy:      return 12
+        case .black:      return 12
+        default:          return 5
         }
     }
 }

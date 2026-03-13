@@ -38,10 +38,12 @@ struct Full_Screen_Calendar_ReminderApp: App {
     }
 
     private static func registerBundledFonts() {
-        let fontFiles = ["ArchivoBlack-Regular.ttf", "SpaceMono-Regular.ttf", "SpaceMono-Bold.ttf"]
-        for file in fontFiles {
-            if let url = Bundle.main.url(forResource: file, withExtension: nil) {
-                CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+        // Register all .ttf and .otf files found in the bundle
+        for ext in ["ttf", "otf"] {
+            if let urls = Bundle.main.urls(forResourcesWithExtension: ext, subdirectory: nil) {
+                for url in urls {
+                    CTFontManagerRegisterFontsForURL(url as CFURL, .process, nil)
+                }
             }
         }
     }

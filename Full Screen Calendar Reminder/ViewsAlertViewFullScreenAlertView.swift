@@ -79,7 +79,9 @@ struct FullScreenAlertView: View {
                         .foregroundColor(style.fontColor.color)
                         .textCase(style.uppercased == true ? .uppercase : nil)
                         .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
-                        .multilineTextAlignment(style.textAlignment)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                        .truncationMode(.tail)
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
 

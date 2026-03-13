@@ -381,7 +381,7 @@ struct AppearanceSettingsView: View {
                             workingTheme.elementStyles[element] = style
                         }
                     ))
-                    if element == .joinButton {
+                    if element == .joinButton || element == .snoozeButton {
                         ColorPicker("Background", selection: Binding(
                             get: { style.buttonBackgroundColor?.color ?? .blue },
                             set: { newValue in
@@ -463,6 +463,7 @@ struct AppearanceSettingsView: View {
         case .location: return "location"
         case .calendarName: return "calendar"
         case .joinButton: return "video.fill"
+        case .snoozeButton: return "bell.badge"
         case .queueCounter: return "number"
         case .dismissButton: return "xmark"
         }
@@ -475,6 +476,7 @@ struct AppearanceSettingsView: View {
         case .location: return "Location"
         case .calendarName: return "Calendar"
         case .joinButton: return "Join Button"
+        case .snoozeButton: return "Snooze"
         case .queueCounter: return "Counter"
         case .dismissButton: return "Dismiss"
         }

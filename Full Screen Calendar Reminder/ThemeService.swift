@@ -24,13 +24,18 @@ class ThemeService: ObservableObject {
     
     func getTheme(for calendarIdentifier: String?) -> AlertTheme {
         let id = calendarIdentifier ?? "default"
-        
-        if let theme = themes[id] {
-            return theme
+
+        var theme = themes[id] ?? themes["default"] ?? AlertTheme.defaultTheme()
+
+        // Backfill any missing element styles from the default theme
+        let defaults = AlertTheme.defaultTheme()
+        for element in AlertElementIdentifier.allCases {
+            if theme.elementStyles[element] == nil {
+                theme.elementStyles[element] = defaults.elementStyles[element]
+            }
         }
-        
-        // Return default theme if not found
-        return themes["default"] ?? AlertTheme.defaultTheme()
+
+        return theme
     }
     
     func setTheme(_ theme: AlertTheme, for calendarIdentifier: String) {
@@ -94,6 +99,20 @@ class ThemeService: ObservableObject {
 
         if themes["default"] == nil {
             themes["default"] = AlertTheme.defaultTheme()
+        }
+
+        // Backfill missing element styles into all saved themes
+        let defaults = AlertTheme.defaultTheme()
+        var didChange = false
+        for key in themes.keys {
+            for element in AlertElementIdentifier.allCases {
+                if themes[key]?.elementStyles[element] == nil {
+                    themes[key]?.elementStyles[element] = defaults.elementStyles[element]
+                    didChange = true
+                }
+            }
+        }
+        if didChange {
             saveThemes()
         }
     }

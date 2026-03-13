@@ -98,6 +98,20 @@ struct AlertTheme: Codable, Identifiable {
                     buttonPaddingHorizontal: 32,
                     buttonPaddingVertical: 16
                 ),
+                .snoozeButton: AlertElementStyle(
+                    fontFamily: "SF Pro",
+                    fontSize: 14,
+                    fontWeight: .medium,
+                    fontColor: CodableColor(Color.white.opacity(0.9)),
+                    textAlignment: .center,
+                    positionX: 0.5,
+                    positionY: 0.85,
+                    maxWidthPercentage: 0.5,
+                    buttonBackgroundColor: CodableColor(Color.white.opacity(0.15)),
+                    buttonCornerRadius: 16,
+                    buttonPaddingHorizontal: 16,
+                    buttonPaddingVertical: 8
+                ),
                 .dismissButton: AlertElementStyle(
                     fontFamily: "SF Pro",
                     fontSize: 24,
@@ -202,6 +216,20 @@ struct AlertTheme: Codable, Identifiable {
                     buttonPaddingHorizontal: 40,
                     buttonPaddingVertical: 16
                 ),
+                .snoozeButton: AlertElementStyle(
+                    fontFamily: "Space Mono",
+                    fontSize: 14,
+                    fontWeight: .medium,
+                    fontColor: CodableColor(black.opacity(0.9)),
+                    textAlignment: .center,
+                    positionX: 0.5,
+                    positionY: 0.85,
+                    maxWidthPercentage: 0.5,
+                    buttonBackgroundColor: CodableColor(black.opacity(0.15)),
+                    buttonCornerRadius: 50,
+                    buttonPaddingHorizontal: 16,
+                    buttonPaddingVertical: 8
+                ),
                 .dismissButton: AlertElementStyle(
                     fontFamily: "SF Pro",
                     fontSize: 24,
@@ -237,6 +265,7 @@ enum AlertElementIdentifier: String, CaseIterable, Codable {
     case location
     case calendarName
     case joinButton
+    case snoozeButton
     case dismissButton
     case queueCounter
 
@@ -247,6 +276,7 @@ enum AlertElementIdentifier: String, CaseIterable, Codable {
         case .location: return "Location"
         case .calendarName: return "Calendar Name"
         case .joinButton: return "Join Meeting Button"
+        case .snoozeButton: return "Snooze Button"
         case .dismissButton: return "Dismiss Button (X)"
         case .queueCounter: return "Queue Counter"
         }

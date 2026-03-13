@@ -103,6 +103,16 @@ struct AppearanceSettingsView: View {
                 Spacer()
                 
                 Menu("More") {
+                    Menu("Load Preset...") {
+                        ForEach(AlertTheme.presets, id: \.name) { preset in
+                            Button(preset.name) {
+                                var theme = preset.theme()
+                                theme.id = selectedCalendarID
+                                workingTheme = theme
+                            }
+                        }
+                    }
+
                     Menu("Duplicate From...") {
                         if selectedCalendarID != "default" {
                             Button("Default Theme") {
@@ -383,6 +393,22 @@ struct AppearanceSettingsView: View {
                             workingTheme.elementStyles[element] = style
                         }
                     ))
+                }
+
+                // Vertical scale (for text elements only)
+                if element != .dismissButton {
+                    Stepper(
+                        "Vertical Stretch: \(String(format: "%.0f%%", (style.verticalScale ?? 1.0) * 100))",
+                        value: Binding(
+                            get: { style.verticalScale ?? 1.0 },
+                            set: { newValue in
+                                style.verticalScale = newValue
+                                workingTheme.elementStyles[element] = style
+                            }
+                        ),
+                        in: 0.5...2.0,
+                        step: 0.1
+                    )
                 }
 
                 // Button-specific properties

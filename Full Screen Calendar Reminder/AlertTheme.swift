@@ -123,6 +123,110 @@ struct AlertTheme: Codable, Identifiable {
             ]
         )
     }
+    // MARK: - Preset Themes
+
+    static let presets: [(name: String, theme: () -> AlertTheme)] = [
+        ("Kinetic Orange", { kineticOrangeTheme() }),
+    ]
+
+    static func kineticOrangeTheme(id: String = "default", name: String = "Kinetic Orange") -> AlertTheme {
+        let orange = Color(hex: "#FF4D00")
+        let black = Color.black
+
+        return AlertTheme(
+            id: id,
+            name: name,
+            backgroundType: .solidColor,
+            solidColor: CodableColor(orange),
+            solidColorOpacity: 1.0,
+            imageData: nil,
+            overlayColor: CodableColor(.black),
+            overlayOpacity: 0.0,
+            elementStyles: [
+                .title: AlertElementStyle(
+                    fontFamily: "Archivo Black",
+                    fontSize: 96,
+                    fontWeight: .bold,
+                    fontColor: CodableColor(black),
+                    textAlignment: .center,
+                    positionX: 0.5,
+                    positionY: 0.2,
+                    maxWidthPercentage: 0.8,
+                    uppercased: true
+                ),
+                .startTime: AlertElementStyle(
+                    fontFamily: "Space Mono",
+                    fontSize: 48,
+                    fontWeight: .medium,
+                    fontColor: CodableColor(black),
+                    textAlignment: .center,
+                    positionX: 0.5,
+                    positionY: 0.3,
+                    maxWidthPercentage: 0.6,
+                    uppercased: true
+                ),
+                .location: AlertElementStyle(
+                    fontFamily: "Space Mono",
+                    fontSize: 28,
+                    fontWeight: .regular,
+                    fontColor: CodableColor(black.opacity(0.8)),
+                    textAlignment: .center,
+                    positionX: 0.5,
+                    positionY: 0.42,
+                    maxWidthPercentage: 0.7
+                ),
+                .calendarName: AlertElementStyle(
+                    fontFamily: "Space Mono",
+                    fontSize: 20,
+                    fontWeight: .medium,
+                    fontColor: CodableColor(black.opacity(0.6)),
+                    textAlignment: .center,
+                    positionX: 0.5,
+                    positionY: 0.72,
+                    maxWidthPercentage: 0.5,
+                    uppercased: true
+                ),
+                .joinButton: AlertElementStyle(
+                    fontFamily: "Archivo Black",
+                    fontSize: 24,
+                    fontWeight: .bold,
+                    fontColor: CodableColor(orange),
+                    textAlignment: .center,
+                    positionX: 0.5,
+                    positionY: 0.82,
+                    maxWidthPercentage: 0.4,
+                    uppercased: true,
+                    buttonBackgroundColor: CodableColor(black),
+                    buttonTextColor: CodableColor(orange),
+                    buttonCornerRadius: 50,
+                    buttonPaddingHorizontal: 40,
+                    buttonPaddingVertical: 16
+                ),
+                .dismissButton: AlertElementStyle(
+                    fontFamily: "SF Pro",
+                    fontSize: 24,
+                    fontWeight: .regular,
+                    fontColor: CodableColor(black.opacity(0.7)),
+                    textAlignment: .center,
+                    positionX: 0.05,
+                    positionY: 0.12,
+                    maxWidthPercentage: 0.1,
+                    iconSize: 36,
+                    iconColor: CodableColor(black.opacity(0.7))
+                ),
+                .queueCounter: AlertElementStyle(
+                    fontFamily: "Space Mono",
+                    fontSize: 18,
+                    fontWeight: .medium,
+                    fontColor: CodableColor(black.opacity(0.5)),
+                    textAlignment: .center,
+                    positionX: 0.5,
+                    positionY: 0.9,
+                    maxWidthPercentage: 0.3
+                )
+            ]
+        )
+    }
 }
 
 // MARK: - Alert Element Identifier
@@ -161,6 +265,7 @@ struct AlertElementStyle: Codable {
     var positionY: Double // 0.0 to 1.0 (percentage of screen height)
     var maxWidthPercentage: Double // 0.0 to 1.0
     var uppercased: Bool?
+    var verticalScale: CGFloat? // 1.0 = normal, >1.0 = taller, <1.0 = shorter
 
     // Button-specific properties
     var buttonBackgroundColor: CodableColor?

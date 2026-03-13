@@ -78,6 +78,7 @@ struct FullScreenAlertView: View {
                         .font(style.font)
                         .foregroundColor(style.fontColor.color)
                         .textCase(style.uppercased == true ? .uppercase : nil)
+                        .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
                         .multilineTextAlignment(style.textAlignment)
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
@@ -88,6 +89,7 @@ struct FullScreenAlertView: View {
                         .font(style.font)
                         .foregroundColor(style.fontColor.color)
                         .textCase(style.uppercased == true ? .uppercase : nil)
+                        .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
                         .multilineTextAlignment(style.textAlignment)
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
@@ -103,6 +105,7 @@ struct FullScreenAlertView: View {
                             .textCase(style.uppercased == true ? .uppercase : nil)
                     }
                     .foregroundColor(style.fontColor.color)
+                    .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
                     .multilineTextAlignment(style.textAlignment)
                     .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                     .onTapGesture {
@@ -122,6 +125,7 @@ struct FullScreenAlertView: View {
                         .font(style.font)
                         .foregroundColor(style.fontColor.color)
                         .textCase(style.uppercased == true ? .uppercase : nil)
+                        .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
                         .multilineTextAlignment(style.textAlignment)
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
@@ -133,6 +137,7 @@ struct FullScreenAlertView: View {
                         Text("Join Meeting")
                             .font(style.font)
                             .textCase(style.uppercased == true ? .uppercase : nil)
+                            .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
                         if let serviceName = videoConferenceServiceName(for: videoURL) {
                             Text(serviceName)
                                 .font(.system(size: style.fontSize * 0.5, weight: .medium))
@@ -166,6 +171,7 @@ struct FullScreenAlertView: View {
                         .font(style.font)
                         .foregroundColor(style.fontColor.color)
                         .textCase(style.uppercased == true ? .uppercase : nil)
+                        .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                 }
 

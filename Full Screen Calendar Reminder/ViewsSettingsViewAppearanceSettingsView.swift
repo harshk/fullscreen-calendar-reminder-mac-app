@@ -331,34 +331,45 @@ struct AppearanceSettingsView: View {
                             .tag(font)
                     }
                 }
+
+                // "Change all fonts" button — shown when this element's font differs from any other
+                if workingTheme.elementStyles.contains(where: { $0.key != element && $0.value.fontFamily != style.fontFamily }) {
+                    Button("Change all fonts to: \(style.fontFamily)") {
+                        for key in workingTheme.elementStyles.keys {
+                            workingTheme.elementStyles[key]?.fontFamily = style.fontFamily
+                        }
+                    }
+                    .font(.caption)
+                }
                 
-                // Font Size
-                Stepper(
-                    "Font Size: \(Int(style.fontSize))pt",
-                    value: Binding(
-                        get: { style.fontSize },
+                // Font Size + Weight
+                HStack {
+                    Stepper(
+                        "Font Size: \(Int(style.fontSize))pt",
+                        value: Binding(
+                            get: { style.fontSize },
+                            set: { newValue in
+                                style.fontSize = newValue
+                                workingTheme.elementStyles[element] = style
+                            }
+                        ),
+                        in: 8...200,
+                        step: 2
+                    )
+
+                    Picker("Weight", selection: Binding(
+                        get: { style.fontWeight },
                         set: { newValue in
-                            style.fontSize = newValue
+                            style.fontWeight = newValue
                             workingTheme.elementStyles[element] = style
                         }
-                    ),
-                    in: 8...200,
-                    step: 2
-                )
-                
-                // Font Weight
-                Picker("Font Weight", selection: Binding(
-                    get: { style.fontWeight },
-                    set: { newValue in
-                        style.fontWeight = newValue
-                        workingTheme.elementStyles[element] = style
+                    )) {
+                        Text("Light").tag(Font.Weight.light)
+                        Text("Regular").tag(Font.Weight.regular)
+                        Text("Medium").tag(Font.Weight.medium)
+                        Text("Semibold").tag(Font.Weight.semibold)
+                        Text("Bold").tag(Font.Weight.bold)
                     }
-                )) {
-                    Text("Light").tag(Font.Weight.light)
-                    Text("Regular").tag(Font.Weight.regular)
-                    Text("Medium").tag(Font.Weight.medium)
-                    Text("Semibold").tag(Font.Weight.semibold)
-                    Text("Bold").tag(Font.Weight.bold)
                 }
                 
                 // Font Color (+ Background Color for buttons)
@@ -381,19 +392,6 @@ struct AppearanceSettingsView: View {
                     }
                 }
                 
-                // Text Alignment
-                Picker("Alignment", selection: Binding(
-                    get: { style.textAlignment },
-                    set: { newValue in
-                        style.textAlignment = newValue
-                        workingTheme.elementStyles[element] = style
-                    }
-                )) {
-                    Text("Left").tag(TextAlignment.leading)
-                    Text("Center").tag(TextAlignment.center)
-                    Text("Right").tag(TextAlignment.trailing)
-                }
-                .pickerStyle(.segmented)
 
                 // Uppercase toggle (for text elements only)
                 if element != .dismissButton {
@@ -422,53 +420,6 @@ struct AppearanceSettingsView: View {
                     )
                 }
 
-                // Button-specific properties
-                if element == .joinButton {
-                    Divider()
-                    
-                    Text("Button Properties")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                    
-                    Stepper(
-                        "Corner Radius: \(Int(style.buttonCornerRadius ?? 12))pt",
-                        value: Binding(
-                            get: { style.buttonCornerRadius ?? 12 },
-                            set: { newValue in
-                                style.buttonCornerRadius = newValue
-                                workingTheme.elementStyles[element] = style
-                            }
-                        ),
-                        in: 0...50,
-                        step: 2
-                    )
-                    
-                    Stepper(
-                        "Horizontal Padding: \(Int(style.buttonPaddingHorizontal ?? 24))pt",
-                        value: Binding(
-                            get: { style.buttonPaddingHorizontal ?? 24 },
-                            set: { newValue in
-                                style.buttonPaddingHorizontal = newValue
-                                workingTheme.elementStyles[element] = style
-                            }
-                        ),
-                        in: 0...100,
-                        step: 4
-                    )
-                    
-                    Stepper(
-                        "Vertical Padding: \(Int(style.buttonPaddingVertical ?? 12))pt",
-                        value: Binding(
-                            get: { style.buttonPaddingVertical ?? 12 },
-                            set: { newValue in
-                                style.buttonPaddingVertical = newValue
-                                workingTheme.elementStyles[element] = style
-                            }
-                        ),
-                        in: 0...50,
-                        step: 2
-                    )
-                }
                 
                 // Dismiss button-specific properties
                 if element == .dismissButton {

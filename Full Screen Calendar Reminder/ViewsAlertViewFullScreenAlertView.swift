@@ -245,6 +245,10 @@ struct FullScreenAlertView: View {
 
     // MARK: - Snooze Buttons
 
+    private var snoozeCornerRadius: CGFloat {
+        theme.elementStyles[.joinButton]?.buttonCornerRadius ?? 12
+    }
+
     private var snoozeButtons: some View {
         HStack(spacing: 12) {
             ForEach(AppSettings.shared.snoozeDurations, id: \.self) { duration in
@@ -254,10 +258,10 @@ struct FullScreenAlertView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: snoozeCornerRadius)
                             .fill(Color.white.opacity(0.15))
                     )
-                    .contentShape(RoundedRectangle(cornerRadius: 8))
+                    .contentShape(RoundedRectangle(cornerRadius: snoozeCornerRadius))
                     .onTapGesture {
                         onSnooze(duration)
                     }

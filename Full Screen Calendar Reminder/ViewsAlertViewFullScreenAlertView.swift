@@ -73,7 +73,7 @@ struct FullScreenAlertView: View {
     private func primaryScreenContent(geometry: GeometryProxy) -> some View {
         ZStack {
             // Main content in a VStack so elements never overlap
-            VStack(spacing: 12) {
+            VStack(spacing: 0) {
                 Spacer()
 
                 // Title
@@ -132,6 +132,7 @@ struct FullScreenAlertView: View {
                             if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
                         }
                     }
+                    .padding(.top, 12)
                 }
 
                 // Calendar Name
@@ -145,6 +146,7 @@ struct FullScreenAlertView: View {
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
                         .contentShape(Rectangle())
                         .onTapGesture { onElementTap?(.calendarName) }
+                        .padding(.top, 12)
                 }
 
                 // Join Meeting Button
@@ -178,6 +180,7 @@ struct FullScreenAlertView: View {
                         }
                     }
                     .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
+                    .padding(.top, 12)
                 }
 
                 // Queue Counter
@@ -195,6 +198,7 @@ struct FullScreenAlertView: View {
 
                 // Snooze buttons
                 snoozeButtons
+                    .padding(.top, 12)
 
                 Spacer()
             }

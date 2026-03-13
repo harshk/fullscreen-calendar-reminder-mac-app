@@ -160,6 +160,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         closePanel()
 
         if let settingsWindow = settingsWindow, settingsWindow.isVisible {
+            NSApp.setActivationPolicy(.regular)
             settingsWindow.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return

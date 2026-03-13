@@ -396,7 +396,21 @@ class AlertCoordinator: ObservableObject {
         ) { _ in
             NSEvent.removeMonitor(localMonitor as Any)
             if let gm = globalMonitor { NSEvent.removeMonitor(gm) }
-            NSApp.setActivationPolicy(.accessory)
+
+            // If the settings window is still open, keep .regular and re-focus it;
+            // otherwise fall back to .accessory so the dock icon disappears.
+            if let settingsWindow = NSApp.windows.first(where: {
+                $0.isVisible && $0.title == "Settings"
+            }) {
+                // Small delay so the closing animation finishes first
+                DispatchQueue.main.async {
+                    NSApp.setActivationPolicy(.regular)
+                    settingsWindow.makeKeyAndOrderFront(nil)
+                    NSApp.activate(ignoringOtherApps: true)
+                }
+            } else {
+                NSApp.setActivationPolicy(.accessory)
+            }
         }
     }
     

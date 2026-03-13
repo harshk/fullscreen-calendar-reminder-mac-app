@@ -361,14 +361,25 @@ struct AppearanceSettingsView: View {
                     Text("Bold").tag(Font.Weight.bold)
                 }
                 
-                // Font Color
-                ColorPicker("Color", selection: Binding(
-                    get: { style.fontColor.color },
-                    set: { newValue in
-                        style.fontColor = CodableColor(newValue)
-                        workingTheme.elementStyles[element] = style
+                // Font Color (+ Background Color for buttons)
+                HStack {
+                    ColorPicker("Text Color", selection: Binding(
+                        get: { style.fontColor.color },
+                        set: { newValue in
+                            style.fontColor = CodableColor(newValue)
+                            workingTheme.elementStyles[element] = style
+                        }
+                    ))
+                    if element == .joinButton {
+                        ColorPicker("Background", selection: Binding(
+                            get: { style.buttonBackgroundColor?.color ?? .blue },
+                            set: { newValue in
+                                style.buttonBackgroundColor = CodableColor(newValue)
+                                workingTheme.elementStyles[element] = style
+                            }
+                        ))
                     }
-                ))
+                }
                 
                 // Text Alignment
                 Picker("Alignment", selection: Binding(
@@ -418,22 +429,6 @@ struct AppearanceSettingsView: View {
                     Text("Button Properties")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                    
-                    ColorPicker("Background Color", selection: Binding(
-                        get: { style.buttonBackgroundColor?.color ?? .blue },
-                        set: { newValue in
-                            style.buttonBackgroundColor = CodableColor(newValue)
-                            workingTheme.elementStyles[element] = style
-                        }
-                    ))
-                    
-                    ColorPicker("Text Color", selection: Binding(
-                        get: { style.buttonTextColor?.color ?? .white },
-                        set: { newValue in
-                            style.buttonTextColor = CodableColor(newValue)
-                            workingTheme.elementStyles[element] = style
-                        }
-                    ))
                     
                     Stepper(
                         "Corner Radius: \(Int(style.buttonCornerRadius ?? 12))pt",

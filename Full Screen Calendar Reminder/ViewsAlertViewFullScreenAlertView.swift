@@ -144,7 +144,7 @@ struct FullScreenAlertView: View {
                                 .opacity(0.8)
                         }
                     }
-                    .foregroundColor(style.buttonTextColor?.color ?? .white)
+                    .foregroundColor(style.fontColor.color)
                     .padding(.horizontal, style.buttonPaddingHorizontal ?? 24)
                     .padding(.vertical, style.buttonPaddingVertical ?? 12)
                     .background(

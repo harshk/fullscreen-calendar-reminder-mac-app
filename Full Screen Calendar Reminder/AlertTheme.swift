@@ -139,9 +139,27 @@ struct AlertTheme: Codable, Identifiable {
     }
     // MARK: - Preset Themes
 
-    static let presets: [(name: String, theme: () -> AlertTheme)] = [
+    /// Hardcoded presets (always available as fallbacks)
+    private static let hardcodedPresets: [(name: String, theme: () -> AlertTheme)] = [
         ("Kinetic Orange", { kineticOrangeTheme() }),
     ]
+
+    /// All presets: bundled JSON files take priority, then hardcoded fallbacks.
+    static var presets: [(name: String, theme: () -> AlertTheme)] {
+        let jsonPresets = PresetManager.shared.loadPresets()
+        let jsonNames = Set(jsonPresets.map { $0.name })
+
+        var result: [(name: String, theme: () -> AlertTheme)] = jsonPresets.map { preset in
+            (preset.name, { preset.theme })
+        }
+
+        // Add hardcoded presets that don't have a JSON override
+        for hardcoded in hardcodedPresets where !jsonNames.contains(hardcoded.name) {
+            result.append(hardcoded)
+        }
+
+        return result.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
 
     static func kineticOrangeTheme(id: String = "default", name: String = "Kinetic Orange") -> AlertTheme {
         let orange = Color(hex: "#FF4D00")

@@ -21,6 +21,11 @@ struct AppearanceSettingsView: View {
     @State private var showingImagePicker = false
     @State private var showingSavedConfirmation = false
     @State private var fontSearchText = ""
+    #if DEBUG
+    @State private var showingSavePresetDialog = false
+    @State private var savePresetName = ""
+    @State private var showingSavedPresetConfirmation = false
+    #endif
 
     private static let availableFonts: [String] = {
         let families = NSFontManager.shared.availableFontFamilies.sorted()
@@ -135,6 +140,19 @@ struct AppearanceSettingsView: View {
                     Button("Reset to Default Theme") {
                         showingResetConfirmation = true
                     }
+
+                    #if DEBUG
+                    Divider()
+
+                    Button("Save as Preset...") {
+                        savePresetName = ""
+                        showingSavePresetDialog = true
+                    }
+
+                    Button("Reveal Presets in Finder") {
+                        PresetManager.shared.revealPresetsInFinder()
+                    }
+                    #endif
                 }
             }
             .padding()
@@ -148,6 +166,33 @@ struct AppearanceSettingsView: View {
         } message: {
             Text("This will reset all customizations for this theme to the default theme.")
         }
+        #if DEBUG
+        .alert("Save as Preset", isPresented: $showingSavePresetDialog) {
+            TextField("Preset Name", text: $savePresetName)
+            Button("Cancel", role: .cancel) { }
+            Button("Save") {
+                let name = savePresetName.trimmingCharacters(in: .whitespaces)
+                guard !name.isEmpty else { return }
+                PresetManager.shared.savePreset(name: name, theme: workingTheme)
+                showingSavedPresetConfirmation = true
+            }
+        } message: {
+            let existing = PresetManager.shared.loadPresets().map(\.name)
+            if existing.isEmpty {
+                Text("Enter a name for the new preset.")
+            } else {
+                Text("Enter a name for the new preset.\n\nExisting presets: \(existing.joined(separator: ", "))")
+            }
+        }
+        .alert("Preset Saved", isPresented: $showingSavedPresetConfirmation) {
+            Button("OK", role: .cancel) { }
+            Button("Reveal in Finder") {
+                PresetManager.shared.revealPresetsInFinder()
+            }
+        } message: {
+            Text("To bundle this preset with the app, copy the JSON file into the source Presets/ folder.")
+        }
+        #endif
     }
     
     // MARK: - Editor Pane

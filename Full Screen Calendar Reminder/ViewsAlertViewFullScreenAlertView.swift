@@ -135,17 +135,10 @@ struct FullScreenAlertView: View {
                 // Join Meeting Button
                 if let videoURL = videoConferenceURL,
                    let style = theme.elementStyles[.joinButton] {
-                    VStack(spacing: 4) {
-                        Text("Join Meeting")
-                            .font(style.font)
-                            .textCase(style.uppercased == true ? .uppercase : nil)
-                            .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
-                        if let serviceName = videoConferenceServiceName(for: videoURL) {
-                            Text(serviceName)
-                                .font(.system(size: style.fontSize * 0.5, weight: .medium))
-                                .opacity(0.8)
-                        }
-                    }
+                    Text(joinMeetingLabel(for: videoURL))
+                        .font(style.font)
+                        .textCase(style.uppercased == true ? .uppercase : nil)
+                        .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
                     .foregroundColor(style.fontColor.color)
                     .padding(.horizontal, style.buttonPaddingHorizontal ?? 24)
                     .padding(.vertical, style.buttonPaddingVertical ?? 12)
@@ -341,13 +334,34 @@ struct FullScreenAlertView: View {
     }
 
     private func videoConferenceServiceName(for url: URL) -> String? {
-        let host = url.host?.lowercased() ?? ""
-        if host.contains("zoom.us") { return "Zoom" }
+        let resolvedURL = unwrapRedirectURL(url)
+        let host = resolvedURL.host?.lowercased() ?? ""
+        let scheme = resolvedURL.scheme?.lowercased() ?? ""
+        if host.contains("zoom.us") || scheme == "zoommtg" || scheme == "zoomus" { return "Zoom" }
         if host.contains("meet.google.com") { return "Google Meet" }
-        if host.contains("teams.microsoft.com") { return "Microsoft Teams" }
+        if host.contains("teams.microsoft.com") || host.contains("teams.live.com") { return "Microsoft Teams" }
         if host.contains("webex.com") { return "Webex" }
-        if url.scheme == "facetime" { return "FaceTime" }
+        if scheme == "facetime" { return "FaceTime" }
         return nil
+    }
+
+    /// Unwraps Google Calendar redirect URLs to get the actual destination URL.
+    private func unwrapRedirectURL(_ url: URL) -> URL {
+        guard let host = url.host?.lowercased(),
+              host.contains("google.com"),
+              let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let destination = components.queryItems?.first(where: { $0.name == "q" })?.value,
+              let innerURL = URL(string: destination) else {
+            return url
+        }
+        return innerURL
+    }
+
+    private func joinMeetingLabel(for url: URL) -> String {
+        if let serviceName = videoConferenceServiceName(for: url) {
+            return "Join Meeting: \(serviceName)"
+        }
+        return "Join Meeting"
     }
 }
 

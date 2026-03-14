@@ -13,6 +13,7 @@ import UniformTypeIdentifiers
 struct AppearanceSettingsView: View {
     @ObservedObject var themeService = ThemeService.shared
     @ObservedObject var calendarService = CalendarService.shared
+    @ObservedObject var appSettings = AppSettings.shared
     
     @State private var selectedCalendarID = "default"
     @State private var selectedElement: AlertElementIdentifier? = .title
@@ -57,10 +58,13 @@ struct AppearanceSettingsView: View {
                 Picker("Editing Theme For:", selection: $selectedCalendarID) {
                     Text("Default").tag("default")
                     
-                    if !calendarService.availableCalendars.isEmpty {
+                    let enabledCalendars = calendarService.availableCalendars.filter {
+                        appSettings.selectedCalendarIdentifiers.contains($0.calendarIdentifier)
+                    }
+                    if !enabledCalendars.isEmpty {
                         Divider()
-                        
-                        ForEach(calendarService.availableCalendars, id: \.calendarIdentifier) { calendar in
+
+                        ForEach(enabledCalendars, id: \.calendarIdentifier) { calendar in
                             Text(calendar.title).tag(calendar.calendarIdentifier)
                         }
                     }

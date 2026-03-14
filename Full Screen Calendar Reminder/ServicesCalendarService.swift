@@ -25,6 +25,7 @@ class CalendarService: ObservableObject {
     private var pollingTimer: Timer?
     private var fireCheckTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
+    private var lastFireCheckDate = Date()
     
     private init() {
         setupNotifications()
@@ -240,6 +241,18 @@ class CalendarService: ObservableObject {
         guard !AppSettings.shared.isPaused else { return }
 
         let now = Date()
+        let elapsed = now.timeIntervalSince(lastFireCheckDate)
+        lastFireCheckDate = now
+
+        // If more than 10 seconds elapsed since the last check, the system was
+        // likely asleep (timer fires every 1s). Silently mark all past events
+        // as fired so they don't trigger alerts.
+        if elapsed > 10 {
+            for event in upcomingEvents where event.startDate <= now {
+                firedEventIDs.insert(event.id)
+            }
+            return
+        }
 
         // Pre-alert check: fire pre-alert for events approaching within lead time
         if AppSettings.shared.preAlertEnabled {
@@ -293,22 +306,9 @@ class CalendarService: ObservableObject {
     }
     
     private func handleWakeFromSleep() async {
+        // Refresh events from EventKit. The gap detection in
+        // checkForEventsToFire() handles suppressing missed alerts.
         await fetchUpcomingEvents()
-        
-        // Fire events that started less than 2 minutes ago
-        let now = Date()
-        let twoMinutesAgo = now.addingTimeInterval(-120)
-        
-        let eventsToFire = upcomingEvents.filter { event in
-            !firedEventIDs.contains(event.id) &&
-            event.startDate >= twoMinutesAgo &&
-            event.startDate <= now
-        }
-        
-        for event in eventsToFire {
-            firedEventIDs.insert(event.id)
-            AlertCoordinator.shared.queueAlert(for: event)
-        }
     }
     
     // MARK: - Calendar App Integration

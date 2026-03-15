@@ -15,11 +15,16 @@ struct GeneralSettingsView: View {
             Section {
                 Toggle("Launch at Login", isOn: $settings.launchAtLogin)
                 
-                Stepper(
-                    "Events in Menu Bar: \(settings.numberOfEventsInMenuBar)",
-                    value: $settings.numberOfEventsInMenuBar,
-                    in: 1...50
-                )
+                HStack {
+                    Text("Number of Events in Menu Bar")
+                    Spacer()
+                    TextField("", value: Binding(
+                        get: { settings.numberOfEventsInMenuBar },
+                        set: { settings.numberOfEventsInMenuBar = max(1, $0) }
+                    ), format: .number)
+                    .frame(width: 60)
+                    .multilineTextAlignment(.trailing)
+                }
             } header: {
                 Text("General")
                     .font(.headline)
@@ -27,43 +32,31 @@ struct GeneralSettingsView: View {
             
             Section {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Pause Behavior")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-
-                    Text("When full-screen reminders are paused, alerts are silently skipped rather than queued. Events that would have fired during the pause period will not trigger alerts when you unpause.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-            }
-
-            Section {
-                VStack(alignment: .leading, spacing: 8) {
                     Text("Snooze Durations")
                         .font(.subheadline)
                         .fontWeight(.semibold)
 
-                    Text("Choose which snooze options appear on the full-screen alert.")
+                    Text("Set the duration in minutes for each snooze button on the full-screen alert.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                ForEach(snoozeOptions, id: \.value) { option in
-                    Toggle(option.label, isOn: Binding(
-                        get: { settings.snoozeDurations.contains(option.value) },
-                        set: { enabled in
-                            if enabled {
-                                if !settings.snoozeDurations.contains(option.value) {
-                                    settings.snoozeDurations.append(option.value)
-                                    settings.snoozeDurations.sort()
-                                }
-                            } else {
-                                settings.snoozeDurations.removeAll { $0 == option.value }
+                ForEach(0..<3, id: \.self) { index in
+                    HStack {
+                        Text("Button \(index + 1)")
+                        Spacer()
+                        TextField("Min", value: Binding(
+                            get: { Int(settings.snoozeDurations[index] / 60) },
+                            set: { newValue in
+                                settings.snoozeDurations[index] = Double(max(1, newValue)) * 60
                             }
-                        }
-                    ))
+                        ), format: .number)
+                        .frame(width: 60)
+                        .multilineTextAlignment(.trailing)
+                        Text("min")
+                            .foregroundColor(.secondary)
+                    }
                 }
             } header: {
                 Text("Snooze")
@@ -74,20 +67,35 @@ struct GeneralSettingsView: View {
                 Toggle("Enable Pre-Alert", isOn: $settings.preAlertEnabled)
 
                 if settings.preAlertEnabled {
-                    Picker("Lead Time", selection: $settings.preAlertLeadTime) {
-                        Text("30 seconds").tag(30.0)
-                        Text("1 minute").tag(60.0)
-                        Text("2 minutes").tag(120.0)
-                        Text("3 minutes").tag(180.0)
-                        Text("5 minutes").tag(300.0)
+                    HStack {
+                        Text("Lead Time")
+                        Spacer()
+                        TextField("Sec", value: Binding(
+                            get: { Int(settings.preAlertLeadTime) },
+                            set: { settings.preAlertLeadTime = Double(max(1, $0)) }
+                        ), format: .number)
+                        .frame(width: 60)
+                        .multilineTextAlignment(.trailing)
+                        Text("sec")
+                            .foregroundColor(.secondary)
                     }
 
-                    Picker("Duration", selection: $settings.preAlertDuration) {
-                        Text("Until event starts").tag(0.0)
-                        Text("5 seconds").tag(5.0)
-                        Text("10 seconds").tag(10.0)
-                        Text("15 seconds").tag(15.0)
-                        Text("30 seconds").tag(30.0)
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text("Duration")
+                            Text("Set to 0 to persist until event starts.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        TextField("Sec", value: Binding(
+                            get: { Int(settings.preAlertDuration) },
+                            set: { settings.preAlertDuration = Double(max(0, $0)) }
+                        ), format: .number)
+                        .frame(width: 60)
+                        .multilineTextAlignment(.trailing)
+                        Text("sec")
+                            .foregroundColor(.secondary)
                     }
 
                     Button("Show Preview: Pre-Alert") {
@@ -104,13 +112,6 @@ struct GeneralSettingsView: View {
     }
 }
 
-private let snoozeOptions: [(label: String, value: Double)] = [
-    ("1 minute", 60),
-    ("5 minutes", 300),
-    ("10 minutes", 600),
-    ("15 minutes", 900),
-    ("30 minutes", 1800),
-]
 
 #Preview {
     GeneralSettingsView()

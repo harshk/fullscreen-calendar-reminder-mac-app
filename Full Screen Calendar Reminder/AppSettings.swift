@@ -84,10 +84,13 @@ class AppSettings: ObservableObject {
         } else {
             self.preAlertDuration = 0 // persist until event starts
         }
+        let defaultSnooze: [Double] = [60, 300, 900] // 1m, 5m, 15m
         if let storedSnooze = UserDefaults.standard.array(forKey: "snoozeDurations") as? [Double], !storedSnooze.isEmpty {
-            self.snoozeDurations = storedSnooze
+            var result = storedSnooze
+            while result.count < 3 { result.append(defaultSnooze[result.count]) }
+            self.snoozeDurations = Array(result.prefix(3))
         } else {
-            self.snoozeDurations = [60, 300, 900] // 1m, 5m, 15m
+            self.snoozeDurations = defaultSnooze
         }
         
         // Load selected calendar identifiers

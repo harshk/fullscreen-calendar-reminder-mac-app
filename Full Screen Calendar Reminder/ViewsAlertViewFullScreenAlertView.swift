@@ -60,15 +60,14 @@ struct FullScreenAlertView: View {
         case .image:
             if let imageData = theme.imageData,
                let nsImage = NSImage(data: imageData) {
-                Color.clear
-                    .overlay(
-                        Image(nsImage: nsImage)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .blur(radius: (theme.imageBlurRadius ?? 0.3) * 50)
-                    )
-                    .clipped()
-                    .ignoresSafeArea()
+                GeometryReader { geo in
+                    Image(nsImage: nsImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .clipped()
+                }
+                .ignoresSafeArea()
                     .overlay(
                         theme.overlayColor.color
                             .opacity(theme.overlayOpacity)

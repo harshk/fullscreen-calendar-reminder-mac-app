@@ -306,7 +306,8 @@ struct FullScreenAlertView: View {
         return HStack(spacing: 12) {
             ForEach(AppSettings.shared.snoozeDurations, id: \.self) { duration in
                 HStack(spacing: 6) {
-                    Image(systemName: "arrow.trianglehead.clockwise.rotate.90")
+                    Image(systemName: "bell.badge")
+                        .imageScale(.small)
                     Text(snoozeLabel(for: duration))
                         .tracking(tracking)
                         .textCase(isUppercased ? .uppercase : nil)

@@ -226,9 +226,7 @@ struct FullScreenAlertView: View {
             .frame(maxWidth: .infinity)
 
             // Dismiss Button (stays in ZStack for absolute positioning)
-            if let style = theme.elementStyles[.dismissButton] {
-                dismissButton(style: style, geometry: geometry)
-            }
+            dismissButton(geometry: geometry)
         }
     }
     
@@ -271,15 +269,19 @@ struct FullScreenAlertView: View {
     // MARK: - Dismiss Button
     
     @ViewBuilder
-    private func dismissButton(style: AlertElementStyle, geometry: GeometryProxy) -> some View {
+    private func dismissButton(geometry: GeometryProxy) -> some View {
+        let style = theme.elementStyles[.dismissButton]
+        let size: CGFloat = style?.iconSize ?? 32
+        let iconColor = style?.iconColor?.color ?? Color.white.opacity(0.7)
+        let bgColor = style?.buttonBackgroundColor?.color ?? Color.white.opacity(0.2)
         Button(action: { if let onElementTap = onElementTap { onElementTap(.dismissButton) } else { onDismiss() } }) {
             Image(systemName: "xmark")
-                .font(.system(size: (style.iconSize ?? 32) * 0.5, weight: .semibold))
-                .foregroundColor(style.iconColor?.color ?? .white.opacity(0.9))
-                .frame(width: style.iconSize ?? 32, height: style.iconSize ?? 32)
+                .font(.system(size: size * 0.5, weight: .semibold))
+                .foregroundColor(iconColor)
+                .frame(width: size, height: size)
                 .background(
                     Circle()
-                        .fill(Color.white.opacity(0.2))
+                        .fill(bgColor)
                 )
                 .clipShape(Circle())
                 .contentShape(Circle())
@@ -287,7 +289,7 @@ struct FullScreenAlertView: View {
         .buttonStyle(.plain)
         .position(
             x: geometry.size.width * 0.05,
-            y: (style.iconSize ?? 32) * 2 + (style.iconSize ?? 32) / 2
+            y: size * 2 + size / 2
         )
     }
 

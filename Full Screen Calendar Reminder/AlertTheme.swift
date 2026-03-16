@@ -88,6 +88,7 @@ struct AlertTheme: Codable, Identifiable {
                     fontSize: 24,
                     fontWeight: .regular,
                     fontColor: CodableColor(Color.white.opacity(0.7)),
+                    buttonBackgroundColor: CodableColor(Color.white.opacity(0.2)),
                     iconSize: 32,
                     iconColor: CodableColor(Color.white.opacity(0.7))
                 ),
@@ -161,6 +162,7 @@ struct AlertTheme: Codable, Identifiable {
                     fontSize: 24,
                     fontWeight: .regular,
                     fontColor: CodableColor(black.opacity(0.7)),
+                    buttonBackgroundColor: CodableColor(black.opacity(0.2)),
                     iconSize: 36,
                     iconColor: CodableColor(black.opacity(0.7))
                 ),
@@ -216,7 +218,7 @@ struct AlertElementStyle: Codable {
     // Button-specific properties (join/snooze only)
     var buttonBackgroundColor: CodableColor?
 
-    // Icon-specific properties (dismiss only)
+    // Dismiss button-specific properties
     var iconSize: CGFloat?
     var iconColor: CodableColor?
 }

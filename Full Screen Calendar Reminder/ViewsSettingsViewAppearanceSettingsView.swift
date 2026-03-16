@@ -358,98 +358,97 @@ struct PresetsSettingsView: View {
                 Text("\(labelForElement(element)) Properties")
                     .font(.headline)
 
-                // Font Family
-                Picker("Font Family", selection: Binding(
-                    get: { style.fontFamily },
-                    set: { newValue in
-                        style.fontFamily = newValue
-                        workingTheme.elementStyles[element] = style
-                    }
-                )) {
-                    ForEach(Self.availableFonts, id: \.self) { font in
-                        Text(font)
-                            .font(.custom(font, size: 13))
-                            .tag(font)
-                    }
-                }
-
-                // "Change all fonts" button
-                if workingTheme.elementStyles.contains(where: { $0.key != element && $0.value.fontFamily != style.fontFamily }) {
-                    Button("Change all fonts to: \(style.fontFamily)") {
-                        for key in workingTheme.elementStyles.keys {
-                            workingTheme.elementStyles[key]?.fontFamily = style.fontFamily
-                        }
-                    }
-                    .font(.caption)
-                }
-
-                // Font Size + Weight
-                HStack {
-                    Stepper(
-                        "Font Size: \(Int(style.fontSize))pt",
-                        value: Binding(
-                            get: { style.fontSize },
-                            set: { newValue in
-                                style.fontSize = newValue
-                                workingTheme.elementStyles[element] = style
-                            }
-                        ),
-                        in: 8...200,
-                        step: 2
-                    )
-
-                    Picker("Weight", selection: Binding(
-                        get: { style.fontWeight },
+                if element != .dismissButton {
+                    // Font Family
+                    Picker("Font Family", selection: Binding(
+                        get: { style.fontFamily },
                         set: { newValue in
-                            style.fontWeight = newValue
+                            style.fontFamily = newValue
                             workingTheme.elementStyles[element] = style
                         }
                     )) {
-                        Text("Light").tag(Font.Weight.light)
-                        Text("Regular").tag(Font.Weight.regular)
-                        Text("Medium").tag(Font.Weight.medium)
-                        Text("Semibold").tag(Font.Weight.semibold)
-                        Text("Bold").tag(Font.Weight.bold)
+                        ForEach(Self.availableFonts, id: \.self) { font in
+                            Text(font)
+                                .font(.custom(font, size: 13))
+                                .tag(font)
+                        }
                     }
-                }
 
-                // Letter Spacing
-                Stepper(
-                    "Letter Spacing: \(String(format: "%.1f", style.letterSpacing ?? 0))pt",
-                    value: Binding(
-                        get: { style.letterSpacing ?? 0 },
-                        set: { newValue in
-                            style.letterSpacing = newValue
-                            workingTheme.elementStyles[element] = style
+                    // "Change all fonts" button
+                    if workingTheme.elementStyles.contains(where: { $0.key != element && $0.value.fontFamily != style.fontFamily }) {
+                        Button("Change all fonts to: \(style.fontFamily)") {
+                            for key in workingTheme.elementStyles.keys {
+                                workingTheme.elementStyles[key]?.fontFamily = style.fontFamily
+                            }
                         }
-                    ),
-                    in: -15...30,
-                    step: 0.5
-                )
+                        .font(.caption)
+                    }
 
-                // Font Color (+ Background Color for buttons)
-                HStack {
-                    ColorPicker("Text Color", selection: Binding(
-                        get: { style.fontColor.color },
-                        set: { newValue in
-                            style.fontColor = CodableColor(newValue)
-                            workingTheme.elementStyles[element] = style
-                        }
-                    ))
-                    if element == .joinButton || element == .snoozeButton {
-                        ColorPicker("Background", selection: Binding(
-                            get: { style.buttonBackgroundColor?.color ?? .blue },
+                    // Font Size + Weight
+                    HStack {
+                        Stepper(
+                            "Font Size: \(Int(style.fontSize))pt",
+                            value: Binding(
+                                get: { style.fontSize },
+                                set: { newValue in
+                                    style.fontSize = newValue
+                                    workingTheme.elementStyles[element] = style
+                                }
+                            ),
+                            in: 8...200,
+                            step: 2
+                        )
+
+                        Picker("Weight", selection: Binding(
+                            get: { style.fontWeight },
                             set: { newValue in
-                                style.buttonBackgroundColor = CodableColor(newValue)
+                                style.fontWeight = newValue
+                                workingTheme.elementStyles[element] = style
+                            }
+                        )) {
+                            Text("Light").tag(Font.Weight.light)
+                            Text("Regular").tag(Font.Weight.regular)
+                            Text("Medium").tag(Font.Weight.medium)
+                            Text("Semibold").tag(Font.Weight.semibold)
+                            Text("Bold").tag(Font.Weight.bold)
+                        }
+                    }
+
+                    // Letter Spacing
+                    Stepper(
+                        "Letter Spacing: \(String(format: "%.1f", style.letterSpacing ?? 0))pt",
+                        value: Binding(
+                            get: { style.letterSpacing ?? 0 },
+                            set: { newValue in
+                                style.letterSpacing = newValue
+                                workingTheme.elementStyles[element] = style
+                            }
+                        ),
+                        in: -15...30,
+                        step: 0.5
+                    )
+
+                    // Font Color (+ Background Color for buttons)
+                    HStack {
+                        ColorPicker("Text Color", selection: Binding(
+                            get: { style.fontColor.color },
+                            set: { newValue in
+                                style.fontColor = CodableColor(newValue)
                                 workingTheme.elementStyles[element] = style
                             }
                         ))
+                        if element == .joinButton || element == .snoozeButton {
+                            ColorPicker("Background", selection: Binding(
+                                get: { style.buttonBackgroundColor?.color ?? .blue },
+                                set: { newValue in
+                                    style.buttonBackgroundColor = CodableColor(newValue)
+                                    workingTheme.elementStyles[element] = style
+                                }
+                            ))
+                        }
                     }
-                }
 
-
-                // Uppercase & Italic toggles (for text elements only)
-                if element != .dismissButton {
+                    // Uppercase & Italic toggles
                     Toggle("Uppercase", isOn: Binding(
                         get: { style.uppercased ?? false },
                         set: { newValue in
@@ -465,10 +464,8 @@ struct PresetsSettingsView: View {
                             workingTheme.elementStyles[element] = style
                         }
                     ))
-                }
 
-                // Vertical scale (for text elements only)
-                if element != .dismissButton {
+                    // Vertical scale
                     Stepper(
                         "Vertical Stretch: \(String(format: "%.0f%%", (style.verticalScale ?? 1.0) * 100))",
                         value: Binding(
@@ -483,15 +480,8 @@ struct PresetsSettingsView: View {
                     )
                 }
 
-
-                // Dismiss button-specific properties
+                // Dismiss button icon properties
                 if element == .dismissButton {
-                    Divider()
-
-                    Text("Icon Properties")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-
                     Stepper(
                         "Icon Size: \(Int(style.iconSize ?? 32))pt",
                         value: Binding(
@@ -509,6 +499,14 @@ struct PresetsSettingsView: View {
                         get: { style.iconColor?.color ?? .white },
                         set: { newValue in
                             style.iconColor = CodableColor(newValue)
+                            workingTheme.elementStyles[element] = style
+                        }
+                    ))
+
+                    ColorPicker("Background Color", selection: Binding(
+                        get: { style.buttonBackgroundColor?.color ?? Color.white.opacity(0.2) },
+                        set: { newValue in
+                            style.buttonBackgroundColor = CodableColor(newValue)
                             workingTheme.elementStyles[element] = style
                         }
                     ))

@@ -49,80 +49,45 @@ struct AlertTheme: Codable, Identifiable {
                     fontFamily: "SF Pro",
                     fontSize: 72,
                     fontWeight: .bold,
-                    fontColor: CodableColor(.white),
-                    textAlignment: .center,
-                    positionX: 0.5,
-                    positionY: 0.2,
-                    maxWidthPercentage: 0.8
+                    fontColor: CodableColor(.white)
                 ),
                 .startTime: AlertElementStyle(
                     fontFamily: "SF Pro",
                     fontSize: 48,
                     fontWeight: .semibold,
-                    fontColor: CodableColor(Color(red: 1.0, green: 0.27, blue: 0.58)),
-                    textAlignment: .center,
-                    positionX: 0.5,
-                    positionY: 0.3,
-                    maxWidthPercentage: 0.6
+                    fontColor: CodableColor(Color(red: 1.0, green: 0.27, blue: 0.58))
                 ),
                 .location: AlertElementStyle(
                     fontFamily: "SF Pro",
                     fontSize: 32,
                     fontWeight: .regular,
-                    fontColor: CodableColor(Color.white.opacity(0.8)),
-                    textAlignment: .center,
-                    positionX: 0.5,
-                    positionY: 0.42,
-                    maxWidthPercentage: 0.7
+                    fontColor: CodableColor(Color.white.opacity(0.8))
                 ),
                 .calendarName: AlertElementStyle(
                     fontFamily: "SF Pro",
                     fontSize: 24,
                     fontWeight: .medium,
-                    fontColor: CodableColor(Color.white.opacity(0.6)),
-                    textAlignment: .center,
-                    positionX: 0.5,
-                    positionY: 0.72,
-                    maxWidthPercentage: 0.5
+                    fontColor: CodableColor(Color.white.opacity(0.6))
                 ),
                 .joinButton: AlertElementStyle(
                     fontFamily: "SF Pro",
-                    fontSize: 28,
-                    fontWeight: .semibold,
+                    fontSize: 14,
+                    fontWeight: .medium,
                     fontColor: CodableColor(.white),
-                    textAlignment: .center,
-                    positionX: 0.5,
-                    positionY: 0.82,
-                    maxWidthPercentage: 0.4,
-                    buttonBackgroundColor: CodableColor(Color(red: 1.0, green: 0.27, blue: 0.58)),
-                    buttonTextColor: CodableColor(.white),
-                    buttonCornerRadius: 16,
-                    buttonPaddingHorizontal: 32,
-                    buttonPaddingVertical: 16
+                    buttonBackgroundColor: CodableColor(Color(red: 1.0, green: 0.27, blue: 0.58))
                 ),
                 .snoozeButton: AlertElementStyle(
                     fontFamily: "SF Pro",
                     fontSize: 14,
                     fontWeight: .medium,
                     fontColor: CodableColor(Color.white.opacity(0.9)),
-                    textAlignment: .center,
-                    positionX: 0.5,
-                    positionY: 0.85,
-                    maxWidthPercentage: 0.5,
-                    buttonBackgroundColor: CodableColor(Color.white.opacity(0.15)),
-                    buttonCornerRadius: 16,
-                    buttonPaddingHorizontal: 16,
-                    buttonPaddingVertical: 8
+                    buttonBackgroundColor: CodableColor(Color.white.opacity(0.15))
                 ),
                 .dismissButton: AlertElementStyle(
                     fontFamily: "SF Pro",
                     fontSize: 24,
                     fontWeight: .regular,
                     fontColor: CodableColor(Color.white.opacity(0.7)),
-                    textAlignment: .center,
-                    positionX: 0.05,
-                    positionY: 0.12,
-                    maxWidthPercentage: 0.1,
                     iconSize: 32,
                     iconColor: CodableColor(Color.white.opacity(0.7))
                 ),
@@ -130,11 +95,7 @@ struct AlertTheme: Codable, Identifiable {
                     fontFamily: "SF Pro",
                     fontSize: 20,
                     fontWeight: .medium,
-                    fontColor: CodableColor(Color.white.opacity(0.5)),
-                    textAlignment: .center,
-                    positionX: 0.5,
-                    positionY: 0.9,
-                    maxWidthPercentage: 0.3
+                    fontColor: CodableColor(Color.white.opacity(0.5))
                 )
             ]
         )
@@ -182,10 +143,6 @@ struct AlertTheme: Codable, Identifiable {
                     fontSize: 96,
                     fontWeight: .bold,
                     fontColor: CodableColor(black),
-                    textAlignment: .center,
-                    positionX: 0.5,
-                    positionY: 0.2,
-                    maxWidthPercentage: 0.8,
                     uppercased: true
                 ),
                 .startTime: AlertElementStyle(
@@ -193,31 +150,19 @@ struct AlertTheme: Codable, Identifiable {
                     fontSize: 48,
                     fontWeight: .medium,
                     fontColor: CodableColor(black),
-                    textAlignment: .center,
-                    positionX: 0.5,
-                    positionY: 0.3,
-                    maxWidthPercentage: 0.6,
                     uppercased: true
                 ),
                 .location: AlertElementStyle(
                     fontFamily: "Space Mono",
                     fontSize: 28,
                     fontWeight: .regular,
-                    fontColor: CodableColor(black.opacity(0.8)),
-                    textAlignment: .center,
-                    positionX: 0.5,
-                    positionY: 0.42,
-                    maxWidthPercentage: 0.7
+                    fontColor: CodableColor(black.opacity(0.8))
                 ),
                 .calendarName: AlertElementStyle(
                     fontFamily: "Space Mono",
                     fontSize: 20,
                     fontWeight: .medium,
                     fontColor: CodableColor(black.opacity(0.6)),
-                    textAlignment: .center,
-                    positionX: 0.5,
-                    positionY: 0.72,
-                    maxWidthPercentage: 0.5,
                     uppercased: true
                 ),
                 .joinButton: AlertElementStyle(
@@ -225,40 +170,21 @@ struct AlertTheme: Codable, Identifiable {
                     fontSize: 24,
                     fontWeight: .bold,
                     fontColor: CodableColor(orange),
-                    textAlignment: .center,
-                    positionX: 0.5,
-                    positionY: 0.82,
-                    maxWidthPercentage: 0.4,
                     uppercased: true,
-                    buttonBackgroundColor: CodableColor(black),
-                    buttonTextColor: CodableColor(orange),
-                    buttonCornerRadius: 50,
-                    buttonPaddingHorizontal: 40,
-                    buttonPaddingVertical: 16
+                    buttonBackgroundColor: CodableColor(black)
                 ),
                 .snoozeButton: AlertElementStyle(
                     fontFamily: "Space Mono",
                     fontSize: 14,
                     fontWeight: .medium,
                     fontColor: CodableColor(black.opacity(0.9)),
-                    textAlignment: .center,
-                    positionX: 0.5,
-                    positionY: 0.85,
-                    maxWidthPercentage: 0.5,
-                    buttonBackgroundColor: CodableColor(black.opacity(0.15)),
-                    buttonCornerRadius: 50,
-                    buttonPaddingHorizontal: 16,
-                    buttonPaddingVertical: 8
+                    buttonBackgroundColor: CodableColor(black.opacity(0.15))
                 ),
                 .dismissButton: AlertElementStyle(
                     fontFamily: "SF Pro",
                     fontSize: 24,
                     fontWeight: .regular,
                     fontColor: CodableColor(black.opacity(0.7)),
-                    textAlignment: .center,
-                    positionX: 0.05,
-                    positionY: 0.12,
-                    maxWidthPercentage: 0.1,
                     iconSize: 36,
                     iconColor: CodableColor(black.opacity(0.7))
                 ),
@@ -266,11 +192,7 @@ struct AlertTheme: Codable, Identifiable {
                     fontFamily: "Space Mono",
                     fontSize: 18,
                     fontWeight: .medium,
-                    fontColor: CodableColor(black.opacity(0.5)),
-                    textAlignment: .center,
-                    positionX: 0.5,
-                    positionY: 0.9,
-                    maxWidthPercentage: 0.3
+                    fontColor: CodableColor(black.opacity(0.5))
                 )
             ]
         )
@@ -310,22 +232,14 @@ struct AlertElementStyle: Codable {
     var fontSize: CGFloat
     var fontWeight: Font.Weight
     var fontColor: CodableColor
-    var textAlignment: TextAlignment
-    var positionX: Double // 0.0 to 1.0 (percentage of screen width)
-    var positionY: Double // 0.0 to 1.0 (percentage of screen height)
-    var maxWidthPercentage: Double // 0.0 to 1.0
     var uppercased: Bool?
     var verticalScale: CGFloat? // 1.0 = normal, >1.0 = taller, <1.0 = shorter
     var letterSpacing: CGFloat? // nil or 0 = default, positive = wider, negative = tighter
 
-    // Button-specific properties
+    // Button-specific properties (join/snooze only)
     var buttonBackgroundColor: CodableColor?
-    var buttonTextColor: CodableColor?
-    var buttonCornerRadius: CGFloat?
-    var buttonPaddingHorizontal: CGFloat?
-    var buttonPaddingVertical: CGFloat?
-    
-    // Icon-specific properties
+
+    // Icon-specific properties (dismiss only)
     var iconSize: CGFloat?
     var iconColor: CodableColor?
 }
@@ -405,37 +319,6 @@ extension Font.Weight: Codable {
         case .heavy: rawValue = 0.8
         case .black: rawValue = 1.0
         default: rawValue = 0.0
-        }
-        
-        try container.encode(rawValue)
-    }
-}
-
-extension TextAlignment: Codable {
-    enum CodingKeys: String, CodingKey {
-        case rawValue
-    }
-    
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let rawValue = try container.decode(String.self)
-        
-        switch rawValue {
-        case "leading": self = .leading
-        case "center": self = .center
-        case "trailing": self = .trailing
-        default: self = .center
-        }
-    }
-    
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        
-        let rawValue: String
-        switch self {
-        case .leading: rawValue = "leading"
-        case .center: rawValue = "center"
-        case .trailing: rawValue = "trailing"
         }
         
         try container.encode(rawValue)

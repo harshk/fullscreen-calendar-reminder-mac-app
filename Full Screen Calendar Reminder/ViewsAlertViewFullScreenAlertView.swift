@@ -91,7 +91,7 @@ struct FullScreenAlertView: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
                         .truncationMode(.tail)
-                        .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
+                        .frame(maxWidth: geometry.size.width * 0.9, alignment: .center)
                         .contentShape(Rectangle())
                         .onTapGesture { onElementTap?(.title) }
                 }
@@ -104,8 +104,8 @@ struct FullScreenAlertView: View {
                         .foregroundColor(style.fontColor.color)
                         .textCase(style.uppercased == true ? .uppercase : nil)
                         .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
-                        .multilineTextAlignment(style.textAlignment)
-                        .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: geometry.size.width * 0.9, alignment: .center)
                         .contentShape(Rectangle())
                         .onTapGesture { onElementTap?(.startTime) }
                 }
@@ -123,8 +123,8 @@ struct FullScreenAlertView: View {
                     }
                     .foregroundColor(style.fontColor.color)
                     .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
-                    .multilineTextAlignment(style.textAlignment)
-                    .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: geometry.size.width * 0.9, alignment: .center)
                     .contentShape(Rectangle())
                     .onTapGesture {
                         if let onElementTap = onElementTap {
@@ -150,8 +150,8 @@ struct FullScreenAlertView: View {
                         .foregroundColor(style.fontColor.color)
                         .textCase(style.uppercased == true ? .uppercase : nil)
                         .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
-                        .multilineTextAlignment(style.textAlignment)
-                        .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: geometry.size.width * 0.9, alignment: .center)
                         .contentShape(Rectangle())
                         .onTapGesture { onElementTap?(.calendarName) }
                         .padding(.top, 36)
@@ -166,13 +166,13 @@ struct FullScreenAlertView: View {
                         .textCase(style.uppercased == true ? .uppercase : nil)
                         .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
                     .foregroundColor(style.fontColor.color)
-                    .padding(.horizontal, style.buttonPaddingHorizontal ?? 24)
-                    .padding(.vertical, style.buttonPaddingVertical ?? 12)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
                     .background(
-                        RoundedRectangle(cornerRadius: style.buttonCornerRadius ?? 12)
+                        RoundedRectangle(cornerRadius: 12)
                             .fill(style.buttonBackgroundColor?.color ?? Color(hex: "#FF1493"))
                     )
-                    .contentShape(RoundedRectangle(cornerRadius: style.buttonCornerRadius ?? 12))
+                    .contentShape(RoundedRectangle(cornerRadius: 12))
                     .onTapGesture {
                         if let onElementTap = onElementTap {
                             onElementTap(.joinButton)
@@ -188,7 +188,7 @@ struct FullScreenAlertView: View {
                             if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
                         }
                     }
-                    .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
+                    .frame(maxWidth: geometry.size.width * 0.9, alignment: .center)
                     .padding(.top, 36)
                 }
 
@@ -201,7 +201,7 @@ struct FullScreenAlertView: View {
                         .foregroundColor(style.fontColor.color)
                         .textCase(style.uppercased == true ? .uppercase : nil)
                         .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
-                        .frame(maxWidth: geometry.size.width * 0.9, alignment: style.frameAlignment)
+                        .frame(maxWidth: geometry.size.width * 0.9, alignment: .center)
                         .contentShape(Rectangle())
                         .onTapGesture { onElementTap?(.queueCounter) }
                 }
@@ -248,11 +248,11 @@ struct FullScreenAlertView: View {
         Text(text)
             .font(style.font)
             .foregroundColor(style.fontColor.color)
-            .multilineTextAlignment(style.textAlignment)
+            .multilineTextAlignment(.center)
             .frame(maxWidth: geometry.size.width * 0.9)
             .position(
-                x: geometry.size.width * style.positionX,
-                y: geometry.size.height * style.positionY
+                x: geometry.size.width * 0.5,
+                y: geometry.size.height * 0.5
             )
             .allowsHitTesting(false)
     }
@@ -268,14 +268,14 @@ struct FullScreenAlertView: View {
                 .frame(width: style.iconSize ?? 32, height: style.iconSize ?? 32)
                 .background(
                     Circle()
-                        .fill(style.buttonBackgroundColor?.color ?? Color.white.opacity(0.2))
+                        .fill(Color.white.opacity(0.2))
                 )
                 .clipShape(Circle())
                 .contentShape(Circle())
         }
         .buttonStyle(.plain)
         .position(
-            x: geometry.size.width * style.positionX,
+            x: geometry.size.width * 0.05,
             y: (style.iconSize ?? 32) * 2 + (style.iconSize ?? 32) / 2
         )
     }
@@ -284,13 +284,10 @@ struct FullScreenAlertView: View {
 
     private var snoozeButtons: some View {
         let style = theme.elementStyles[.snoozeButton]
-        let cornerRadius = theme.elementStyles[.joinButton]?.buttonCornerRadius ?? 12
         let font = style?.font ?? .system(size: 14, weight: .medium)
         let tracking = style?.letterSpacing ?? 0
         let textColor = style?.fontColor.color ?? .white.opacity(0.9)
         let bgColor = style?.buttonBackgroundColor?.color ?? Color.white.opacity(0.15)
-        let hPad = style?.buttonPaddingHorizontal ?? 16
-        let vPad = style?.buttonPaddingVertical ?? 8
         let isUppercased = style?.uppercased == true
 
         return HStack(spacing: 12) {
@@ -300,13 +297,13 @@ struct FullScreenAlertView: View {
                     .tracking(tracking)
                     .textCase(isUppercased ? .uppercase : nil)
                     .foregroundColor(textColor)
-                    .padding(.horizontal, hPad)
-                    .padding(.vertical, vPad)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
                     .background(
-                        RoundedRectangle(cornerRadius: cornerRadius)
+                        RoundedRectangle(cornerRadius: 12)
                             .fill(bgColor)
                     )
-                    .contentShape(RoundedRectangle(cornerRadius: cornerRadius))
+                    .contentShape(RoundedRectangle(cornerRadius: 12))
                     .onTapGesture {
                         if let onElementTap = onElementTap {
                             onElementTap(.snoozeButton)
@@ -441,13 +438,6 @@ extension AlertElementStyle {
         return .system(size: fontSize).weight(fontWeight)
     }
 
-    var frameAlignment: Alignment {
-        switch textAlignment {
-        case .leading: return .leading
-        case .center: return .center
-        case .trailing: return .trailing
-        }
-    }
 }
 
 extension Font.Weight {

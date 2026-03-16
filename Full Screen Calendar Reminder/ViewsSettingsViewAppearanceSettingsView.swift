@@ -83,14 +83,6 @@ struct PresetsSettingsView: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
-
-                #if DEBUG
-                Button("Reveal in Finder") {
-                    presetManager.revealPresetsInFinder()
-                }
-                .font(.caption)
-                .frame(maxWidth: .infinity)
-                #endif
             }
             .padding(8)
         }

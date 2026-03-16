@@ -169,10 +169,10 @@ struct FullScreenAlertView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
+                        Capsule()
                             .fill(style.buttonBackgroundColor?.color ?? Color(hex: "#FF1493"))
                     )
-                    .contentShape(RoundedRectangle(cornerRadius: 12))
+                    .contentShape(Capsule())
                     .onTapGesture {
                         if let onElementTap = onElementTap {
                             onElementTap(.joinButton)
@@ -292,18 +292,21 @@ struct FullScreenAlertView: View {
 
         return HStack(spacing: 12) {
             ForEach(AppSettings.shared.snoozeDurations, id: \.self) { duration in
-                Text(snoozeLabel(for: duration))
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.trianglehead.clockwise.rotate.90")
+                    Text(snoozeLabel(for: duration))
+                        .tracking(tracking)
+                        .textCase(isUppercased ? .uppercase : nil)
+                }
                     .font(font)
-                    .tracking(tracking)
-                    .textCase(isUppercased ? .uppercase : nil)
                     .foregroundColor(textColor)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
+                        Capsule()
                             .fill(bgColor)
                     )
-                    .contentShape(RoundedRectangle(cornerRadius: 12))
+                    .contentShape(Capsule())
                     .onTapGesture {
                         if let onElementTap = onElementTap {
                             onElementTap(.snoozeButton)

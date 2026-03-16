@@ -428,6 +428,20 @@ struct PresetsSettingsView: View {
                         step: 0.5
                     )
 
+                    // Vertical scale
+                    Stepper(
+                        "Vertical Stretch: \(String(format: "%.0f%%", (style.verticalScale ?? 1.0) * 100))",
+                        value: Binding(
+                            get: { style.verticalScale ?? 1.0 },
+                            set: { newValue in
+                                style.verticalScale = newValue
+                                workingTheme.elementStyles[element] = style
+                            }
+                        ),
+                        in: 0.5...2.0,
+                        step: 0.1
+                    )
+
                     // Font Color (+ Background Color for buttons)
                     HStack {
                         ColorPicker("Text Color", selection: Binding(
@@ -464,20 +478,6 @@ struct PresetsSettingsView: View {
                             workingTheme.elementStyles[element] = style
                         }
                     ))
-
-                    // Vertical scale
-                    Stepper(
-                        "Vertical Stretch: \(String(format: "%.0f%%", (style.verticalScale ?? 1.0) * 100))",
-                        value: Binding(
-                            get: { style.verticalScale ?? 1.0 },
-                            set: { newValue in
-                                style.verticalScale = newValue
-                                workingTheme.elementStyles[element] = style
-                            }
-                        ),
-                        in: 0.5...2.0,
-                        step: 0.1
-                    )
                 }
 
                 // Dismiss button icon properties

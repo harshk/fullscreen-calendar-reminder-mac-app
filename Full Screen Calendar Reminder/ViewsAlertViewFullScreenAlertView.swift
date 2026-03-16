@@ -91,7 +91,7 @@ struct FullScreenAlertView: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
                         .truncationMode(.tail)
-                        .frame(maxWidth: geometry.size.width * 0.9, alignment: .center)
+                        .frame(maxWidth: geometry.size.width * 0.5, alignment: .center)
                         .contentShape(Rectangle())
                         .onTapGesture { onElementTap?(.title) }
                 }
@@ -139,7 +139,7 @@ struct FullScreenAlertView: View {
                             if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
                         }
                     }
-                    .padding(.top, 36)
+                    .padding(.top, 72)
                 }
 
                 // Calendar Name
@@ -154,7 +154,7 @@ struct FullScreenAlertView: View {
                         .frame(maxWidth: geometry.size.width * 0.9, alignment: .center)
                         .contentShape(Rectangle())
                         .onTapGesture { onElementTap?(.calendarName) }
-                        .padding(.top, 36)
+                        .padding(.top, 72)
                 }
 
                 // Join Meeting Button
@@ -189,7 +189,7 @@ struct FullScreenAlertView: View {
                         }
                     }
                     .frame(maxWidth: geometry.size.width * 0.9, alignment: .center)
-                    .padding(.top, 36)
+                    .padding(.top, 72)
                 }
 
                 // Queue Counter
@@ -208,7 +208,7 @@ struct FullScreenAlertView: View {
 
                 // Snooze buttons
                 snoozeButtons
-                    .padding(.top, 36)
+                    .padding(.top, 72)
 
                 Spacer()
             }

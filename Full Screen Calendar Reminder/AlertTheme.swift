@@ -232,6 +232,7 @@ struct AlertElementStyle: Codable {
     var fontSize: CGFloat
     var fontWeight: Font.Weight
     var fontColor: CodableColor
+    var italic: Bool?
     var uppercased: Bool?
     var verticalScale: CGFloat? // 1.0 = normal, >1.0 = taller, <1.0 = shorter
     var letterSpacing: CGFloat? // nil or 0 = default, positive = wider, negative = tighter

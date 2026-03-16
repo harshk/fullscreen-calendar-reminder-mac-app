@@ -424,11 +424,13 @@ struct FullScreenAlertView: View {
 
 extension AlertElementStyle {
     var font: Font {
+        let traits: NSFontTraitMask = italic == true ? .italicFontMask : []
+
         if fontFamily != "SF Pro" && fontFamily != "System" {
             // For custom fonts, find the specific variant matching the requested weight
             if let nsFont = NSFontManager.shared.font(
                 withFamily: fontFamily,
-                traits: [],
+                traits: traits,
                 weight: fontWeight.nsFontWeight,
                 size: fontSize
             ) {
@@ -438,7 +440,9 @@ extension AlertElementStyle {
             return .custom(fontFamily, size: fontSize)
         }
 
-        return .system(size: fontSize).weight(fontWeight)
+        var f = Font.system(size: fontSize).weight(fontWeight)
+        if italic == true { f = f.italic() }
+        return f
     }
 
 }

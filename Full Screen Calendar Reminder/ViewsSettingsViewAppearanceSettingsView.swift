@@ -470,12 +470,20 @@ struct AppearanceSettingsView: View {
                 }
                 
 
-                // Uppercase toggle (for text elements only)
+                // Uppercase & Italic toggles (for text elements only)
                 if element != .dismissButton {
                     Toggle("Uppercase", isOn: Binding(
                         get: { style.uppercased ?? false },
                         set: { newValue in
                             style.uppercased = newValue
+                            workingTheme.elementStyles[element] = style
+                        }
+                    ))
+
+                    Toggle("Italic", isOn: Binding(
+                        get: { style.italic ?? false },
+                        set: { newValue in
+                            style.italic = newValue
                             workingTheme.elementStyles[element] = style
                         }
                     ))

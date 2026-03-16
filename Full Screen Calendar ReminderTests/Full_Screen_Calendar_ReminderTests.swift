@@ -172,24 +172,25 @@ struct ThemeServiceTests {
         await MainActor.run {
             let service = ThemeService.shared
             let theme = service.getTheme(for: nil)
-            
-            #expect(theme.id == "default")
+
+            #expect(theme.name == "Pinka Blua")
         }
     }
-    
-    @Test("Get theme for calendar")
+
+    @Test("Get theme for calendar with preset assignment")
     func getThemeForCalendar() async {
         await MainActor.run {
             let service = ThemeService.shared
-            
-            // Set a custom theme
-            var customTheme = AlertTheme.defaultTheme(id: "test-calendar", name: "Test")
-            customTheme.solidColor = CodableColor(.blue)
-            service.setTheme(customTheme, for: "test-calendar")
-            
+
+            // Assign a preset to a calendar
+            service.setPreset("Kinetic Orange", for: "test-calendar")
+
             // Retrieve it
             let retrieved = service.getTheme(for: "test-calendar")
-            #expect(retrieved.id == "test-calendar")
+            #expect(retrieved.name == "Kinetic Orange")
+
+            // Clean up
+            service.resetAssignment(for: "test-calendar")
         }
     }
 }

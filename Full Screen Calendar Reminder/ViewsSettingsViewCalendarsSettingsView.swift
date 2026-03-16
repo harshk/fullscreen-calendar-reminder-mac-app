@@ -11,6 +11,8 @@ import EventKit
 struct CalendarsSettingsView: View {
     @ObservedObject var calendarService = CalendarService.shared
     @ObservedObject var settings = AppSettings.shared
+    @ObservedObject var themeService = ThemeService.shared
+    @ObservedObject var presetManager = PresetManager.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -154,8 +156,24 @@ struct CalendarsSettingsView: View {
             
             Text(calendar.title)
                 .font(.subheadline)
-            
+
             Spacer()
+
+            if settings.selectedCalendarIdentifiers.contains(calendar.calendarIdentifier) {
+                Text("Preset:")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Picker("Preset", selection: Binding(
+                    get: { themeService.assignedPresetName(for: calendar.calendarIdentifier) },
+                    set: { themeService.setPreset($0, for: calendar.calendarIdentifier) }
+                )) {
+                    ForEach(presetManager.presets) { preset in
+                        Text(preset.name).tag(preset.name)
+                    }
+                }
+                .frame(width: 150)
+                .labelsHidden()
+            }
         }
         .padding(.horizontal)
         .padding(.vertical, 8)

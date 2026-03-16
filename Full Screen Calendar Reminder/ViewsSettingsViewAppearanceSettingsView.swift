@@ -1,5 +1,5 @@
 //
-//  AppearanceSettingsView.swift
+//  PresetsSettingsView.swift
 //  Full Screen Calendar Reminder
 //
 //  Created by Harsh Kalra on 3/5/26.
@@ -7,26 +7,18 @@
 
 import SwiftUI
 import AppKit
-import EventKit
 import UniformTypeIdentifiers
 
-struct AppearanceSettingsView: View {
-    @ObservedObject var themeService = ThemeService.shared
-    @ObservedObject var calendarService = CalendarService.shared
-    @ObservedObject var appSettings = AppSettings.shared
-    
-    @State private var selectedCalendarID = "default"
+struct PresetsSettingsView: View {
+    @ObservedObject var presetManager = PresetManager.shared
+
+    @State private var selectedPresetName: String = "Pinka Blua"
     @State private var selectedElement: AlertElementIdentifier? = .title
     @State private var workingTheme: AlertTheme
-    @State private var showingResetConfirmation = false
-    @State private var showingImagePicker = false
     @State private var showingSavedConfirmation = false
-    @State private var fontSearchText = ""
-    #if DEBUG
-    @State private var showingSavePresetDialog = false
-    @State private var savePresetName = ""
-    @State private var showingSavedPresetConfirmation = false
-    #endif
+    @State private var showingDeleteConfirmation = false
+    @State private var showingDuplicateDialog = false
+    @State private var duplicateName = ""
 
     private static let availableFonts: [String] = {
         let families = NSFontManager.shared.availableFontFamilies.sorted()
@@ -34,49 +26,103 @@ struct AppearanceSettingsView: View {
     }()
 
     init() {
-        _workingTheme = State(initialValue: ThemeService.shared.getTheme(for: "default"))
+        _workingTheme = State(initialValue: PresetManager.shared.theme(named: "Pinka Blua"))
     }
-    
+
     var body: some View {
         HStack(spacing: 0) {
+            // Preset list
+            presetList
+
+            Divider()
+
             // Preview pane
             previewPane
-            
+
             Divider()
-            
+
             // Editor pane
             editorPane
         }
     }
-    
-    // MARK: - Preview Pane
-    
-    private var previewPane: some View {
-        VStack(spacing: 0) {
-            // Calendar selector
-            HStack {
-                Picker("Editing Theme For:", selection: $selectedCalendarID) {
-                    Text("Default").tag("default")
-                    
-                    let enabledCalendars = calendarService.availableCalendars.filter {
-                        appSettings.selectedCalendarIdentifiers.contains($0.calendarIdentifier)
-                    }
-                    if !enabledCalendars.isEmpty {
-                        Divider()
 
-                        ForEach(enabledCalendars, id: \.calendarIdentifier) { calendar in
-                            Text(calendar.title).tag(calendar.calendarIdentifier)
+    // MARK: - Preset List
+
+    private var presetList: some View {
+        VStack(spacing: 0) {
+            List(selection: $selectedPresetName) {
+                ForEach(presetManager.presets) { preset in
+                    HStack {
+                        if presetManager.isBuiltIn(preset.name) {
+                            Image(systemName: "lock.fill")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
                         }
+                        Text(preset.name)
+                            .lineLimit(1)
                     }
-                }
-                .onChange(of: selectedCalendarID) { newValue in
-                    loadTheme(for: newValue)
+                    .tag(preset.name)
                 }
             }
-            .padding()
-            
+            .onChange(of: selectedPresetName) { newValue in
+                loadPreset(named: newValue)
+            }
+
             Divider()
-            
+
+            VStack(spacing: 8) {
+                Button("Duplicate") {
+                    duplicateName = presetManager.uniqueName(base: selectedPresetName)
+                    showingDuplicateDialog = true
+                }
+                .frame(maxWidth: .infinity)
+
+                if !presetManager.isBuiltIn(selectedPresetName) {
+                    Button("Delete", role: .destructive) {
+                        showingDeleteConfirmation = true
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+
+                #if DEBUG
+                Button("Reveal in Finder") {
+                    presetManager.revealPresetsInFinder()
+                }
+                .font(.caption)
+                .frame(maxWidth: .infinity)
+                #endif
+            }
+            .padding(8)
+        }
+        .frame(width: 180)
+        .alert("Duplicate Preset", isPresented: $showingDuplicateDialog) {
+            TextField("Name", text: $duplicateName)
+            Button("Cancel", role: .cancel) { }
+            Button("Duplicate") {
+                let name = duplicateName.trimmingCharacters(in: .whitespaces)
+                guard !name.isEmpty else { return }
+                presetManager.duplicatePreset(from: selectedPresetName, newName: name)
+                selectedPresetName = name
+            }
+        } message: {
+            Text("Enter a name for the new preset.")
+        }
+        .alert("Delete Preset?", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                ThemeService.shared.clearAssignments(for: selectedPresetName)
+                presetManager.deletePreset(named: selectedPresetName)
+                selectedPresetName = "Pinka Blua"
+            }
+        } message: {
+            Text("This will permanently delete \"\(selectedPresetName)\" and reset any calendars using it.")
+        }
+    }
+
+    // MARK: - Preview Pane
+
+    private var previewPane: some View {
+        VStack(spacing: 0) {
             // Preview - render at actual screen size and scale down to fit
             GeometryReader { geometry in
                 let screenSize = NSScreen.main?.frame.size ?? CGSize(width: 1440, height: 900)
@@ -105,102 +151,26 @@ struct AppearanceSettingsView: View {
                     .frame(width: geometry.size.width, height: geometry.size.height)
                 }
             }
-            
+
             // Actions
             HStack(spacing: 12) {
                 Button("Preview Full Screen") {
                     AlertCoordinator.shared.showPreviewAlert(theme: workingTheme)
                 }
-                
+
                 Spacer()
-                
-                Menu("More") {
-                    Menu("Load Preset...") {
-                        ForEach(AlertTheme.presets, id: \.name) { preset in
-                            Button(preset.name) {
-                                var theme = preset.theme()
-                                theme.id = selectedCalendarID
-                                workingTheme = theme
-                            }
-                        }
-                    }
-
-                    Menu("Duplicate From...") {
-                        if selectedCalendarID != "default" {
-                            Button("Default Theme") {
-                                duplicateTheme(from: "default")
-                            }
-                        }
-
-                        ForEach(calendarService.availableCalendars, id: \.calendarIdentifier) { calendar in
-                            if calendar.calendarIdentifier != selectedCalendarID {
-                                Button(calendar.title) {
-                                    duplicateTheme(from: calendar.calendarIdentifier)
-                                }
-                            }
-                        }
-                    }
-
-                    Button("Reset to Default Theme") {
-                        showingResetConfirmation = true
-                    }
-
-                    #if DEBUG
-                    Divider()
-
-                    Button("Save as Preset...") {
-                        savePresetName = ""
-                        showingSavePresetDialog = true
-                    }
-
-                    Button("Reveal Presets in Finder") {
-                        PresetManager.shared.revealPresetsInFinder()
-                    }
-                    #endif
-                }
             }
             .padding()
         }
         .frame(maxWidth: .infinity)
-        .alert("Reset Theme?", isPresented: $showingResetConfirmation) {
-            Button("Cancel", role: .cancel) { }
-            Button("Reset", role: .destructive) {
-                resetTheme()
-            }
-        } message: {
-            Text("This will reset all customizations for this theme to the default theme.")
-        }
-        #if DEBUG
-        .alert("Save as Preset", isPresented: $showingSavePresetDialog) {
-            TextField("Preset Name", text: $savePresetName)
-            Button("Cancel", role: .cancel) { }
-            Button("Save") {
-                let name = savePresetName.trimmingCharacters(in: .whitespaces)
-                guard !name.isEmpty else { return }
-                PresetManager.shared.savePreset(name: name, theme: workingTheme)
-                showingSavedPresetConfirmation = true
-            }
-        } message: {
-            let existing = PresetManager.shared.loadPresets().map(\.name)
-            if existing.isEmpty {
-                Text("Enter a name for the new preset.")
-            } else {
-                Text("Enter a name for the new preset.\n\nExisting presets: \(existing.joined(separator: ", "))")
-            }
-        }
-        .alert("Preset Saved", isPresented: $showingSavedPresetConfirmation) {
-            Button("OK", role: .cancel) { }
-            Button("Reveal in Finder") {
-                PresetManager.shared.revealPresetsInFinder()
-            }
-        } message: {
-            Text("To bundle this preset with the app, copy the JSON file into the source Presets/ folder.")
-        }
-        #endif
     }
-    
+
     // MARK: - Editor Pane
-    
+
+    private var isEditable: Bool {
+        presetManager.isEditable(selectedPresetName)
+    }
+
     private var editorPane: some View {
         VStack(spacing: 0) {
             ScrollView {
@@ -214,57 +184,64 @@ struct AppearanceSettingsView: View {
                     if selectedElement == nil {
                         backgroundProperties
                     } else if let element = selectedElement {
-                        // Element properties
                         elementProperties(for: element)
                     }
                 }
                 .padding()
             }
+            .disabled(!isEditable)
 
             Divider()
 
-            // Save/Cancel buttons pinned to bottom
+            // Save/Revert buttons pinned to bottom
             HStack(spacing: 12) {
                 Button("Revert Changes") {
-                    loadTheme(for: selectedCalendarID)
+                    loadPreset(named: selectedPresetName)
                 }
 
                 Spacer()
 
-                Button(showingSavedConfirmation ? "Saved!" : "Save Theme") {
-                    saveTheme()
-                    showingSavedConfirmation = true
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                        showingSavedConfirmation = false
+                if isEditable {
+                    Button(showingSavedConfirmation ? "Saved!" : "Save Preset") {
+                        savePreset()
+                        showingSavedConfirmation = true
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            showingSavedConfirmation = false
+                        }
                     }
+                    .buttonStyle(.borderedProminent)
+                } else {
+                    Text("Built-in preset (read-only)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
-                .buttonStyle(.borderedProminent)
             }
             .padding()
         }
         .frame(width: 350)
     }
-    
+
     // MARK: - Element Selector
-    
+
     private var elementSelector: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Select Element")
                 .font(.headline)
-            
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 8) {
+
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 5), spacing: 4) {
                 Button(action: { selectedElement = nil }) {
-                    VStack {
+                    VStack(spacing: 2) {
                         Image(systemName: "photo")
+                            .font(.caption2)
                         Text("Background")
-                            .font(.caption)
+                            .font(.caption2)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 4)
                     .background(selectedElement == nil ? Color.accentColor.opacity(0.2) : Color.clear)
-                    .cornerRadius(8)
+                    .cornerRadius(6)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: 6)
                             .stroke(selectedElement == nil ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: 1)
                     )
                     .contentShape(Rectangle())
@@ -273,17 +250,18 @@ struct AppearanceSettingsView: View {
 
                 ForEach(AlertElementIdentifier.allCases, id: \.self) { element in
                     Button(action: { selectedElement = element }) {
-                        VStack {
+                        VStack(spacing: 2) {
                             Image(systemName: iconForElement(element))
+                                .font(.caption2)
                             Text(labelForElement(element))
-                                .font(.caption)
+                                .font(.caption2)
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 8)
+                        .padding(.vertical, 4)
                         .background(selectedElement == element ? Color.accentColor.opacity(0.2) : Color.clear)
-                        .cornerRadius(8)
+                        .cornerRadius(6)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 8)
+                            RoundedRectangle(cornerRadius: 6)
                                 .stroke(selectedElement == element ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: 1)
                         )
                         .contentShape(Rectangle())
@@ -293,26 +271,26 @@ struct AppearanceSettingsView: View {
             }
         }
     }
-    
+
     // MARK: - Background Properties
-    
+
     private var backgroundProperties: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Background Properties")
                 .font(.headline)
-            
+
             Picker("Type", selection: $workingTheme.backgroundType) {
                 Text("Solid Color").tag(AlertTheme.BackgroundType.solidColor)
                 Text("Image").tag(AlertTheme.BackgroundType.image)
             }
             .pickerStyle(.segmented)
-            
+
             if workingTheme.backgroundType == .solidColor {
                 ColorPicker("Color", selection: Binding(
                     get: { workingTheme.solidColor.color },
                     set: { workingTheme.solidColor = CodableColor($0) }
                 ))
-                
+
                 Slider(
                     value: $workingTheme.solidColorOpacity,
                     in: 0.5...1.0,
@@ -329,9 +307,9 @@ struct AppearanceSettingsView: View {
                             .aspectRatio(contentMode: .fit)
                             .frame(height: 100)
                             .cornerRadius(8)
-                        
+
                         Spacer()
-                        
+
                         Button("Remove") {
                             workingTheme.imageData = nil
                             workingTheme.backgroundType = .solidColor
@@ -339,16 +317,16 @@ struct AppearanceSettingsView: View {
                         .buttonStyle(.borderless)
                     }
                 }
-                
+
                 Button("Choose Image") {
                     showImagePicker()
                 }
-                
+
                 ColorPicker("Overlay Color", selection: Binding(
                     get: { workingTheme.overlayColor.color },
                     set: { workingTheme.overlayColor = CodableColor($0) }
                 ))
-                
+
                 Slider(
                     value: $workingTheme.overlayOpacity,
                     in: 0.0...1.0,
@@ -370,16 +348,16 @@ struct AppearanceSettingsView: View {
             }
         }
     }
-    
+
     // MARK: - Element Properties
-    
+
     @ViewBuilder
     private func elementProperties(for element: AlertElementIdentifier) -> some View {
         if var style = workingTheme.elementStyles[element] {
             VStack(alignment: .leading, spacing: 16) {
                 Text("\(labelForElement(element)) Properties")
                     .font(.headline)
-                
+
                 // Font Family
                 Picker("Font Family", selection: Binding(
                     get: { style.fontFamily },
@@ -395,7 +373,7 @@ struct AppearanceSettingsView: View {
                     }
                 }
 
-                // "Change all fonts" button — shown when this element's font differs from any other
+                // "Change all fonts" button
                 if workingTheme.elementStyles.contains(where: { $0.key != element && $0.value.fontFamily != style.fontFamily }) {
                     Button("Change all fonts to: \(style.fontFamily)") {
                         for key in workingTheme.elementStyles.keys {
@@ -404,7 +382,7 @@ struct AppearanceSettingsView: View {
                     }
                     .font(.caption)
                 }
-                
+
                 // Font Size + Weight
                 HStack {
                     Stepper(
@@ -468,7 +446,7 @@ struct AppearanceSettingsView: View {
                         ))
                     }
                 }
-                
+
 
                 // Uppercase & Italic toggles (for text elements only)
                 if element != .dismissButton {
@@ -505,15 +483,15 @@ struct AppearanceSettingsView: View {
                     )
                 }
 
-                
+
                 // Dismiss button-specific properties
                 if element == .dismissButton {
                     Divider()
-                    
+
                     Text("Icon Properties")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                    
+
                     Stepper(
                         "Icon Size: \(Int(style.iconSize ?? 32))pt",
                         value: Binding(
@@ -526,7 +504,7 @@ struct AppearanceSettingsView: View {
                         in: 16...64,
                         step: 4
                     )
-                    
+
                     ColorPicker("Icon Color", selection: Binding(
                         get: { style.iconColor?.color ?? .white },
                         set: { newValue in
@@ -538,9 +516,9 @@ struct AppearanceSettingsView: View {
             }
         }
     }
-    
+
     // MARK: - Helper Functions
-    
+
     private func iconForElement(_ element: AlertElementIdentifier) -> String {
         switch element {
         case .title: return "textformat.size.larger"
@@ -566,32 +544,23 @@ struct AppearanceSettingsView: View {
         case .dismissButton: return "Dismiss"
         }
     }
-    
-    private func loadTheme(for calendarID: String) {
-        workingTheme = themeService.getTheme(for: calendarID)
+
+    private func loadPreset(named name: String) {
+        workingTheme = presetManager.theme(named: name)
         selectedElement = .title
     }
-    
-    private func saveTheme() {
-        themeService.setTheme(workingTheme, for: selectedCalendarID)
-    }
-    
-    private func resetTheme() {
-        themeService.resetTheme(for: selectedCalendarID)
-        loadTheme(for: selectedCalendarID)
+
+    private func savePreset() {
+        presetManager.savePreset(name: selectedPresetName, theme: workingTheme)
     }
 
-    private func duplicateTheme(from sourceID: String) {
-        workingTheme = themeService.getTheme(for: sourceID)
-    }
-    
     private func showImagePicker() {
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
         panel.allowedContentTypes = [.png, .jpeg, .webP]
-        
+
         if panel.runModal() == .OK, let url = panel.url {
             if let imageData = try? Data(contentsOf: url) {
                 workingTheme.imageData = imageData
@@ -602,6 +571,6 @@ struct AppearanceSettingsView: View {
 }
 
 #Preview {
-    AppearanceSettingsView()
+    PresetsSettingsView()
         .frame(width: 800, height: 600)
 }

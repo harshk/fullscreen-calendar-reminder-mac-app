@@ -97,7 +97,7 @@ struct FullScreenAlertView: View {
                         .foregroundColor(style.fontColor.color)
                         .textCase(style.uppercased == true ? .uppercase : nil)
                         .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
-                        .lineLimit(1)
+                        .lineLimit(2)
                         .minimumScaleFactor(0.5)
                         .truncationMode(.tail)
                         .frame(maxWidth: geometry.size.width * 0.5, alignment: .center)
@@ -118,6 +118,24 @@ struct FullScreenAlertView: View {
                         .contentShape(Rectangle())
                         .onTapGesture { onElementTap?(.startTime) }
                 }
+                
+                // Calendar Name
+                if let style = theme.elementStyles[.calendarName] {
+                    Text(calendarNameText)
+                        .font(style.font)
+                        .tracking(style.letterSpacing ?? 0)
+                        .foregroundColor(style.fontColor.color)
+                        .textCase(style.uppercased == true ? .uppercase : nil)
+                        .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: geometry.size.width * 0.9, alignment: .center)
+                        .contentShape(Rectangle())
+                        .onTapGesture { onElementTap?(.calendarName) }
+//                        .padding(.top, 18)
+                }
+                
+                Spacer()
+                        .frame(height: 72)
 
                 // Location (clickable — opens in Apple Maps)
                 if let location = locationText,
@@ -148,22 +166,6 @@ struct FullScreenAlertView: View {
                             if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }
                         }
                     }
-                    .padding(.top, 72)
-                }
-
-                // Calendar Name
-                if let style = theme.elementStyles[.calendarName] {
-                    Text(calendarNameText)
-                        .font(style.font)
-                        .tracking(style.letterSpacing ?? 0)
-                        .foregroundColor(style.fontColor.color)
-                        .textCase(style.uppercased == true ? .uppercase : nil)
-                        .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: geometry.size.width * 0.9, alignment: .center)
-                        .contentShape(Rectangle())
-                        .onTapGesture { onElementTap?(.calendarName) }
-                        .padding(.top, 72)
                 }
 
                 // Join Meeting Button
@@ -198,7 +200,6 @@ struct FullScreenAlertView: View {
                         }
                     }
                     .frame(maxWidth: geometry.size.width * 0.9, alignment: .center)
-                    .padding(.top, 72)
                 }
 
                 // Queue Counter
@@ -217,7 +218,8 @@ struct FullScreenAlertView: View {
 
                 // Snooze buttons
                 snoozeButtons
-                    .padding(.top, 72)
+//                    .padding(.top, 72)
+                    .padding(.top, 18)
 
                 Spacer()
             }

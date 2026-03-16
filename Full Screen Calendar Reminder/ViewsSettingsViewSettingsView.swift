@@ -11,7 +11,7 @@ struct SettingsView: View {
     enum SettingsTab: Hashable {
         case general
         case calendars
-        case appearance
+        case presets
     }
 
     @State private var selectedTab: SettingsTab = .general
@@ -30,13 +30,14 @@ struct SettingsView: View {
                 }
                 .tag(SettingsTab.calendars)
 
-            AppearanceSettingsView()
+            PresetsSettingsView()
                 .tabItem {
-                    Label("Appearance", systemImage: "paintbrush")
+                    Label("Presets", systemImage: "paintbrush")
                 }
-                .tag(SettingsTab.appearance)
+                .tag(SettingsTab.presets)
         }
-        .frame(width: 800, height: 600)
+        .frame(width: selectedTab == .presets ? 1300 : 800, height: 600)
+        .animation(.easeInOut(duration: 0.2), value: selectedTab)
     }
 }
 

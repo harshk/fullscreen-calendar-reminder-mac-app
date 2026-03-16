@@ -11,115 +11,99 @@ import Combine
 
 class ThemeService: ObservableObject {
     static let shared = ThemeService()
-    
-    @Published private(set) var themes: [String: AlertTheme] = [:]
-    
-    private let themesKey = "alertThemes"
-    
+
+    /// Maps calendar identifier → preset name.
+    @Published private(set) var calendarPresetAssignments: [String: String] = [:]
+
+    private static let defaultPresetName = "Pinka Blua"
+
     private init() {
-        loadThemes()
+        loadAssignments()
+        migrateOldThemesIfNeeded()
     }
-    
-    // MARK: - Theme Management
-    
+
+    // MARK: - Public API
+
     func getTheme(for calendarIdentifier: String?) -> AlertTheme {
-        let id = calendarIdentifier ?? "default"
+        let presetName = assignedPresetName(for: calendarIdentifier)
+        return PresetManager.shared.theme(named: presetName)
+    }
 
-        var theme = themes[id] ?? themes["default"] ?? AlertTheme.defaultTheme()
+    func assignedPresetName(for calendarIdentifier: String?) -> String {
+        guard let id = calendarIdentifier else { return Self.defaultPresetName }
+        return calendarPresetAssignments[id] ?? Self.defaultPresetName
+    }
 
-        // Backfill any missing element styles from the default theme
-        let defaults = AlertTheme.defaultTheme()
-        for element in AlertElementIdentifier.allCases {
-            if theme.elementStyles[element] == nil {
-                theme.elementStyles[element] = defaults.elementStyles[element]
-            }
+    func setPreset(_ presetName: String, for calendarIdentifier: String) {
+        calendarPresetAssignments[calendarIdentifier] = presetName
+        saveAssignments()
+    }
+
+    func resetAssignment(for calendarIdentifier: String) {
+        calendarPresetAssignments.removeValue(forKey: calendarIdentifier)
+        saveAssignments()
+    }
+
+    /// When a preset is deleted, remove all assignments pointing to it.
+    func clearAssignments(for presetName: String) {
+        let keysToRemove = calendarPresetAssignments.filter { $0.value == presetName }.map(\.key)
+        for key in keysToRemove {
+            calendarPresetAssignments.removeValue(forKey: key)
         }
+        if !keysToRemove.isEmpty { saveAssignments() }
+    }
 
-        return theme
-    }
-    
-    func setTheme(_ theme: AlertTheme, for calendarIdentifier: String) {
-        themes[calendarIdentifier] = theme
-        saveThemes()
-    }
-    
-    func resetTheme(for calendarIdentifier: String) {
-        if calendarIdentifier == "default" {
-            themes["default"] = AlertTheme.defaultTheme()
-        } else {
-            themes.removeValue(forKey: calendarIdentifier)
-        }
-        saveThemes()
-    }
-    
-    func duplicateTheme(from sourceIdentifier: String, to targetIdentifier: String) {
-        guard let sourceTheme = themes[sourceIdentifier] else { return }
-        
-        var newTheme = sourceTheme
-        newTheme.id = targetIdentifier
-        themes[targetIdentifier] = newTheme
-        saveThemes()
-    }
-    
-    func ensureDefaultTheme() {
-        if themes["default"] == nil {
-            themes["default"] = AlertTheme.defaultTheme()
-            saveThemes()
-        }
-    }
-    
-    // MARK: - Persistence (file-based to avoid UserDefaults 4MB limit)
+    // MARK: - Persistence
 
-    private var themesFileURL: URL {
+    private var assignmentsFileURL: URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let appDir = appSupport.appendingPathComponent("Full Screen Calendar Reminder", isDirectory: true)
         try? FileManager.default.createDirectory(at: appDir, withIntermediateDirectories: true)
+        return appDir.appendingPathComponent("preset_assignments.json")
+    }
+
+    private func loadAssignments() {
+        guard let data = try? Data(contentsOf: assignmentsFileURL),
+              let decoded = try? JSONDecoder().decode([String: String].self, from: data) else {
+            return
+        }
+        calendarPresetAssignments = decoded
+    }
+
+    private func saveAssignments() {
+        if let data = try? JSONEncoder().encode(calendarPresetAssignments) {
+            try? data.write(to: assignmentsFileURL, options: .atomic)
+        }
+    }
+
+    // MARK: - Migration from old per-calendar themes
+
+    private var oldThemesFileURL: URL {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let appDir = appSupport.appendingPathComponent("Full Screen Calendar Reminder", isDirectory: true)
         return appDir.appendingPathComponent("themes.json")
     }
 
-    private func loadThemes() {
-        // Migrate from UserDefaults if file doesn't exist yet
-        if !FileManager.default.fileExists(atPath: themesFileURL.path),
-           let legacyData = UserDefaults.standard.data(forKey: themesKey),
-           let decoded = try? JSONDecoder().decode([String: AlertTheme].self, from: legacyData) {
-            themes = decoded
-            saveThemes()
-            UserDefaults.standard.removeObject(forKey: themesKey)
+    private func migrateOldThemesIfNeeded() {
+        let fileURL = oldThemesFileURL
+        guard FileManager.default.fileExists(atPath: fileURL.path),
+              let data = try? Data(contentsOf: fileURL),
+              let oldThemes = try? JSONDecoder().decode([String: AlertTheme].self, from: data) else {
             return
         }
 
-        guard let data = try? Data(contentsOf: themesFileURL),
-              let decoded = try? JSONDecoder().decode([String: AlertTheme].self, from: data) else {
-            themes["default"] = AlertTheme.defaultTheme()
-            saveThemes()
-            return
+        let presetManager = PresetManager.shared
+
+        for (calendarID, theme) in oldThemes where calendarID != "default" {
+            let presetName = presetManager.uniqueName(base: theme.name.isEmpty ? "Migrated" : theme.name)
+            presetManager.savePreset(name: presetName, theme: theme)
+            calendarPresetAssignments[calendarID] = presetName
         }
 
-        themes = decoded
+        saveAssignments()
 
-        if themes["default"] == nil {
-            themes["default"] = AlertTheme.defaultTheme()
-        }
-
-        // Backfill missing element styles into all saved themes
-        let defaults = AlertTheme.defaultTheme()
-        var didChange = false
-        for key in themes.keys {
-            for element in AlertElementIdentifier.allCases {
-                if themes[key]?.elementStyles[element] == nil {
-                    themes[key]?.elementStyles[element] = defaults.elementStyles[element]
-                    didChange = true
-                }
-            }
-        }
-        if didChange {
-            saveThemes()
-        }
-    }
-
-    func saveThemes() {
-        if let encoded = try? JSONEncoder().encode(themes) {
-            try? encoded.write(to: themesFileURL, options: .atomic)
-        }
+        // Archive the old file
+        let backupURL = fileURL.deletingPathExtension().appendingPathExtension("json.backup")
+        try? FileManager.default.moveItem(at: fileURL, to: backupURL)
     }
 }

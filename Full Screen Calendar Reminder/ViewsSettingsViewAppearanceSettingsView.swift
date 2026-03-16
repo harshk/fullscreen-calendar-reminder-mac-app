@@ -471,6 +471,14 @@ struct PresetsSettingsView: View {
                         }
                     ))
 
+                    let hasItalic = style.fontFamily == "System" || {
+                        guard let members = NSFontManager.shared.availableMembers(ofFontFamily: style.fontFamily) else { return false }
+                        return members.contains { member in
+                            let traits = (member[3] as? Int) ?? 0
+                            return traits & Int(NSFontTraitMask.italicFontMask.rawValue) != 0
+                        }
+                    }()
+
                     Toggle("Italic", isOn: Binding(
                         get: { style.italic ?? false },
                         set: { newValue in
@@ -478,6 +486,7 @@ struct PresetsSettingsView: View {
                             workingTheme.elementStyles[element] = style
                         }
                     ))
+                    .disabled(!hasItalic)
                 }
 
                 // Dismiss button icon properties

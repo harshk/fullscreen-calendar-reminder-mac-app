@@ -75,24 +75,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         panel.backgroundColor = .clear
         panel.hasShadow = true
 
-        let visualEffect = NSVisualEffectView(frame: NSRect(origin: .zero, size: contentSize))
-        visualEffect.material = .menu
-        visualEffect.state = .active
-        visualEffect.blendingMode = .behindWindow
-        visualEffect.wantsLayer = true
-        visualEffect.layer?.cornerRadius = 10
-        visualEffect.layer?.masksToBounds = true
-
         let hostingView = NSHostingView(rootView:
             MenuBarView()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         )
-        hostingView.frame = visualEffect.bounds
-        hostingView.autoresizingMask = [.width, .height]
-        hostingView.layer?.backgroundColor = .clear
-        visualEffect.addSubview(hostingView)
 
-        panel.contentView = visualEffect
+        if #available(macOS 26.0, *) {
+            let glassView = NSGlassEffectView()
+            glassView.frame = NSRect(origin: .zero, size: contentSize)
+            glassView.autoresizingMask = [.width, .height]
+            hostingView.frame = glassView.bounds
+            hostingView.autoresizingMask = [.width, .height]
+            hostingView.layer?.backgroundColor = .clear
+            glassView.contentView = hostingView
+            panel.contentView = glassView
+        } else {
+            let visualEffect = NSVisualEffectView(frame: NSRect(origin: .zero, size: contentSize))
+            visualEffect.material = .menu
+            visualEffect.state = .active
+            visualEffect.blendingMode = .behindWindow
+            visualEffect.wantsLayer = true
+            visualEffect.layer?.cornerRadius = 10
+            visualEffect.layer?.masksToBounds = true
+            hostingView.frame = visualEffect.bounds
+            hostingView.autoresizingMask = [.width, .height]
+            hostingView.layer?.backgroundColor = .clear
+            visualEffect.addSubview(hostingView)
+            panel.contentView = visualEffect
+        }
         self.panel = panel
         
         // Hide dock icon when settings window closes

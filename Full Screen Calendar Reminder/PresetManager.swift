@@ -120,18 +120,7 @@ class PresetManager: ObservableObject {
         var seen = Set<String>()
         builtInNames = []
 
-        // 1. Hardcoded presets (always first)
-        let hardcoded: [PresetTheme] = [
-            PresetTheme(name: "Pinka Blua", theme: AlertTheme.defaultTheme()),
-            PresetTheme(name: "Kinetic Orange", theme: AlertTheme.kineticOrangeTheme()),
-        ]
-        for preset in hardcoded {
-            builtInNames.insert(preset.name)
-            result.append(preset)
-            seen.insert(preset.name)
-        }
-
-        // 2. Bundled JSON presets
+        // 1. Bundled JSON presets
         let bundleLocations: [URL?] = [
             Bundle.main.resourceURL?.appendingPathComponent("Presets"),
             Bundle.main.resourceURL,
@@ -149,7 +138,7 @@ class PresetManager: ObservableObject {
             }
         }
 
-        // 3. Custom presets from App Support (can override built-in in DEBUG)
+        // 2. Custom presets from App Support (can override built-in in DEBUG)
         let localFiles = (try? FileManager.default.contentsOfDirectory(
             at: localPresetsDir, includingPropertiesForKeys: nil
         )) ?? []

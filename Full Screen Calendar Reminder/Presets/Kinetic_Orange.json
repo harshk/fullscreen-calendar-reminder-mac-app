@@ -1,0 +1,149 @@
+{
+  "name" : "Kinetic Orange",
+  "theme" : {
+    "backgroundType" : "solidColor",
+    "elementStyles" : [
+      "snoozeButton",
+      {
+        "buttonBackgroundColor" : {
+          "blue" : 0,
+          "green" : 0,
+          "opacity" : 0.15,
+          "red" : 0
+        },
+        "fontColor" : {
+          "blue" : 0,
+          "green" : 0,
+          "opacity" : 0.9,
+          "red" : 0
+        },
+        "fontFamily" : "Space Mono",
+        "fontSize" : 14,
+        "fontWeight" : 0.2
+      },
+      "location",
+      {
+        "fontColor" : {
+          "blue" : 0,
+          "green" : 0,
+          "opacity" : 0.8,
+          "red" : 0
+        },
+        "fontFamily" : "Space Mono",
+        "fontSize" : 28,
+        "fontWeight" : 0
+      },
+      "joinButton",
+      {
+        "buttonBackgroundColor" : {
+          "blue" : 0,
+          "green" : 0,
+          "opacity" : 1,
+          "red" : 0
+        },
+        "fontColor" : {
+          "blue" : 0,
+          "green" : 0.3019607663154602,
+          "opacity" : 1,
+          "red" : 1
+        },
+        "fontFamily" : "Archivo Black",
+        "fontSize" : 24,
+        "fontWeight" : 0.6,
+        "uppercased" : true
+      },
+      "dismissButton",
+      {
+        "buttonBackgroundColor" : {
+          "blue" : 0,
+          "green" : 0,
+          "opacity" : 0.2,
+          "red" : 0
+        },
+        "fontColor" : {
+          "blue" : 0,
+          "green" : 0,
+          "opacity" : 0.7,
+          "red" : 0
+        },
+        "fontFamily" : "SF Pro",
+        "fontSize" : 24,
+        "fontWeight" : 0,
+        "iconColor" : {
+          "blue" : 0,
+          "green" : 0,
+          "opacity" : 0.7,
+          "red" : 0
+        },
+        "iconSize" : 36
+      },
+      "title",
+      {
+        "fontColor" : {
+          "blue" : 0,
+          "green" : 0,
+          "opacity" : 1,
+          "red" : 0
+        },
+        "fontFamily" : "Archivo Black",
+        "fontSize" : 96,
+        "fontWeight" : 0.6,
+        "uppercased" : true
+      },
+      "calendarName",
+      {
+        "fontColor" : {
+          "blue" : 0,
+          "green" : 0,
+          "opacity" : 0.6,
+          "red" : 0
+        },
+        "fontFamily" : "Space Mono",
+        "fontSize" : 20,
+        "fontWeight" : 0.2,
+        "uppercased" : true
+      },
+      "queueCounter",
+      {
+        "fontColor" : {
+          "blue" : 0,
+          "green" : 0,
+          "opacity" : 0.5,
+          "red" : 0
+        },
+        "fontFamily" : "Space Mono",
+        "fontSize" : 18,
+        "fontWeight" : 0.2
+      },
+      "startTime",
+      {
+        "fontColor" : {
+          "blue" : 0,
+          "green" : 0,
+          "opacity" : 1,
+          "red" : 0
+        },
+        "fontFamily" : "Space Mono",
+        "fontSize" : 48,
+        "fontWeight" : 0.2,
+        "uppercased" : true
+      }
+    ],
+    "id" : "default",
+    "name" : "Kinetic Orange",
+    "overlayColor" : {
+      "blue" : 0,
+      "green" : 0,
+      "opacity" : 1,
+      "red" : 0
+    },
+    "overlayOpacity" : 0,
+    "solidColor" : {
+      "blue" : 0,
+      "green" : 0.3019607663154602,
+      "opacity" : 1,
+      "red" : 1
+    },
+    "solidColorOpacity" : 1
+  }
+}

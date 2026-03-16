@@ -356,6 +356,17 @@ struct AppearanceSettingsView: View {
                 ) {
                     Text("Overlay Opacity: \(Int(workingTheme.overlayOpacity * 100))%")
                 }
+
+                Slider(
+                    value: Binding(
+                        get: { workingTheme.imageBlurRadius ?? 0.3 },
+                        set: { workingTheme.imageBlurRadius = $0 }
+                    ),
+                    in: 0.0...1.0,
+                    step: 0.05
+                ) {
+                    Text("Blur: \(Int((workingTheme.imageBlurRadius ?? 0.3) * 100))%")
+                }
             }
         }
     }

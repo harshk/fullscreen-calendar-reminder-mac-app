@@ -21,6 +21,7 @@ struct AlertTheme: Codable, Identifiable {
     var imageData: Data?
     var overlayColor: CodableColor
     var overlayOpacity: Double
+    var imageBlurRadius: Double?
     
     // Element Styles
     var elementStyles: [AlertElementIdentifier: AlertElementStyle]
@@ -42,6 +43,7 @@ struct AlertTheme: Codable, Identifiable {
             imageData: nil,
             overlayColor: CodableColor(.black),
             overlayOpacity: 0.3,
+            imageBlurRadius: 0.3,
             elementStyles: [
                 .title: AlertElementStyle(
                     fontFamily: "SF Pro",

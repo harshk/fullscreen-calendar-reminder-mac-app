@@ -56,6 +56,7 @@ struct FullScreenAlertView: View {
                         Image(nsImage: nsImage)
                             .resizable()
                             .aspectRatio(contentMode: .fill)
+                            .blur(radius: (theme.imageBlurRadius ?? 0.3) * 50)
                     )
                     .clipped()
                     .ignoresSafeArea()

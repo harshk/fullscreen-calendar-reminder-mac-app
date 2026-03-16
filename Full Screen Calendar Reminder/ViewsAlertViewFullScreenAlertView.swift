@@ -61,12 +61,14 @@ struct FullScreenAlertView: View {
             if let imageData = theme.imageData,
                let nsImage = NSImage(data: imageData) {
                 GeometryReader { geo in
+                    let blurRadius = (theme.imageBlurRadius ?? 0.3) * 50
                     Image(nsImage: nsImage)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                        .blur(radius: (theme.imageBlurRadius ?? 0.3) * 50)
-                        .frame(width: geo.size.width, height: geo.size.height)
+                        .blur(radius: blurRadius)
+                        .frame(width: geo.size.width + blurRadius * 2, height: geo.size.height + blurRadius * 2)
                         .clipped()
+                        .frame(width: geo.size.width, height: geo.size.height)
                 }
                 .ignoresSafeArea()
                     .overlay(

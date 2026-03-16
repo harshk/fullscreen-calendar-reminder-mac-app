@@ -18,7 +18,9 @@ struct FullScreenAlertView: View {
     let onSnooze: (TimeInterval) -> Void
     let onJoinMeeting: (URL) -> Void
     var onElementTap: ((AlertElementIdentifier?) -> Void)? = nil
-    
+
+    @State private var contentOpacity: Double = 0
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -31,12 +33,19 @@ struct FullScreenAlertView: View {
                 if isPrimaryScreen {
                     // Full content on primary screen
                     primaryScreenContent(geometry: geometry)
+                        .opacity(contentOpacity)
+                        .animation(.easeIn(duration: 1.0), value: contentOpacity)
                 } else {
                     // Simplified content on secondary screens
                     secondaryScreenContent(geometry: geometry)
+                        .opacity(contentOpacity)
+                        .animation(.easeIn(duration: 1.0), value: contentOpacity)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .onAppear {
+                contentOpacity = 1.0
+            }
         }
     }
     

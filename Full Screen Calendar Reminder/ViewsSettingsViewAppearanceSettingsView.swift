@@ -51,17 +51,24 @@ struct PresetsSettingsView: View {
     private var presetList: some View {
         VStack(spacing: 0) {
             List(selection: $selectedPresetName) {
-                ForEach(presetManager.presets) { preset in
-                    HStack {
-                        if presetManager.isBuiltIn(preset.name) {
+                Section("Built-in Presets") {
+                    ForEach(presetManager.presets.filter { presetManager.isBuiltIn($0.name) }) { preset in
+                        HStack {
                             Image(systemName: "lock.fill")
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
+                            Text(preset.name)
+                                .lineLimit(1)
                         }
+                        .tag(preset.name)
+                    }
+                }
+                Section("Custom Presets") {
+                    ForEach(presetManager.presets.filter { !presetManager.isBuiltIn($0.name) }) { preset in
                         Text(preset.name)
                             .lineLimit(1)
+                            .tag(preset.name)
                     }
-                    .tag(preset.name)
                 }
             }
             .onChange(of: selectedPresetName) { newValue in
@@ -77,12 +84,11 @@ struct PresetsSettingsView: View {
                 }
                 .frame(maxWidth: .infinity)
 
-                if !presetManager.isBuiltIn(selectedPresetName) {
-                    Button("Delete", role: .destructive) {
-                        showingDeleteConfirmation = true
-                    }
-                    .frame(maxWidth: .infinity)
+                Button("Delete", role: .destructive) {
+                    showingDeleteConfirmation = true
                 }
+                .frame(maxWidth: .infinity)
+                .disabled(presetManager.isBuiltIn(selectedPresetName))
             }
             .padding(8)
         }

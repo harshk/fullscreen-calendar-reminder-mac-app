@@ -70,8 +70,8 @@ struct PresetsSettingsView: View {
 
             Divider()
 
-            VStack(spacing: 8) {
-                Button("Duplicate") {
+            HStack(spacing: 8) {
+                Button("Copy") {
                     duplicateName = presetManager.uniqueName(base: selectedPresetName)
                     showingDuplicateDialog = true
                 }
@@ -87,10 +87,10 @@ struct PresetsSettingsView: View {
             .padding(8)
         }
         .frame(width: 180)
-        .alert("Duplicate Preset", isPresented: $showingDuplicateDialog) {
+        .alert("Copy Preset", isPresented: $showingDuplicateDialog) {
             TextField("Name", text: $duplicateName)
             Button("Cancel", role: .cancel) { }
-            Button("Duplicate") {
+            Button("Copy") {
                 let name = duplicateName.trimmingCharacters(in: .whitespaces)
                 guard !name.isEmpty else { return }
                 presetManager.duplicatePreset(from: selectedPresetName, newName: name)

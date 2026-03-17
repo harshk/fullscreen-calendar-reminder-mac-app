@@ -1,0 +1,68 @@
+{
+  "name" : "Teal Lavender",
+  "theme" : {
+    "backgroundColor" : {
+      "blue" : 0.91,
+      "green" : 0.72,
+      "opacity" : 1,
+      "red" : 0.78
+    },
+    "backgroundOpacity" : 0.95,
+    "countdownColor" : {
+      "blue" : 0.33,
+      "green" : 0.30,
+      "opacity" : 0.75,
+      "red" : 0.09
+    },
+    "disableButtonBackgroundColor" : {
+      "blue" : 0.33,
+      "green" : 0.30,
+      "opacity" : 0.9,
+      "red" : 0.09
+    },
+    "disableButtonTextColor" : {
+      "blue" : 0.91,
+      "green" : 0.72,
+      "opacity" : 1,
+      "red" : 0.78
+    },
+    "dismissButtonColor" : {
+      "blue" : 0.78,
+      "green" : 0.60,
+      "opacity" : 0.6,
+      "red" : 0.65
+    },
+    "dismissIconColor" : {
+      "blue" : 0.33,
+      "green" : 0.30,
+      "opacity" : 0.8,
+      "red" : 0.09
+    },
+    "id" : "default",
+    "joinButtonBackgroundColor" : {
+      "blue" : 0.33,
+      "green" : 0.30,
+      "opacity" : 1,
+      "red" : 0.09
+    },
+    "joinButtonTextColor" : {
+      "blue" : 0.91,
+      "green" : 0.72,
+      "opacity" : 1,
+      "red" : 0.78
+    },
+    "name" : "Teal Lavender",
+    "progressRingColor" : {
+      "blue" : 0.33,
+      "green" : 0.30,
+      "opacity" : 0.6,
+      "red" : 0.09
+    },
+    "titleColor" : {
+      "blue" : 0.33,
+      "green" : 0.30,
+      "opacity" : 1,
+      "red" : 0.09
+    }
+  }
+}

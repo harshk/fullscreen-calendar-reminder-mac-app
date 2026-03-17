@@ -15,10 +15,15 @@ class ThemeService: ObservableObject {
     /// Maps calendar identifier → preset name.
     @Published private(set) var calendarPresetAssignments: [String: String] = [:]
 
+    /// Maps calendar identifier → pre-alert preset name.
+    @Published private(set) var calendarPreAlertAssignments: [String: String] = [:]
+
     private static let defaultPresetName = "Pinka Blua"
+    private static let defaultPreAlertPresetName = "Basic"
 
     private init() {
         loadAssignments()
+        loadPreAlertAssignments()
         migrateOldThemesIfNeeded()
     }
 
@@ -42,6 +47,36 @@ class ThemeService: ObservableObject {
     func resetAssignment(for calendarIdentifier: String) {
         calendarPresetAssignments.removeValue(forKey: calendarIdentifier)
         saveAssignments()
+    }
+
+    // MARK: - Pre-Alert Preset API
+
+    func getPreAlertTheme(for calendarIdentifier: String?) -> PreAlertTheme {
+        let presetName = assignedPreAlertPresetName(for: calendarIdentifier)
+        return PreAlertPresetManager.shared.theme(named: presetName)
+    }
+
+    func assignedPreAlertPresetName(for calendarIdentifier: String?) -> String {
+        guard let id = calendarIdentifier else { return Self.defaultPreAlertPresetName }
+        return calendarPreAlertAssignments[id] ?? Self.defaultPreAlertPresetName
+    }
+
+    func setPreAlertPreset(_ presetName: String, for calendarIdentifier: String) {
+        calendarPreAlertAssignments[calendarIdentifier] = presetName
+        savePreAlertAssignments()
+    }
+
+    func resetPreAlertAssignment(for calendarIdentifier: String) {
+        calendarPreAlertAssignments.removeValue(forKey: calendarIdentifier)
+        savePreAlertAssignments()
+    }
+
+    func clearPreAlertAssignments(for presetName: String) {
+        let keysToRemove = calendarPreAlertAssignments.filter { $0.value == presetName }.map(\.key)
+        for key in keysToRemove {
+            calendarPreAlertAssignments.removeValue(forKey: key)
+        }
+        if !keysToRemove.isEmpty { savePreAlertAssignments() }
     }
 
     /// When a preset is deleted, remove all assignments pointing to it.
@@ -73,6 +108,27 @@ class ThemeService: ObservableObject {
     private func saveAssignments() {
         if let data = try? JSONEncoder().encode(calendarPresetAssignments) {
             try? data.write(to: assignmentsFileURL, options: .atomic)
+        }
+    }
+
+    private var preAlertAssignmentsFileURL: URL {
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let appDir = appSupport.appendingPathComponent("Full Screen Calendar Reminder", isDirectory: true)
+        try? FileManager.default.createDirectory(at: appDir, withIntermediateDirectories: true)
+        return appDir.appendingPathComponent("pre_alert_preset_assignments.json")
+    }
+
+    private func loadPreAlertAssignments() {
+        guard let data = try? Data(contentsOf: preAlertAssignmentsFileURL),
+              let decoded = try? JSONDecoder().decode([String: String].self, from: data) else {
+            return
+        }
+        calendarPreAlertAssignments = decoded
+    }
+
+    private func savePreAlertAssignments() {
+        if let data = try? JSONEncoder().encode(calendarPreAlertAssignments) {
+            try? data.write(to: preAlertAssignmentsFileURL, options: .atomic)
         }
     }
 

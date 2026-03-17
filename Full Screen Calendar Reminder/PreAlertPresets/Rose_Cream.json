@@ -1,0 +1,68 @@
+{
+  "name" : "Rose Cream",
+  "theme" : {
+    "backgroundColor" : {
+      "blue" : 0.41999998688697815,
+      "green" : 0.2799999713897705,
+      "opacity" : 1,
+      "red" : 0.9100000262260437
+    },
+    "backgroundOpacity" : 0.95,
+    "countdownColor" : {
+      "blue" : 0.8799999952316284,
+      "green" : 0.9599999785423279,
+      "opacity" : 0.7,
+      "red" : 1
+    },
+    "disableButtonBackgroundColor" : {
+      "blue" : 0.8799999952316284,
+      "green" : 0.9599999785423279,
+      "opacity" : 0.9,
+      "red" : 1
+    },
+    "disableButtonTextColor" : {
+      "blue" : 0.41999998688697815,
+      "green" : 0.2799999713897705,
+      "opacity" : 1,
+      "red" : 0.9100000262260437
+    },
+    "dismissButtonColor" : {
+      "blue" : 0.34999996423721313,
+      "green" : 0.21999996900558472,
+      "opacity" : 0.6,
+      "red" : 0.7799999713897705
+    },
+    "dismissIconColor" : {
+      "blue" : 0.8799999952316284,
+      "green" : 0.9599999785423279,
+      "opacity" : 0.8,
+      "red" : 1
+    },
+    "id" : "default",
+    "joinButtonBackgroundColor" : {
+      "blue" : 0.34999996423721313,
+      "green" : 0.8500000238418579,
+      "opacity" : 1,
+      "red" : 1
+    },
+    "joinButtonTextColor" : {
+      "blue" : 0.41999998688697815,
+      "green" : 0.2799999713897705,
+      "opacity" : 1,
+      "red" : 0.9100000262260437
+    },
+    "name" : "Rose Cream",
+    "progressRingColor" : {
+      "blue" : 0.8799999952316284,
+      "green" : 0.9599999785423279,
+      "opacity" : 0.6,
+      "red" : 1
+    },
+    "titleColor" : {
+      "blue" : 0.8799999952316284,
+      "green" : 0.9599999785423279,
+      "opacity" : 1,
+      "red" : 1
+    }
+  }
+}

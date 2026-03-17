@@ -12,6 +12,7 @@ struct SettingsView: View {
         case general
         case calendars
         case presets
+        case preAlertPresets
     }
 
     @State private var selectedTab: SettingsTab = .general
@@ -35,8 +36,14 @@ struct SettingsView: View {
                     Label("Presets", systemImage: "paintbrush")
                 }
                 .tag(SettingsTab.presets)
+
+            PreAlertPresetsSettingsView()
+                .tabItem {
+                    Label("Pre-Alert", systemImage: "bell.badge")
+                }
+                .tag(SettingsTab.preAlertPresets)
         }
-        .frame(width: selectedTab == .presets ? 1300 : 800, height: 600)
+        .frame(width: (selectedTab == .presets || selectedTab == .preAlertPresets) ? 1300 : 800, height: 600)
         .animation(.easeInOut(duration: 0.2), value: selectedTab)
     }
 }

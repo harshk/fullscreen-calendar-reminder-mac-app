@@ -31,7 +31,8 @@ class PreAlertManager: ObservableObject {
         guard !preAlertEventIDs.contains(event.id) else { return }
         preAlertEventIDs.insert(event.id)
         isShowingPreAlert = true
-        showBanner(eventID: event.id, title: event.title, startDate: event.startDate, color: event.calendar.color, videoURL: event.videoConferenceURL)
+        let theme = ThemeService.shared.getPreAlertTheme(for: event.calendar.identifier)
+        showBanner(eventID: event.id, title: event.title, startDate: event.startDate, color: event.calendar.color, videoURL: event.videoConferenceURL, preAlertTheme: theme)
     }
 
     /// Show pre-alert for an upcoming custom reminder.
@@ -40,7 +41,8 @@ class PreAlertManager: ObservableObject {
         guard !preAlertEventIDs.contains(id) else { return }
         preAlertEventIDs.insert(id)
         isShowingPreAlert = true
-        showBanner(eventID: id, title: reminder.title, startDate: reminder.scheduledDate, color: .orange, videoURL: nil)
+        let theme = ThemeService.shared.getPreAlertTheme(for: nil)
+        showBanner(eventID: id, title: reminder.title, startDate: reminder.scheduledDate, color: .orange, videoURL: nil, preAlertTheme: theme)
     }
 
     /// Dismiss everything and clean up.
@@ -77,12 +79,20 @@ class PreAlertManager: ObservableObject {
     func showTestPreAlert(for event: CalendarEvent) {
         dismiss()
         isShowingPreAlert = true
-        showBanner(eventID: event.id, title: event.title, startDate: event.startDate, color: event.calendar.color, videoURL: event.videoConferenceURL)
+        let theme = ThemeService.shared.getPreAlertTheme(for: event.calendar.identifier)
+        showBanner(eventID: event.id, title: event.title, startDate: event.startDate, color: event.calendar.color, videoURL: event.videoConferenceURL, preAlertTheme: theme)
+    }
+
+    func showTestPreAlert(theme: PreAlertTheme) {
+        dismiss()
+        isShowingPreAlert = true
+        let mock = CalendarEvent.mock()
+        showBanner(eventID: mock.id, title: mock.title, startDate: mock.startDate, color: mock.calendar.color, videoURL: mock.videoConferenceURL, preAlertTheme: theme)
     }
 
     // MARK: - Floating Banner
 
-    private func showBanner(eventID: String, title: String, startDate: Date, color: Color, videoURL: URL?) {
+    private func showBanner(eventID: String, title: String, startDate: Date, color: Color, videoURL: URL?, preAlertTheme: PreAlertTheme) {
         dismissBanner()
 
         guard let screen = NSScreen.main else { return }
@@ -115,6 +125,7 @@ class PreAlertManager: ObservableObject {
             startDate: startDate,
             color: color,
             videoURL: videoURL,
+            preAlertTheme: preAlertTheme,
             onDismiss: { [weak self] in
                 DispatchQueue.main.async { self?.dismiss() }
             },
@@ -167,6 +178,7 @@ struct PreAlertBannerView: View {
     let startDate: Date
     let color: Color
     let videoURL: URL?
+    let preAlertTheme: PreAlertTheme
     let onDismiss: () -> Void
     let onJoin: (URL) -> Void
     let onDisableAlerts: () -> Void
@@ -181,20 +193,20 @@ struct PreAlertBannerView: View {
             // Dismiss X button with progress ring
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.15))
+                    .fill(preAlertTheme.dismissButtonColor.color)
                     .frame(width: 28, height: 28)
 
                 if bannerDuration > 0 {
                     Circle()
                         .trim(from: 0, to: progress)
-                        .stroke(Color.white.opacity(0.4), lineWidth: 2.5)
+                        .stroke(preAlertTheme.progressRingColor.color, lineWidth: 2.5)
                         .frame(width: 28, height: 28)
                         .rotationEffect(.degrees(-90))
                 }
 
                 Image(systemName: "xmark")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(preAlertTheme.dismissIconColor.color)
             }
             .contentShape(Circle())
             .onTapGesture {
@@ -206,7 +218,7 @@ struct PreAlertBannerView: View {
                 HStack(spacing: 8) {
                     Text(title)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(preAlertTheme.titleColor.color)
                         .lineLimit(1)
                         .truncationMode(.tail)
                     Circle()
@@ -217,17 +229,17 @@ struct PreAlertBannerView: View {
                 // Countdown timer
                 Text(countdown)
                     .font(.system(size: 13, weight: .medium).monospacedDigit())
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundColor(preAlertTheme.countdownColor.color)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
             // Bottom row: Disable and Join buttons
             HStack(spacing: 8) {
                 Text(AppStrings.disableAlertsForEvent)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.9))
+                    .foregroundColor(preAlertTheme.disableButtonTextColor.color)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 5)
-                    .background(Capsule().fill(Color.red.opacity(0.8)))
+                    .background(Capsule().fill(preAlertTheme.disableButtonBackgroundColor.color))
                     .contentShape(Capsule())
                     .onTapGesture {
                         onDisableAlerts()
@@ -236,10 +248,10 @@ struct PreAlertBannerView: View {
                 if let videoURL {
                     Text("Join")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundColor(preAlertTheme.joinButtonTextColor.color)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 5)
-                        .background(Capsule().fill(Color(red: 0.2, green: 0.6, blue: 1.0)))
+                        .background(Capsule().fill(preAlertTheme.joinButtonBackgroundColor.color))
                         .contentShape(Capsule())
                         .onTapGesture {
                             onJoin(videoURL)
@@ -255,7 +267,7 @@ struct PreAlertBannerView: View {
         .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Color(red: 0.12, green: 0.12, blue: 0.16).opacity(0.95))
+                .fill(preAlertTheme.backgroundColor.color.opacity(preAlertTheme.backgroundOpacity))
         )
         .shadow(color: .black.opacity(0.3), radius: 12, y: 4)
         .onAppear {

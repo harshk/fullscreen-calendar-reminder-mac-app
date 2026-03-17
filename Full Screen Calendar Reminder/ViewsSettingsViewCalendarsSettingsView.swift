@@ -13,6 +13,7 @@ struct CalendarsSettingsView: View {
     @ObservedObject var settings = AppSettings.shared
     @ObservedObject var themeService = ThemeService.shared
     @ObservedObject var presetManager = PresetManager.shared
+    @ObservedObject var preAlertPresetManager = PreAlertPresetManager.shared
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -168,6 +169,20 @@ struct CalendarsSettingsView: View {
                     set: { themeService.setPreset($0, for: calendar.calendarIdentifier) }
                 )) {
                     ForEach(presetManager.presets) { preset in
+                        Text(preset.name).tag(preset.name)
+                    }
+                }
+                .frame(width: 150)
+                .labelsHidden()
+
+                Text("Pre-Alert:")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                Picker("Pre-Alert", selection: Binding(
+                    get: { themeService.assignedPreAlertPresetName(for: calendar.calendarIdentifier) },
+                    set: { themeService.setPreAlertPreset($0, for: calendar.calendarIdentifier) }
+                )) {
+                    ForEach(preAlertPresetManager.presets) { preset in
                         Text(preset.name).tag(preset.name)
                     }
                 }

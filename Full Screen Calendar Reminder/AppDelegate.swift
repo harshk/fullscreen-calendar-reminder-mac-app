@@ -150,8 +150,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func updateMenuBarIcon() {
         if let button = statusItem?.button {
             let isPaused = AppSettings.shared.isPaused
-            let iconName = isPaused ? "bell.slash.fill" : "bell.fill"
-            button.image = NSImage(systemSymbolName: iconName, accessibilityDescription: "Full Screen Calendar Reminder")
+            if isPaused {
+                button.image = NSImage(systemSymbolName: "bell.slash.fill", accessibilityDescription: "Full Screen Calendar Reminder (Paused)")
+            } else {
+                let icon = NSImage(named: "StatusBarIcon")
+                icon?.isTemplate = true
+                button.image = icon
+            }
         }
     }
     

@@ -87,7 +87,7 @@ class PreAlertManager: ObservableObject {
 
         guard let screen = NSScreen.main else { return }
         let bannerWidth: CGFloat = 460
-        let bannerHeight: CGFloat = 72
+        let bannerHeight: CGFloat = 108
 
         let x = screen.frame.midX - bannerWidth / 2
         let menuBarHeight: CGFloat = NSApplication.shared.mainMenu?.menuBarHeight ?? 24
@@ -172,71 +172,83 @@ struct PreAlertBannerView: View {
     let onDisableAlerts: () -> Void
 
     @State private var countdown: String = ""
+    @State private var progress: CGFloat = 1.0
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    private let bannerDuration = AppSettings.shared.preAlertDuration
 
     var body: some View {
-        HStack(spacing: 12) {
-            // Color dot
-            Circle()
-                .fill(color)
-                .frame(width: 10, height: 10)
-
-            // Title and disable button
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-
-                Text(AppStrings.disableAlertsForEvent)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.9))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(Color.red.opacity(0.8))
-                    .cornerRadius(4)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        onDisableAlerts()
-                    }
-            }
-
-            Spacer()
-
-            // Countdown timer
-            Text(countdown)
-                .font(.system(size: 13, weight: .medium).monospacedDigit())
-                .foregroundColor(.white.opacity(0.8))
-
-            // Join button (conditional)
-            if let videoURL {
-                Text("Join")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 5)
-                    .background(Color(red: 0.2, green: 0.6, blue: 1.0))
-                    .cornerRadius(6)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        onJoin(videoURL)
-                        onDismiss()
-                    }
-            }
-
-            // Dismiss X button
+        HStack(alignment: .top, spacing: 12) {
+            // Dismiss X button with progress ring
             ZStack {
                 Circle()
                     .fill(Color.white.opacity(0.15))
-                    .frame(width: 22, height: 22)
+                    .frame(width: 28, height: 28)
+
+                if bannerDuration > 0 {
+                    Circle()
+                        .trim(from: 0, to: progress)
+                        .stroke(Color.white.opacity(0.4), lineWidth: 2.5)
+                        .frame(width: 28, height: 28)
+                        .rotationEffect(.degrees(-90))
+                }
+
                 Image(systemName: "xmark")
-                    .font(.system(size: 11, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.6))
             }
             .contentShape(Circle())
             .onTapGesture {
                 onDismiss()
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                // Title row
+                HStack(spacing: 8) {
+                    Text(title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Circle()
+                        .fill(color)
+                        .frame(width: 10, height: 10)
+                }
+
+                // Countdown timer
+                Text(countdown)
+                    .font(.system(size: 13, weight: .medium).monospacedDigit())
+                    .foregroundColor(.white.opacity(0.8))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+            // Bottom row: Disable and Join buttons
+            HStack(spacing: 8) {
+                Text(AppStrings.disableAlertsForEvent)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.9))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 5)
+                    .background(Capsule().fill(Color.red.opacity(0.8)))
+                    .contentShape(Capsule())
+                    .onTapGesture {
+                        onDisableAlerts()
+                    }
+
+                if let videoURL {
+                    Text("Join")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 5)
+                        .background(Capsule().fill(Color(red: 0.2, green: 0.6, blue: 1.0)))
+                        .contentShape(Capsule())
+                        .onTapGesture {
+                            onJoin(videoURL)
+                            onDismiss()
+                        }
+                }
+
+                Spacer()
+            }
             }
         }
         .padding(.horizontal, 16)
@@ -246,7 +258,14 @@ struct PreAlertBannerView: View {
                 .fill(Color(red: 0.12, green: 0.12, blue: 0.16).opacity(0.95))
         )
         .shadow(color: .black.opacity(0.3), radius: 12, y: 4)
-        .onAppear { updateCountdown() }
+        .onAppear {
+            updateCountdown()
+            if bannerDuration > 0 {
+                withAnimation(.linear(duration: bannerDuration)) {
+                    progress = 0.0
+                }
+            }
+        }
         .onReceive(timer) { _ in updateCountdown() }
     }
 

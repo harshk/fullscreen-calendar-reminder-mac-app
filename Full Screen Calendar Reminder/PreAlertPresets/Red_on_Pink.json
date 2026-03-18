@@ -1,0 +1,68 @@
+{
+  "name" : "Red on Pink",
+  "theme" : {
+    "backgroundColor" : {
+      "blue" : 0.73,
+      "green" : 0.78,
+      "opacity" : 1,
+      "red" : 0.98
+    },
+    "backgroundOpacity" : 0.97,
+    "countdownColor" : {
+      "blue" : 0.20,
+      "green" : 0.26,
+      "opacity" : 0.8,
+      "red" : 0.86
+    },
+    "disableButtonBackgroundColor" : {
+      "blue" : 0.20,
+      "green" : 0.26,
+      "opacity" : 0.9,
+      "red" : 0.86
+    },
+    "disableButtonTextColor" : {
+      "blue" : 0.73,
+      "green" : 0.78,
+      "opacity" : 1,
+      "red" : 0.98
+    },
+    "dismissButtonColor" : {
+      "blue" : 0.20,
+      "green" : 0.26,
+      "opacity" : 0.15,
+      "red" : 0.86
+    },
+    "dismissIconColor" : {
+      "blue" : 0.20,
+      "green" : 0.26,
+      "opacity" : 0.6,
+      "red" : 0.86
+    },
+    "id" : "default",
+    "joinButtonBackgroundColor" : {
+      "blue" : 0.20,
+      "green" : 0.26,
+      "opacity" : 1,
+      "red" : 0.86
+    },
+    "joinButtonTextColor" : {
+      "blue" : 0.73,
+      "green" : 0.78,
+      "opacity" : 1,
+      "red" : 0.98
+    },
+    "name" : "Red on Pink",
+    "progressRingColor" : {
+      "blue" : 0.20,
+      "green" : 0.26,
+      "opacity" : 0.4,
+      "red" : 0.86
+    },
+    "titleColor" : {
+      "blue" : 0.20,
+      "green" : 0.26,
+      "opacity" : 1,
+      "red" : 0.86
+    }
+  }
+}

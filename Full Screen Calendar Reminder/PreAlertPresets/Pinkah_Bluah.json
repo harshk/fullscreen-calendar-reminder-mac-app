@@ -1,0 +1,68 @@
+{
+  "name" : "Pinkah Bluah",
+  "theme" : {
+    "backgroundColor" : {
+      "blue" : 0.58,
+      "green" : 0.08,
+      "opacity" : 1,
+      "red" : 1.0
+    },
+    "backgroundOpacity" : 0.97,
+    "countdownColor" : {
+      "blue" : 1.0,
+      "green" : 0.93,
+      "opacity" : 0.8,
+      "red" : 0.68
+    },
+    "disableButtonBackgroundColor" : {
+      "blue" : 1.0,
+      "green" : 0.93,
+      "opacity" : 0.9,
+      "red" : 0.68
+    },
+    "disableButtonTextColor" : {
+      "blue" : 0.58,
+      "green" : 0.08,
+      "opacity" : 1,
+      "red" : 1.0
+    },
+    "dismissButtonColor" : {
+      "blue" : 1.0,
+      "green" : 0.93,
+      "opacity" : 0.15,
+      "red" : 0.68
+    },
+    "dismissIconColor" : {
+      "blue" : 1.0,
+      "green" : 0.93,
+      "opacity" : 0.6,
+      "red" : 0.68
+    },
+    "id" : "default",
+    "joinButtonBackgroundColor" : {
+      "blue" : 1.0,
+      "green" : 0.93,
+      "opacity" : 1,
+      "red" : 0.68
+    },
+    "joinButtonTextColor" : {
+      "blue" : 0.58,
+      "green" : 0.08,
+      "opacity" : 1,
+      "red" : 1.0
+    },
+    "name" : "Pinkah Bluah",
+    "progressRingColor" : {
+      "blue" : 1.0,
+      "green" : 0.93,
+      "opacity" : 0.4,
+      "red" : 0.68
+    },
+    "titleColor" : {
+      "blue" : 1.0,
+      "green" : 0.93,
+      "opacity" : 1,
+      "red" : 0.68
+    }
+  }
+}

@@ -4,10 +4,14 @@
 //
 
 import SwiftUI
+import EventKit
 import UniformTypeIdentifiers
 
 struct PreAlertPresetsSettingsView: View {
     @ObservedObject var presetManager = PreAlertPresetManager.shared
+    @ObservedObject private var calendarService = CalendarService.shared
+    @ObservedObject private var appSettings = AppSettings.shared
+    @ObservedObject private var themeService = ThemeService.shared
 
     @State private var selectedPresetName: String = "Coral Paper"
     @State private var workingTheme: PreAlertTheme
@@ -15,6 +19,10 @@ struct PreAlertPresetsSettingsView: View {
     @State private var showingDeleteConfirmation = false
     @State private var showingDuplicateDialog = false
     @State private var duplicateName = ""
+    @State private var showingRenameDialog = false
+    @State private var renameName = ""
+    @State private var renameTarget = ""
+    @State private var assignCalendarPresetName: String? = nil
 
     init() {
         _workingTheme = State(initialValue: PreAlertPresetManager.shared.theme(named: "Coral Paper"))
@@ -50,6 +58,18 @@ struct PreAlertPresetsSettingsView: View {
                         }
                         .contentShape(Rectangle())
                         .tag(preset.name)
+                        .contextMenu {
+                            Button("Copy") {
+                                duplicateName = presetManager.uniqueName(base: preset.name)
+                                selectedPresetName = preset.name
+                                showingDuplicateDialog = true
+                            }
+                            if !selectedCalendars.isEmpty {
+                                Button("Assign to Calendar...") {
+                                    assignCalendarPresetName = preset.name
+                                }
+                            }
+                        }
                     }
                 }
                 Section("Custom Presets") {
@@ -59,6 +79,28 @@ struct PreAlertPresetsSettingsView: View {
                             .lineLimit(1)
                             .contentShape(Rectangle())
                             .tag(preset.name)
+                            .contextMenu {
+                                Button("Copy") {
+                                    duplicateName = presetManager.uniqueName(base: preset.name)
+                                    selectedPresetName = preset.name
+                                    showingDuplicateDialog = true
+                                }
+                                Button("Rename") {
+                                    renameTarget = preset.name
+                                    renameName = preset.name
+                                    showingRenameDialog = true
+                                }
+                                if !selectedCalendars.isEmpty {
+                                    Button("Assign to Calendar...") {
+                                        assignCalendarPresetName = preset.name
+                                    }
+                                }
+                                Divider()
+                                Button("Delete", role: .destructive) {
+                                    selectedPresetName = preset.name
+                                    showingDeleteConfirmation = true
+                                }
+                            }
                     }
                 }
             }
@@ -105,6 +147,32 @@ struct PreAlertPresetsSettingsView: View {
             }
         } message: {
             Text("This will permanently delete \"\(selectedPresetName)\" and reset any calendars using it.")
+        }
+        .alert("Rename Preset", isPresented: $showingRenameDialog) {
+            TextField("Name", text: $renameName)
+            Button("Cancel", role: .cancel) { }
+            Button("Rename") {
+                let name = renameName.trimmingCharacters(in: .whitespaces)
+                guard !name.isEmpty, name != renameTarget else { return }
+                ThemeService.shared.updatePreAlertAssignments(from: renameTarget, to: name)
+                presetManager.renamePreset(from: renameTarget, to: name)
+                selectedPresetName = name
+            }
+        } message: {
+            Text("Enter a new name for \"\(renameTarget)\".")
+        }
+        .sheet(isPresented: Binding(
+            get: { assignCalendarPresetName != nil },
+            set: { if !$0 { assignCalendarPresetName = nil } }
+        )) {
+            if let presetName = assignCalendarPresetName {
+                AssignCalendarsSheet(
+                    presetName: presetName,
+                    calendars: selectedCalendars,
+                    themeService: themeService,
+                    kind: .preAlert
+                )
+            }
         }
     }
 
@@ -319,6 +387,12 @@ struct PreAlertPresetsSettingsView: View {
     }
 
     // MARK: - Helpers
+
+    private var selectedCalendars: [EKCalendar] {
+        calendarService.availableCalendars
+            .filter { appSettings.selectedCalendarIdentifiers.contains($0.calendarIdentifier) }
+            .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+    }
 
     private func loadPreset(named name: String) {
         workingTheme = presetManager.theme(named: name)

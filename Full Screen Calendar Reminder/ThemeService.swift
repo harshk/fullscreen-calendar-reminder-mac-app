@@ -98,6 +98,16 @@ class ThemeService: ObservableObject {
         if changed { saveAssignments() }
     }
 
+    /// When a pre-alert preset is renamed, update all assignments pointing to it.
+    func updatePreAlertAssignments(from oldName: String, to newName: String) {
+        var changed = false
+        for (key, value) in calendarPreAlertAssignments where value == oldName {
+            calendarPreAlertAssignments[key] = newName
+            changed = true
+        }
+        if changed { savePreAlertAssignments() }
+    }
+
     // MARK: - Persistence
 
     private var assignmentsFileURL: URL {

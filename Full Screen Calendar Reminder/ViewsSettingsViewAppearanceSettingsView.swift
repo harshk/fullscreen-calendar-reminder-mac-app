@@ -8,6 +8,7 @@
 import SwiftUI
 import AppKit
 import Combine
+import EventKit
 import UniformTypeIdentifiers
 
 class FontCache: ObservableObject {
@@ -28,6 +29,9 @@ class FontCache: ObservableObject {
 struct PresetsSettingsView: View {
     @ObservedObject var presetManager = PresetManager.shared
     @ObservedObject private var fontCache = FontCache.shared
+    @ObservedObject private var calendarService = CalendarService.shared
+    @ObservedObject private var appSettings = AppSettings.shared
+    @ObservedObject private var themeService = ThemeService.shared
 
     @State private var selectedPresetName: String = "Coral Paper FS"
     @State private var selectedElement: AlertElementIdentifier? = .title
@@ -39,6 +43,7 @@ struct PresetsSettingsView: View {
     @State private var showingRenameDialog = false
     @State private var renameName = ""
     @State private var renameTarget = ""
+    @State private var assignCalendarPresetName: String? = nil
 
     init() {
         _workingTheme = State(initialValue: PresetManager.shared.theme(named: "Coral Paper FS"))
@@ -83,6 +88,11 @@ struct PresetsSettingsView: View {
                                 selectedPresetName = preset.name
                                 showingDuplicateDialog = true
                             }
+                            if !selectedCalendars.isEmpty {
+                                Button("Assign to Calendar...") {
+                                    assignCalendarPresetName = preset.name
+                                }
+                            }
                         }
                     }
                 }
@@ -103,6 +113,11 @@ struct PresetsSettingsView: View {
                                     renameTarget = preset.name
                                     renameName = preset.name
                                     showingRenameDialog = true
+                                }
+                                if !selectedCalendars.isEmpty {
+                                    Button("Assign to Calendar...") {
+                                        assignCalendarPresetName = preset.name
+                                    }
                                 }
                                 Divider()
                                 Button("Delete", role: .destructive) {
@@ -169,6 +184,19 @@ struct PresetsSettingsView: View {
             }
         } message: {
             Text("Enter a new name for \"\(renameTarget)\".")
+        }
+        .sheet(isPresented: Binding(
+            get: { assignCalendarPresetName != nil },
+            set: { if !$0 { assignCalendarPresetName = nil } }
+        )) {
+            if let presetName = assignCalendarPresetName {
+                AssignCalendarsSheet(
+                    presetName: presetName,
+                    calendars: selectedCalendars,
+                    themeService: themeService,
+                    kind: .fullScreen
+                )
+            }
         }
     }
 
@@ -605,6 +633,12 @@ struct PresetsSettingsView: View {
         }
     }
 
+    private var selectedCalendars: [EKCalendar] {
+        calendarService.availableCalendars
+            .filter { appSettings.selectedCalendarIdentifiers.contains($0.calendarIdentifier) }
+            .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+    }
+
     private func loadPreset(named name: String) {
         workingTheme = presetManager.theme(named: name)
         selectedElement = .title
@@ -626,6 +660,108 @@ struct PresetsSettingsView: View {
                 workingTheme.imageData = imageData
                 workingTheme.backgroundType = .image
             }
+        }
+    }
+}
+
+// MARK: - Assign Calendars Sheet
+
+struct AssignCalendarsSheet: View {
+    enum Kind { case fullScreen, preAlert }
+
+    let presetName: String
+    let calendars: [EKCalendar]
+    @ObservedObject var themeService: ThemeService
+    let kind: Kind
+
+    @Environment(\.dismiss) private var dismiss
+
+    private var allAssigned: Bool {
+        calendars.allSatisfy { isAssigned($0) }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Assign \"\(presetName)\"")
+                .font(.headline)
+                .padding()
+
+            Divider()
+
+            List {
+                Toggle("All Calendars", isOn: Binding(
+                    get: { allAssigned },
+                    set: { newValue in
+                        for calendar in calendars {
+                            if newValue {
+                                assign(presetName, to: calendar)
+                            } else {
+                                resetAssignment(for: calendar)
+                            }
+                        }
+                    }
+                ))
+                .fontWeight(.medium)
+
+                ForEach(calendars, id: \.calendarIdentifier) { calendar in
+                    Toggle(isOn: Binding(
+                        get: { isAssigned(calendar) },
+                        set: { newValue in
+                            if newValue {
+                                assign(presetName, to: calendar)
+                            } else {
+                                resetAssignment(for: calendar)
+                            }
+                        }
+                    )) {
+                        HStack(spacing: 8) {
+                            if let cgColor = calendar.cgColor {
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(Color(cgColor: cgColor))
+                                    .frame(width: 14, height: 14)
+                            }
+                            Text(calendar.title)
+                        }
+                    }
+                }
+            }
+
+            Divider()
+
+            HStack {
+                Spacer()
+                Button("Done") { dismiss() }
+                    .keyboardShortcut(.defaultAction)
+            }
+            .padding()
+        }
+        .frame(width: 300, height: min(CGFloat(calendars.count * 28 + 150), 400))
+    }
+
+    private func isAssigned(_ calendar: EKCalendar) -> Bool {
+        switch kind {
+        case .fullScreen:
+            return themeService.assignedPresetName(for: calendar.calendarIdentifier) == presetName
+        case .preAlert:
+            return themeService.assignedPreAlertPresetName(for: calendar.calendarIdentifier) == presetName
+        }
+    }
+
+    private func assign(_ preset: String, to calendar: EKCalendar) {
+        switch kind {
+        case .fullScreen:
+            themeService.setPreset(preset, for: calendar.calendarIdentifier)
+        case .preAlert:
+            themeService.setPreAlertPreset(preset, for: calendar.calendarIdentifier)
+        }
+    }
+
+    private func resetAssignment(for calendar: EKCalendar) {
+        switch kind {
+        case .fullScreen:
+            themeService.resetAssignment(for: calendar.calendarIdentifier)
+        case .preAlert:
+            themeService.resetPreAlertAssignment(for: calendar.calendarIdentifier)
         }
     }
 }

@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct PreAlertPresetsSettingsView: View {
     @ObservedObject var presetManager = PreAlertPresetManager.shared
@@ -150,17 +151,77 @@ struct PreAlertPresetsSettingsView: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("Colors")
+                    Text("Background")
                         .font(.headline)
 
-                    ColorPicker("Background", selection: Binding(
-                        get: { workingTheme.backgroundColor.color },
-                        set: { workingTheme.backgroundColor = CodableColor($0) }
-                    ))
-
-                    Slider(value: $workingTheme.backgroundOpacity, in: 0.5...1.0, step: 0.05) {
-                        Text("Background Opacity: \(Int(workingTheme.backgroundOpacity * 100))%")
+                    Picker("Type", selection: $workingTheme.backgroundType) {
+                        Text("Solid Color").tag(PreAlertTheme.BackgroundType.solidColor)
+                        Text("Image").tag(PreAlertTheme.BackgroundType.image)
                     }
+                    .pickerStyle(.segmented)
+
+                    if workingTheme.backgroundType == .solidColor {
+                        ColorPicker("Color", selection: Binding(
+                            get: { workingTheme.backgroundColor.color },
+                            set: { workingTheme.backgroundColor = CodableColor($0) }
+                        ))
+
+                        Slider(value: $workingTheme.backgroundOpacity, in: 0.5...1.0, step: 0.05) {
+                            Text("Opacity: \(Int(workingTheme.backgroundOpacity * 100))%")
+                        }
+                    } else {
+                        if let imageData = workingTheme.imageData,
+                           let nsImage = NSImage(data: imageData) {
+                            HStack {
+                                Image(nsImage: nsImage)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(height: 80)
+                                    .cornerRadius(8)
+
+                                Spacer()
+
+                                Button("Remove") {
+                                    workingTheme.imageData = nil
+                                    workingTheme.backgroundType = .solidColor
+                                }
+                                .buttonStyle(.borderless)
+                            }
+                        }
+
+                        Button("Choose Image") {
+                            showImagePicker()
+                        }
+
+                        ColorPicker("Overlay Color", selection: Binding(
+                            get: { workingTheme.overlayColor.color },
+                            set: { workingTheme.overlayColor = CodableColor($0) }
+                        ))
+
+                        Slider(
+                            value: $workingTheme.overlayOpacity,
+                            in: 0.0...1.0,
+                            step: 0.05
+                        ) {
+                            Text("Overlay Opacity: \(Int(workingTheme.overlayOpacity * 100))%")
+                        }
+
+                        Slider(
+                            value: Binding(
+                                get: { workingTheme.imageBlurRadius ?? 0.3 },
+                                set: { workingTheme.imageBlurRadius = $0 }
+                            ),
+                            in: 0.0...1.0,
+                            step: 0.05
+                        ) {
+                            Text("Blur: \(Int((workingTheme.imageBlurRadius ?? 0.3) * 100))%")
+                        }
+                    }
+
+                    Divider()
+
+                    Text("Colors")
+                        .font(.headline)
 
                     Divider()
 
@@ -265,5 +326,20 @@ struct PreAlertPresetsSettingsView: View {
 
     private func savePreset() {
         presetManager.savePreset(name: selectedPresetName, theme: workingTheme)
+    }
+
+    private func showImagePicker() {
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        panel.allowedContentTypes = [.png, .jpeg, .webP]
+
+        if panel.runModal() == .OK, let url = panel.url {
+            if let imageData = try? Data(contentsOf: url) {
+                workingTheme.imageData = imageData
+                workingTheme.backgroundType = .image
+            }
+        }
     }
 }

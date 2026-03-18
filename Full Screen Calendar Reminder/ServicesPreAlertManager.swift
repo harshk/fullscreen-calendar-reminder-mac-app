@@ -266,8 +266,7 @@ struct PreAlertBannerView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(preAlertTheme.backgroundColor.color.opacity(preAlertTheme.backgroundOpacity))
+            bannerBackground
         )
         .shadow(color: .black.opacity(0.3), radius: 12, y: 4)
         .onAppear {
@@ -279,6 +278,36 @@ struct PreAlertBannerView: View {
             }
         }
         .onReceive(timer) { _ in updateCountdown() }
+    }
+
+    @ViewBuilder
+    private var bannerBackground: some View {
+        switch preAlertTheme.backgroundType {
+        case .solidColor:
+            RoundedRectangle(cornerRadius: 14)
+                .fill(preAlertTheme.backgroundColor.color.opacity(preAlertTheme.backgroundOpacity))
+        case .image:
+            if let imageData = preAlertTheme.imageData,
+               let nsImage = NSImage(data: imageData) {
+                GeometryReader { geo in
+                    let blurRadius = (preAlertTheme.imageBlurRadius ?? 0.3) * 30
+                    Image(nsImage: nsImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .blur(radius: blurRadius)
+                        .frame(width: geo.size.width + blurRadius * 2, height: geo.size.height + blurRadius * 2)
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .clipped()
+                        .overlay(
+                            preAlertTheme.overlayColor.color.opacity(preAlertTheme.overlayOpacity)
+                        )
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+            } else {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(preAlertTheme.backgroundColor.color.opacity(preAlertTheme.backgroundOpacity))
+            }
+        }
     }
 
     private func updateCountdown() {

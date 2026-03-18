@@ -47,13 +47,16 @@ struct PreAlertPresetsSettingsView: View {
                             Text(preset.name)
                                 .lineLimit(1)
                         }
+                        .contentShape(Rectangle())
                         .tag(preset.name)
                     }
                 }
                 Section("Custom Presets") {
                     ForEach(presetManager.presets.filter { !presetManager.isBuiltIn($0.name) }) { preset in
                         Text(preset.name)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                             .lineLimit(1)
+                            .contentShape(Rectangle())
                             .tag(preset.name)
                     }
                 }

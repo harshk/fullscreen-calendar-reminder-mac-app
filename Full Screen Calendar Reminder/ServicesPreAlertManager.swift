@@ -115,7 +115,7 @@ class PreAlertManager: ObservableObject {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.isOpaque = false
         panel.backgroundColor = .clear
-        panel.hasShadow = false
+        panel.hasShadow = true
         panel.ignoresMouseEvents = false
         panel.hidesOnDeactivate = false
         panel.acceptsMouseMovedEvents = true
@@ -141,7 +141,7 @@ class PreAlertManager: ObservableObject {
             }
         )
 
-        let hostingView = FirstClickHostingView(rootView: bannerContent)
+        let hostingView = TransparentHostingView(rootView: bannerContent)
         hostingView.frame = NSRect(origin: .zero, size: NSSize(width: bannerWidth, height: bannerHeight))
         hostingView.autoresizingMask = [.width, .height]
         panel.contentView = hostingView
@@ -268,7 +268,7 @@ struct PreAlertBannerView: View {
         .background(
             bannerBackground
         )
-        .shadow(color: .black.opacity(0.3), radius: 12, y: 4)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
         .onAppear {
             updateCountdown()
             if bannerDuration > 0 {
@@ -301,8 +301,8 @@ struct PreAlertBannerView: View {
                         .overlay(
                             preAlertTheme.overlayColor.color.opacity(preAlertTheme.overlayOpacity)
                         )
+                        .drawingGroup()
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 14))
             } else {
                 RoundedRectangle(cornerRadius: 14)
                     .fill(preAlertTheme.backgroundColor.color.opacity(preAlertTheme.backgroundOpacity))
@@ -329,5 +329,21 @@ struct PreAlertBannerView: View {
                 countdown = "Starts in \(minutes):\(String(format: "%02d", seconds))"
             }
         }
+    }
+}
+
+// MARK: - Transparent Hosting View
+
+class TransparentHostingView<Content: View>: NSHostingView<Content> {
+    override var isOpaque: Bool { false }
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func mouseDown(with event: NSEvent) {
+        if window?.isKeyWindow != true {
+            NSApp.activate(ignoringOtherApps: true)
+            window?.makeKeyAndOrderFront(nil)
+        }
+        super.mouseDown(with: event)
     }
 }

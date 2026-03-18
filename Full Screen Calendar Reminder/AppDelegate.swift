@@ -154,6 +154,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 button.image = NSImage(systemSymbolName: "bell.slash.fill", accessibilityDescription: "Full Screen Calendar Reminder (Paused)")
             } else {
                 let icon = NSImage(named: "StatusBarIcon")
+                icon?.size = NSSize(width: 22, height: 22)
                 icon?.isTemplate = true
                 button.image = icon
             }

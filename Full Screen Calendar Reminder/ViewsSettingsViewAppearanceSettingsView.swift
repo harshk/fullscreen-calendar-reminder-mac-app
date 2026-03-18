@@ -12,7 +12,7 @@ import UniformTypeIdentifiers
 struct PresetsSettingsView: View {
     @ObservedObject var presetManager = PresetManager.shared
 
-    @State private var selectedPresetName: String = "Pinka Blua"
+    @State private var selectedPresetName: String = "Coral Paper FS"
     @State private var selectedElement: AlertElementIdentifier? = .title
     @State private var workingTheme: AlertTheme
     @State private var showingSavedConfirmation = false
@@ -26,7 +26,7 @@ struct PresetsSettingsView: View {
     }()
 
     init() {
-        _workingTheme = State(initialValue: PresetManager.shared.theme(named: "Pinka Blua"))
+        _workingTheme = State(initialValue: PresetManager.shared.theme(named: "Coral Paper FS"))
     }
 
     var body: some View {
@@ -113,7 +113,7 @@ struct PresetsSettingsView: View {
             Button("Delete", role: .destructive) {
                 ThemeService.shared.clearAssignments(for: selectedPresetName)
                 presetManager.deletePreset(named: selectedPresetName)
-                selectedPresetName = "Pinka Blua"
+                selectedPresetName = "Coral Paper FS"
             }
         } message: {
             Text("This will permanently delete \"\(selectedPresetName)\" and reset any calendars using it.")

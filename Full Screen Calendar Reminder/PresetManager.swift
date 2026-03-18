@@ -156,10 +156,10 @@ class PresetManager: ObservableObject {
             }
         }
 
-        // Sort: "Pinka Blua" first, then alphabetical
+        // Sort: "Coral Paper FS" first, then alphabetical
         presets = result.sorted {
-            if $0.name == "Pinka Blua" { return true }
-            if $1.name == "Pinka Blua" { return false }
+            if $0.name == "Coral Paper FS" { return true }
+            if $1.name == "Coral Paper FS" { return false }
             return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
         }
     }

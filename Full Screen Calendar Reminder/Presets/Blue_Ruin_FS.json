@@ -1,15 +1,15 @@
 {
-  "name" : "Kinetic Orange",
+  "name" : "Blue Ruin FS",
   "theme" : {
     "backgroundType" : "solidColor",
     "elementStyles" : [
       "title",
       {
         "fontColor" : {
-          "blue" : 0,
-          "green" : 0,
+          "blue" : 0.84,
+          "green" : 0.89,
           "opacity" : 1,
-          "red" : 0
+          "red" : 0.92
         },
         "fontFamily" : "SF Pro Rounded",
         "fontSize" : 72,
@@ -18,10 +18,10 @@
       "calendarName",
       {
         "fontColor" : {
-          "blue" : 0,
-          "green" : 0,
+          "blue" : 0.84,
+          "green" : 0.89,
           "opacity" : 0.6,
-          "red" : 0
+          "red" : 0.92
         },
         "fontFamily" : "SF Pro Rounded",
         "fontSize" : 24,
@@ -30,16 +30,16 @@
       "joinButton",
       {
         "buttonBackgroundColor" : {
-          "blue" : 0,
-          "green" : 0,
+          "blue" : 0.84,
+          "green" : 0.89,
           "opacity" : 1,
-          "red" : 0
+          "red" : 0.92
         },
         "fontColor" : {
-          "blue" : 0,
-          "green" : 0.3019607663154602,
+          "blue" : 0.60,
+          "green" : 0.38,
           "opacity" : 1,
-          "red" : 1
+          "red" : 0.11
         },
         "fontFamily" : "SF Pro Rounded",
         "fontSize" : 14,
@@ -48,10 +48,10 @@
       "queueCounter",
       {
         "fontColor" : {
-          "blue" : 0,
-          "green" : 0,
+          "blue" : 0.84,
+          "green" : 0.89,
           "opacity" : 0.5,
-          "red" : 0
+          "red" : 0.92
         },
         "fontFamily" : "SF Pro Rounded",
         "fontSize" : 20,
@@ -60,10 +60,10 @@
       "location",
       {
         "fontColor" : {
-          "blue" : 0,
-          "green" : 0,
+          "blue" : 0.84,
+          "green" : 0.89,
           "opacity" : 0.8,
-          "red" : 0
+          "red" : 0.92
         },
         "fontFamily" : "SF Pro Rounded",
         "fontSize" : 32,
@@ -72,16 +72,16 @@
       "snoozeButton",
       {
         "buttonBackgroundColor" : {
-          "blue" : 0,
-          "green" : 0,
+          "blue" : 0.84,
+          "green" : 0.89,
           "opacity" : 0.15,
-          "red" : 0
+          "red" : 0.92
         },
         "fontColor" : {
-          "blue" : 0,
-          "green" : 0,
+          "blue" : 0.84,
+          "green" : 0.89,
           "opacity" : 0.9,
-          "red" : 0
+          "red" : 0.92
         },
         "fontFamily" : "SF Pro Rounded",
         "fontSize" : 14,
@@ -90,10 +90,10 @@
       "startTime",
       {
         "fontColor" : {
-          "blue" : 0,
-          "green" : 0,
+          "blue" : 0.84,
+          "green" : 0.89,
           "opacity" : 1,
-          "red" : 0
+          "red" : 0.92
         },
         "fontFamily" : "SF Pro Rounded",
         "fontSize" : 48,
@@ -102,31 +102,32 @@
       "dismissButton",
       {
         "buttonBackgroundColor" : {
-          "blue" : 0,
-          "green" : 0,
+          "blue" : 0.84,
+          "green" : 0.89,
           "opacity" : 0.2,
-          "red" : 0
+          "red" : 0.92
         },
         "fontColor" : {
-          "blue" : 0,
-          "green" : 0,
+          "blue" : 0.84,
+          "green" : 0.89,
           "opacity" : 0.7,
-          "red" : 0
+          "red" : 0.92
         },
         "fontFamily" : "SF Pro Rounded",
         "fontSize" : 24,
         "fontWeight" : 0,
         "iconColor" : {
-          "blue" : 0,
-          "green" : 0,
+          "blue" : 0.84,
+          "green" : 0.89,
           "opacity" : 0.7,
-          "red" : 0
+          "red" : 0.92
         },
         "iconSize" : 32
       }
     ],
     "id" : "default",
-    "name" : "Kinetic Orange",
+    "imageBlurRadius" : 0.3,
+    "name" : "Blue Ruin FS",
     "overlayColor" : {
       "blue" : 0,
       "green" : 0,
@@ -135,12 +136,11 @@
     },
     "overlayOpacity" : 0,
     "solidColor" : {
-      "blue" : 0,
-      "green" : 0.3019607663154602,
+      "blue" : 0.60,
+      "green" : 0.38,
       "opacity" : 1,
-      "red" : 1
+      "red" : 0.11
     },
-    "solidColorOpacity" : 1,
-    "imageBlurRadius" : 0.3
+    "solidColorOpacity" : 0.98
   }
 }

@@ -9,7 +9,7 @@ import UniformTypeIdentifiers
 struct PreAlertPresetsSettingsView: View {
     @ObservedObject var presetManager = PreAlertPresetManager.shared
 
-    @State private var selectedPresetName: String = "Basic"
+    @State private var selectedPresetName: String = "Coral Paper"
     @State private var workingTheme: PreAlertTheme
     @State private var showingSavedConfirmation = false
     @State private var showingDeleteConfirmation = false
@@ -17,7 +17,7 @@ struct PreAlertPresetsSettingsView: View {
     @State private var duplicateName = ""
 
     init() {
-        _workingTheme = State(initialValue: PreAlertPresetManager.shared.theme(named: "Basic"))
+        _workingTheme = State(initialValue: PreAlertPresetManager.shared.theme(named: "Coral Paper"))
     }
 
     var body: some View {
@@ -101,7 +101,7 @@ struct PreAlertPresetsSettingsView: View {
             Button("Delete", role: .destructive) {
                 ThemeService.shared.clearPreAlertAssignments(for: selectedPresetName)
                 presetManager.deletePreset(named: selectedPresetName)
-                selectedPresetName = "Basic"
+                selectedPresetName = "Coral Paper"
             }
         } message: {
             Text("This will permanently delete \"\(selectedPresetName)\" and reset any calendars using it.")

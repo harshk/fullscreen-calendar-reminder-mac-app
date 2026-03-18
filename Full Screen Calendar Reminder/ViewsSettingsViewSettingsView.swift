@@ -33,13 +33,13 @@ struct SettingsView: View {
 
             PresetsSettingsView()
                 .tabItem {
-                    Label("Presets", systemImage: "paintbrush")
+                    Label("Full Screen Alert Presets", systemImage: "paintbrush")
                 }
                 .tag(SettingsTab.presets)
 
             PreAlertPresetsSettingsView()
                 .tabItem {
-                    Label("Pre-Alert", systemImage: "bell.badge")
+                    Label("Pre-Alert Presets", systemImage: "bell.badge")
                 }
                 .tag(SettingsTab.preAlertPresets)
         }

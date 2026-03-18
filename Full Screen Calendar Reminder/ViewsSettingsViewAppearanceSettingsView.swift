@@ -7,10 +7,27 @@
 
 import SwiftUI
 import AppKit
+import Combine
 import UniformTypeIdentifiers
+
+class FontCache: ObservableObject {
+    static let shared = FontCache()
+    @Published private(set) var fonts: [String] = ["System"]
+
+    private init() {
+        DispatchQueue.global(qos: .userInitiated).async {
+            let families = NSFontManager.shared.availableFontFamilies.sorted()
+            let result = ["System"] + families
+            DispatchQueue.main.async {
+                self.fonts = result
+            }
+        }
+    }
+}
 
 struct PresetsSettingsView: View {
     @ObservedObject var presetManager = PresetManager.shared
+    @ObservedObject private var fontCache = FontCache.shared
 
     @State private var selectedPresetName: String = "Coral Paper FS"
     @State private var selectedElement: AlertElementIdentifier? = .title
@@ -19,11 +36,6 @@ struct PresetsSettingsView: View {
     @State private var showingDeleteConfirmation = false
     @State private var showingDuplicateDialog = false
     @State private var duplicateName = ""
-
-    private static let availableFonts: [String] = {
-        let families = NSFontManager.shared.availableFontFamilies.sorted()
-        return ["System"] + families
-    }()
 
     init() {
         _workingTheme = State(initialValue: PresetManager.shared.theme(named: "Coral Paper FS"))
@@ -368,7 +380,7 @@ struct PresetsSettingsView: View {
                             workingTheme.elementStyles[element] = style
                         }
                     )) {
-                        ForEach(Self.availableFonts, id: \.self) { font in
+                        ForEach(fontCache.fonts, id: \.self) { font in
                             Text(font)
                                 .font(.custom(font, size: 13))
                                 .tag(font)

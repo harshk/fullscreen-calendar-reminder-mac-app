@@ -1,0 +1,68 @@
+{
+  "name" : "Blue Ruin",
+  "theme" : {
+    "backgroundColor" : {
+      "blue" : 0.60,
+      "green" : 0.38,
+      "opacity" : 1,
+      "red" : 0.11
+    },
+    "backgroundOpacity" : 0.97,
+    "countdownColor" : {
+      "blue" : 0.84,
+      "green" : 0.89,
+      "opacity" : 0.8,
+      "red" : 0.92
+    },
+    "disableButtonBackgroundColor" : {
+      "blue" : 0.84,
+      "green" : 0.89,
+      "opacity" : 0.9,
+      "red" : 0.92
+    },
+    "disableButtonTextColor" : {
+      "blue" : 0.60,
+      "green" : 0.38,
+      "opacity" : 1,
+      "red" : 0.11
+    },
+    "dismissButtonColor" : {
+      "blue" : 0.84,
+      "green" : 0.89,
+      "opacity" : 0.15,
+      "red" : 0.92
+    },
+    "dismissIconColor" : {
+      "blue" : 0.84,
+      "green" : 0.89,
+      "opacity" : 0.6,
+      "red" : 0.92
+    },
+    "id" : "default",
+    "joinButtonBackgroundColor" : {
+      "blue" : 0.84,
+      "green" : 0.89,
+      "opacity" : 1,
+      "red" : 0.92
+    },
+    "joinButtonTextColor" : {
+      "blue" : 0.60,
+      "green" : 0.38,
+      "opacity" : 1,
+      "red" : 0.11
+    },
+    "name" : "Blue Ruin",
+    "progressRingColor" : {
+      "blue" : 0.84,
+      "green" : 0.89,
+      "opacity" : 0.4,
+      "red" : 0.92
+    },
+    "titleColor" : {
+      "blue" : 0.84,
+      "green" : 0.89,
+      "opacity" : 1,
+      "red" : 0.92
+    }
+  }
+}

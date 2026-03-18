@@ -1,15 +1,15 @@
 {
-  "name" : "Pinkah Bluah FS",
+  "name" : "Bee Sting FS",
   "theme" : {
     "backgroundType" : "solidColor",
     "elementStyles" : [
       "title",
       {
         "fontColor" : {
-          "blue" : 1.0,
-          "green" : 0.93,
+          "blue" : 0.70,
+          "green" : 0.08,
           "opacity" : 1,
-          "red" : 0.68
+          "red" : 0.83
         },
         "fontFamily" : "SF Pro Rounded",
         "fontSize" : 72,
@@ -18,10 +18,10 @@
       "calendarName",
       {
         "fontColor" : {
-          "blue" : 1.0,
-          "green" : 0.93,
+          "blue" : 0.70,
+          "green" : 0.08,
           "opacity" : 0.6,
-          "red" : 0.68
+          "red" : 0.83
         },
         "fontFamily" : "SF Pro Rounded",
         "fontSize" : 24,
@@ -30,14 +30,14 @@
       "joinButton",
       {
         "buttonBackgroundColor" : {
-          "blue" : 1.0,
-          "green" : 0.93,
+          "blue" : 0.70,
+          "green" : 0.08,
           "opacity" : 1,
-          "red" : 0.68
+          "red" : 0.83
         },
         "fontColor" : {
-          "blue" : 0.58,
-          "green" : 0.08,
+          "blue" : 0.0,
+          "green" : 0.82,
           "opacity" : 1,
           "red" : 1.0
         },
@@ -48,10 +48,10 @@
       "queueCounter",
       {
         "fontColor" : {
-          "blue" : 1.0,
-          "green" : 0.93,
+          "blue" : 0.70,
+          "green" : 0.08,
           "opacity" : 0.5,
-          "red" : 0.68
+          "red" : 0.83
         },
         "fontFamily" : "SF Pro Rounded",
         "fontSize" : 20,
@@ -60,10 +60,10 @@
       "location",
       {
         "fontColor" : {
-          "blue" : 1.0,
-          "green" : 0.93,
+          "blue" : 0.70,
+          "green" : 0.08,
           "opacity" : 0.8,
-          "red" : 0.68
+          "red" : 0.83
         },
         "fontFamily" : "SF Pro Rounded",
         "fontSize" : 32,
@@ -72,16 +72,16 @@
       "snoozeButton",
       {
         "buttonBackgroundColor" : {
-          "blue" : 1.0,
-          "green" : 0.93,
+          "blue" : 0.70,
+          "green" : 0.08,
           "opacity" : 0.15,
-          "red" : 0.68
+          "red" : 0.83
         },
         "fontColor" : {
-          "blue" : 1.0,
-          "green" : 0.93,
+          "blue" : 0.70,
+          "green" : 0.08,
           "opacity" : 0.9,
-          "red" : 0.68
+          "red" : 0.83
         },
         "fontFamily" : "SF Pro Rounded",
         "fontSize" : 14,
@@ -90,10 +90,10 @@
       "startTime",
       {
         "fontColor" : {
-          "blue" : 1.0,
-          "green" : 0.93,
+          "blue" : 0.70,
+          "green" : 0.08,
           "opacity" : 1,
-          "red" : 0.68
+          "red" : 0.83
         },
         "fontFamily" : "SF Pro Rounded",
         "fontSize" : 48,
@@ -102,32 +102,32 @@
       "dismissButton",
       {
         "buttonBackgroundColor" : {
-          "blue" : 1.0,
-          "green" : 0.93,
+          "blue" : 0.70,
+          "green" : 0.08,
           "opacity" : 0.2,
-          "red" : 0.68
+          "red" : 0.83
         },
         "fontColor" : {
-          "blue" : 1.0,
-          "green" : 0.93,
+          "blue" : 0.70,
+          "green" : 0.08,
           "opacity" : 0.7,
-          "red" : 0.68
+          "red" : 0.83
         },
         "fontFamily" : "SF Pro Rounded",
         "fontSize" : 24,
         "fontWeight" : 0,
         "iconColor" : {
-          "blue" : 1.0,
-          "green" : 0.93,
+          "blue" : 0.70,
+          "green" : 0.08,
           "opacity" : 0.7,
-          "red" : 0.68
+          "red" : 0.83
         },
         "iconSize" : 32
       }
     ],
     "id" : "default",
     "imageBlurRadius" : 0.3,
-    "name" : "Pinkah Bluah FS",
+    "name" : "Bee Sting FS",
     "overlayColor" : {
       "blue" : 0,
       "green" : 0,
@@ -136,8 +136,8 @@
     },
     "overlayOpacity" : 0,
     "solidColor" : {
-      "blue" : 0.58,
-      "green" : 0.08,
+      "blue" : 0.0,
+      "green" : 0.82,
       "opacity" : 1,
       "red" : 1.0
     },

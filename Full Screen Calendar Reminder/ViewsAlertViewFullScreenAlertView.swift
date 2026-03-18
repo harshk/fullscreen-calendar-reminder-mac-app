@@ -197,6 +197,7 @@ struct FullScreenAlertView: View {
                             onDismiss()
                         }
                     }
+                    .padding(.top, 18)
                     .onHover { hovering in
                         if onElementTap == nil {
                             if hovering { NSCursor.pointingHand.push() } else { NSCursor.pop() }

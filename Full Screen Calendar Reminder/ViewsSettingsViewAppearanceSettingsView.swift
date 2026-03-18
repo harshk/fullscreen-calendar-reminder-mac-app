@@ -36,6 +36,9 @@ struct PresetsSettingsView: View {
     @State private var showingDeleteConfirmation = false
     @State private var showingDuplicateDialog = false
     @State private var duplicateName = ""
+    @State private var showingRenameDialog = false
+    @State private var renameName = ""
+    @State private var renameTarget = ""
 
     init() {
         _workingTheme = State(initialValue: PresetManager.shared.theme(named: "Coral Paper FS"))
@@ -74,6 +77,13 @@ struct PresetsSettingsView: View {
                         }
                         .contentShape(Rectangle())
                         .tag(preset.name)
+                        .contextMenu {
+                            Button("Copy") {
+                                duplicateName = presetManager.uniqueName(base: preset.name)
+                                selectedPresetName = preset.name
+                                showingDuplicateDialog = true
+                            }
+                        }
                     }
                 }
                 Section("Custom Presets") {
@@ -83,6 +93,23 @@ struct PresetsSettingsView: View {
                             .lineLimit(1)
                             .contentShape(Rectangle())
                             .tag(preset.name)
+                            .contextMenu {
+                                Button("Copy") {
+                                    duplicateName = presetManager.uniqueName(base: preset.name)
+                                    selectedPresetName = preset.name
+                                    showingDuplicateDialog = true
+                                }
+                                Button("Rename") {
+                                    renameTarget = preset.name
+                                    renameName = preset.name
+                                    showingRenameDialog = true
+                                }
+                                Divider()
+                                Button("Delete", role: .destructive) {
+                                    selectedPresetName = preset.name
+                                    showingDeleteConfirmation = true
+                                }
+                            }
                     }
                 }
             }
@@ -129,6 +156,19 @@ struct PresetsSettingsView: View {
             }
         } message: {
             Text("This will permanently delete \"\(selectedPresetName)\" and reset any calendars using it.")
+        }
+        .alert("Rename Preset", isPresented: $showingRenameDialog) {
+            TextField("Name", text: $renameName)
+            Button("Cancel", role: .cancel) { }
+            Button("Rename") {
+                let name = renameName.trimmingCharacters(in: .whitespaces)
+                guard !name.isEmpty, name != renameTarget else { return }
+                ThemeService.shared.updateAssignments(from: renameTarget, to: name)
+                presetManager.renamePreset(from: renameTarget, to: name)
+                selectedPresetName = name
+            }
+        } message: {
+            Text("Enter a new name for \"\(renameTarget)\".")
         }
     }
 

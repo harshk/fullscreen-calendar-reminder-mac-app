@@ -88,6 +88,16 @@ class ThemeService: ObservableObject {
         if !keysToRemove.isEmpty { saveAssignments() }
     }
 
+    /// When a preset is renamed, update all assignments pointing to it.
+    func updateAssignments(from oldName: String, to newName: String) {
+        var changed = false
+        for (key, value) in calendarPresetAssignments where value == oldName {
+            calendarPresetAssignments[key] = newName
+            changed = true
+        }
+        if changed { saveAssignments() }
+    }
+
     // MARK: - Persistence
 
     private var assignmentsFileURL: URL {

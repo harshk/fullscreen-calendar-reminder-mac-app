@@ -161,9 +161,11 @@ class AlertCoordinator: ObservableObject {
         let snoozedItem = alertQueue[0]
 
         // Close windows and release view hierarchy to free image memory
-        for window in alertWindows {
-            window.contentView = nil
-            window.close()
+        autoreleasepool {
+            for window in alertWindows {
+                window.contentView = nil
+                window.close()
+            }
         }
         alertWindows.removeAll()
         alertQueue.removeFirst()
@@ -197,9 +199,11 @@ class AlertCoordinator: ObservableObject {
 
     func dismissCurrentAlert() {
         // Release view hierarchy to free image memory, then close
-        for window in alertWindows {
-            window.contentView = nil
-            window.close()
+        autoreleasepool {
+            for window in alertWindows {
+                window.contentView = nil
+                window.close()
+            }
         }
         alertWindows.removeAll()
 
@@ -223,9 +227,11 @@ class AlertCoordinator: ObservableObject {
     
     private func displayFullScreenAlert(for item: AlertItem) {
         // Release view hierarchy and close any existing windows
-        for window in alertWindows {
-            window.contentView = nil
-            window.close()
+        autoreleasepool {
+            for window in alertWindows {
+                window.contentView = nil
+                window.close()
+            }
         }
         alertWindows.removeAll()
 
@@ -440,9 +446,11 @@ class AlertCoordinator: ObservableObject {
         if let o = previewCloseObserver { NotificationCenter.default.removeObserver(o); previewCloseObserver = nil }
 
         // Release view hierarchy and close windows
-        for window in previewWindows {
-            window.contentView = nil
-            window.close()
+        autoreleasepool {
+            for window in previewWindows {
+                window.contentView = nil
+                window.close()
+            }
         }
         previewWindows.removeAll()
 

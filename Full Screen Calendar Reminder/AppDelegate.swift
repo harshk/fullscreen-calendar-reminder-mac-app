@@ -172,15 +172,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func windowDidClose(_ notification: Notification) {
         guard let closedWindow = notification.object as? NSWindow,
               closedWindow == settingsWindow else { return }
-        closedWindow.contentView = nil
-        settingsWindow = nil
+        SettingsWindowVisible.shared.isVisible = false
         NSApp.setActivationPolicy(.accessory)
     }
 
     @objc private func openSettings() {
         closePanel()
 
-        if let settingsWindow = settingsWindow, settingsWindow.isVisible {
+        // Reuse the existing settings window to avoid the ~10-20 MB per-cycle
+        // leak in SwiftUI/AppKit internals that occurs when recreating.
+        SettingsWindowVisible.shared.isVisible = true
+        if let settingsWindow = settingsWindow {
             NSApp.setActivationPolicy(.regular)
             settingsWindow.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)

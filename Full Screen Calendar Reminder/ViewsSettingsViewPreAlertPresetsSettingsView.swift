@@ -30,10 +30,8 @@ struct PreAlertPresetsSettingsView: View {
     }
 
     private func recomputeBackgroundImage() {
-        guard let filename = workingTheme.imageFileName else {
-            cachedBackgroundImage = nil
-            return
-        }
+        cachedBackgroundImage = nil
+        guard let filename = workingTheme.imageFileName else { return }
         let scaleFactor = NSScreen.main?.backingScaleFactor ?? 2
         let blurRadius = (workingTheme.imageBlurRadius ?? 0.3) * 30
         ImageStore.loadBlurredAsync(filename, targetSize: CGSize(width: 460 * scaleFactor, height: 108 * scaleFactor), blurRadius: blurRadius) { image in
@@ -42,10 +40,8 @@ struct PreAlertPresetsSettingsView: View {
     }
 
     private func recomputeThumbnail() {
-        guard let filename = workingTheme.imageFileName else {
-            cachedThumbnail = nil
-            return
-        }
+        cachedThumbnail = nil
+        guard let filename = workingTheme.imageFileName else { return }
         let maxDim = 160 * (NSScreen.main?.backingScaleFactor ?? 2)
         ImageStore.loadThumbnailAsync(filename, maxDimension: maxDim) { image in
             cachedThumbnail = image
@@ -65,6 +61,7 @@ struct PreAlertPresetsSettingsView: View {
             editorPane
         }
         .onAppear { recomputeBackgroundImage(); recomputeThumbnail() }
+        .onDisappear { cachedBackgroundImage = nil; cachedThumbnail = nil }
         .onChange(of: workingTheme.imageFileName) { _ in recomputeBackgroundImage(); recomputeThumbnail() }
         .onChange(of: workingTheme.imageBlurRadius) { _ in recomputeBackgroundImage() }
         .onChange(of: workingTheme.backgroundType) { _ in recomputeBackgroundImage() }

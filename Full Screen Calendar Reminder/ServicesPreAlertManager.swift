@@ -99,6 +99,15 @@ class PreAlertManager: ObservableObject {
         let bannerWidth: CGFloat = 460
         let bannerHeight: CGFloat = 108
 
+        // Pre-render the background image: downscale to banner pixel size and bake in
+        // the blur using Core Image. The resulting flat NSImage is all SwiftUI displays,
+        // so the blur never re-runs on each timer tick.
+        let blurRadius = (preAlertTheme.imageBlurRadius ?? 0.3) * 30
+        let scale = screen.backingScaleFactor
+        let bgImage: NSImage? = preAlertTheme.imageFileName.flatMap {
+            ImageStore.loadBlurred($0, targetSize: CGSize(width: bannerWidth * scale, height: bannerHeight * scale), blurRadius: blurRadius)
+        }
+
         let x = screen.frame.midX - bannerWidth / 2
         let menuBarHeight: CGFloat = NSApplication.shared.mainMenu?.menuBarHeight ?? 24
         let yVisible = screen.frame.maxY - menuBarHeight - bannerHeight - 12
@@ -126,6 +135,7 @@ class PreAlertManager: ObservableObject {
             color: color,
             videoURL: videoURL,
             preAlertTheme: preAlertTheme,
+            backgroundImage: bgImage,
             onDismiss: { [weak self] in
                 DispatchQueue.main.async { self?.dismiss() }
             },
@@ -179,6 +189,7 @@ struct PreAlertBannerView: View {
     let color: Color
     let videoURL: URL?
     let preAlertTheme: PreAlertTheme
+    let backgroundImage: NSImage?
     let onDismiss: () -> Void
     let onJoin: (URL) -> Void
     let onDisableAlerts: () -> Void
@@ -287,22 +298,15 @@ struct PreAlertBannerView: View {
             RoundedRectangle(cornerRadius: 14)
                 .fill(preAlertTheme.backgroundColor.color.opacity(preAlertTheme.backgroundOpacity))
         case .image:
-            if let imageFileName = preAlertTheme.imageFileName,
-               let nsImage = ImageStore.load(imageFileName) {
-                GeometryReader { geo in
-                    let blurRadius = (preAlertTheme.imageBlurRadius ?? 0.3) * 30
-                    Image(nsImage: nsImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .blur(radius: blurRadius)
-                        .frame(width: geo.size.width + blurRadius * 2, height: geo.size.height + blurRadius * 2)
-                        .frame(width: geo.size.width, height: geo.size.height)
-                        .clipped()
-                        .overlay(
-                            preAlertTheme.overlayColor.color.opacity(preAlertTheme.overlayOpacity)
-                        )
-                        .drawingGroup()
-                }
+            if let nsImage = backgroundImage {
+                // backgroundImage is already downscaled + blurred by the caller,
+                // so just display it — no .blur() modifier, no per-frame processing.
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .overlay(
+                        preAlertTheme.overlayColor.color.opacity(preAlertTheme.overlayOpacity)
+                    )
             } else {
                 RoundedRectangle(cornerRadius: 14)
                     .fill(preAlertTheme.backgroundColor.color.opacity(preAlertTheme.backgroundOpacity))

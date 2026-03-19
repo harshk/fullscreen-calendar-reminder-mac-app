@@ -154,8 +154,9 @@ class AlertCoordinator: ObservableObject {
         guard !alertQueue.isEmpty else { return }
         let snoozedItem = alertQueue[0]
 
-        // Close windows and remove from queue (same as dismiss)
+        // Close windows and release view hierarchy to free image memory
         for window in alertWindows {
+            window.contentView = nil
             window.close()
         }
         alertWindows.removeAll()
@@ -189,8 +190,9 @@ class AlertCoordinator: ObservableObject {
     }
 
     func dismissCurrentAlert() {
-        // Close all alert windows
+        // Release view hierarchy to free image memory, then close
         for window in alertWindows {
+            window.contentView = nil
             window.close()
         }
         alertWindows.removeAll()
@@ -214,8 +216,9 @@ class AlertCoordinator: ObservableObject {
     // MARK: - Alert Display
     
     private func displayFullScreenAlert(for item: AlertItem) {
-        // Close any existing windows
+        // Release view hierarchy and close any existing windows
         for window in alertWindows {
+            window.contentView = nil
             window.close()
         }
         alertWindows.removeAll()
@@ -224,10 +227,17 @@ class AlertCoordinator: ObservableObject {
         guard !screens.isEmpty else { return }
 
         let theme = ThemeService.shared.getTheme(for: item.calendarIdentifier)
+        // Pre-render background: downscale to screen pixel size and bake in blur.
+        let largestScreen = screens.max(by: { $0.frame.width < $1.frame.width }) ?? screens[0]
+        let scale = largestScreen.backingScaleFactor
+        let blurRadius = (theme.imageBlurRadius ?? 0.3) * 50
+        let bgImage: NSImage? = theme.imageFileName.flatMap {
+            ImageStore.loadBlurred($0, targetSize: CGSize(width: largestScreen.frame.width * scale, height: largestScreen.frame.height * scale), blurRadius: blurRadius)
+        }
 
         for (index, screen) in screens.enumerated() {
             let isPrimary = index == 0
-            let window = createAlertWindow(for: screen, item: item, theme: theme, isPrimary: isPrimary)
+            let window = createAlertWindow(for: screen, item: item, theme: theme, backgroundImage: bgImage, isPrimary: isPrimary)
             alertWindows.append(window)
             window.orderFrontRegardless()
         }
@@ -250,6 +260,7 @@ class AlertCoordinator: ObservableObject {
         for screen: NSScreen,
         item: AlertItem,
         theme: AlertTheme,
+        backgroundImage: NSImage?,
         isPrimary: Bool
     ) -> NSPanel {
         let window = KeyablePanel(
@@ -284,7 +295,8 @@ class AlertCoordinator: ObservableObject {
             },
             onJoinMeeting: { url in
                 NSWorkspace.shared.open(url)
-            }
+            },
+            backgroundImage: backgroundImage
         )
 
         let hostingView = FirstClickHostingView(rootView: contentView)
@@ -353,15 +365,21 @@ class AlertCoordinator: ObservableObject {
     }
 
     private func showPreviewAlert(theme: AlertTheme, item: AlertItem) {
-        
+
         let screens = NSScreen.screens
         guard !screens.isEmpty else { return }
-        
+
+        let largestScreen = screens.max(by: { $0.frame.width < $1.frame.width }) ?? screens[0]
+        let scale = largestScreen.backingScaleFactor
+        let blurRadius = (theme.imageBlurRadius ?? 0.3) * 50
+        let bgImage: NSImage? = theme.imageFileName.flatMap {
+            ImageStore.loadBlurred($0, targetSize: CGSize(width: largestScreen.frame.width * scale, height: largestScreen.frame.height * scale), blurRadius: blurRadius)
+        }
         var previewWindows: [NSWindow] = []
-        
+
         for (index, screen) in screens.enumerated() {
             let isPrimary = index == 0
-            let window = createPreviewWindow(for: screen, item: item, theme: theme, isPrimary: isPrimary)
+            let window = createPreviewWindow(for: screen, item: item, theme: theme, backgroundImage: bgImage, isPrimary: isPrimary)
             previewWindows.append(window)
             window.orderFrontRegardless()
         }
@@ -373,7 +391,10 @@ class AlertCoordinator: ObservableObject {
         // Local monitor for when the app is active
         let localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             if event.keyCode == 53 {
-                for window in previewWindows { window.close() }
+                for window in previewWindows {
+                    window.contentView = nil
+                    window.close()
+                }
                 return nil
             }
             return event
@@ -383,7 +404,10 @@ class AlertCoordinator: ObservableObject {
         let globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { event in
             if event.keyCode == 53 {
                 DispatchQueue.main.async {
-                    for window in previewWindows { window.close() }
+                    for window in previewWindows {
+                        window.contentView = nil
+                        window.close()
+                    }
                 }
             }
         }
@@ -418,6 +442,7 @@ class AlertCoordinator: ObservableObject {
         for screen: NSScreen,
         item: AlertItem,
         theme: AlertTheme,
+        backgroundImage: NSImage?,
         isPrimary: Bool
     ) -> NSPanel {
         let window = KeyablePanel(
@@ -445,12 +470,15 @@ class AlertCoordinator: ObservableObject {
             queueTotal: 1,
             isPrimaryScreen: isPrimary,
             onDismiss: { [weak window] in
+                window?.contentView = nil
                 window?.close()
             },
             onSnooze: { [weak window] _ in
+                window?.contentView = nil
                 window?.close()
             },
-            onJoinMeeting: { _ in }
+            onJoinMeeting: { _ in },
+            backgroundImage: backgroundImage
         )
 
         let hostingView = FirstClickHostingView(rootView: contentView)

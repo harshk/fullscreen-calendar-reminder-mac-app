@@ -43,9 +43,18 @@ struct PresetsSettingsView: View {
     @State private var showingRenameDialog = false
     @State private var renameTarget = ""
     @State private var assignCalendarPresetName: String? = nil
+    @State private var cachedBackgroundImage: NSImage? = nil
 
     init() {
         _workingTheme = State(initialValue: PresetManager.shared.theme(named: "Coral Paper FS"))
+    }
+
+    private func recomputeBackgroundImage() {
+        cachedBackgroundImage = workingTheme.imageFileName.flatMap {
+            let scaleFactor = NSScreen.main?.backingScaleFactor ?? 2
+            let blurRadius = (workingTheme.imageBlurRadius ?? 0.3) * 50
+            return ImageStore.loadBlurred($0, targetSize: CGSize(width: 800 * scaleFactor, height: 500 * scaleFactor), blurRadius: blurRadius)
+        }
     }
 
     var body: some View {
@@ -63,6 +72,10 @@ struct PresetsSettingsView: View {
             // Editor pane
             editorPane
         }
+        .onAppear { recomputeBackgroundImage() }
+        .onChange(of: workingTheme.imageFileName) { _ in recomputeBackgroundImage() }
+        .onChange(of: workingTheme.imageBlurRadius) { _ in recomputeBackgroundImage() }
+        .onChange(of: workingTheme.backgroundType) { _ in recomputeBackgroundImage() }
     }
 
     // MARK: - Preset List
@@ -226,7 +239,8 @@ struct PresetsSettingsView: View {
                         onJoinMeeting: { _ in },
                         onElementTap: { element in
                             selectedElement = element
-                        }
+                        },
+                        backgroundImage: cachedBackgroundImage
                     )
                     .frame(width: screenSize.width, height: screenSize.height)
                     .scaleEffect(scale)

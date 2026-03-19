@@ -18,6 +18,7 @@ struct FullScreenAlertView: View {
     let onSnooze: (TimeInterval) -> Void
     let onJoinMeeting: (URL) -> Void
     var onElementTap: ((AlertElementIdentifier?) -> Void)? = nil
+    var backgroundImage: NSImage? = nil
 
     @State private var contentOpacity: Double = 0
 
@@ -58,23 +59,21 @@ struct FullScreenAlertView: View {
             theme.solidColor.color
                 .opacity(theme.solidColorOpacity)
         case .image:
-            if let imageFileName = theme.imageFileName,
-               let nsImage = ImageStore.load(imageFileName) {
+            if let nsImage = backgroundImage {
+                // backgroundImage is already downscaled + blurred by the caller,
+                // so just display it — no .blur() modifier, no per-frame processing.
                 GeometryReader { geo in
-                    let blurRadius = (theme.imageBlurRadius ?? 0.3) * 50
                     Image(nsImage: nsImage)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                        .blur(radius: blurRadius)
-                        .frame(width: geo.size.width + blurRadius * 2, height: geo.size.height + blurRadius * 2)
-                        .clipped()
                         .frame(width: geo.size.width, height: geo.size.height)
+                        .clipped()
                 }
                 .ignoresSafeArea()
-                    .overlay(
-                        theme.overlayColor.color
-                            .opacity(theme.overlayOpacity)
-                    )
+                .overlay(
+                    theme.overlayColor.color
+                        .opacity(theme.overlayOpacity)
+                )
             } else {
                 theme.solidColor.color
                     .opacity(theme.solidColorOpacity)

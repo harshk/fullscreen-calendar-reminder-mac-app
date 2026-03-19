@@ -40,9 +40,11 @@ struct PresetsSettingsView: View {
     @State private var showingDeleteConfirmation = false
     @State private var showingDuplicateDialog = false
     @State private var duplicateName = ""
+    @State private var duplicateError = ""
     @State private var showingRenameDialog = false
     @State private var renameName = ""
     @State private var renameTarget = ""
+    @State private var renameError = ""
     @State private var assignCalendarPresetName: String? = nil
 
     init() {
@@ -152,15 +154,25 @@ struct PresetsSettingsView: View {
         .frame(width: 180)
         .alert("Copy Preset", isPresented: $showingDuplicateDialog) {
             TextField("Name", text: $duplicateName)
-            Button("Cancel", role: .cancel) { }
+            Button("Cancel", role: .cancel) { duplicateError = "" }
             Button("Copy") {
                 let name = duplicateName.trimmingCharacters(in: .whitespaces)
                 guard !name.isEmpty else { return }
+                if presetManager.preset(named: name) != nil {
+                    duplicateError = "A preset named \"\(name)\" already exists."
+                    DispatchQueue.main.async { showingDuplicateDialog = true }
+                    return
+                }
+                duplicateError = ""
                 presetManager.duplicatePreset(from: selectedPresetName, newName: name)
                 selectedPresetName = name
             }
         } message: {
-            Text("Enter a name for the new preset.")
+            if duplicateError.isEmpty {
+                Text("Enter a name for the new preset.")
+            } else {
+                Text(duplicateError)
+            }
         }
         .alert("Delete Preset?", isPresented: $showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }
@@ -174,16 +186,26 @@ struct PresetsSettingsView: View {
         }
         .alert("Rename Preset", isPresented: $showingRenameDialog) {
             TextField("Name", text: $renameName)
-            Button("Cancel", role: .cancel) { }
+            Button("Cancel", role: .cancel) { renameError = "" }
             Button("Rename") {
                 let name = renameName.trimmingCharacters(in: .whitespaces)
                 guard !name.isEmpty, name != renameTarget else { return }
+                if presetManager.preset(named: name) != nil {
+                    renameError = "A preset named \"\(name)\" already exists."
+                    DispatchQueue.main.async { showingRenameDialog = true }
+                    return
+                }
+                renameError = ""
                 ThemeService.shared.updateAssignments(from: renameTarget, to: name)
                 presetManager.renamePreset(from: renameTarget, to: name)
                 selectedPresetName = name
             }
         } message: {
-            Text("Enter a new name for \"\(renameTarget)\".")
+            if renameError.isEmpty {
+                Text("Enter a new name for \"\(renameTarget)\".")
+            } else {
+                Text(renameError)
+            }
         }
         .sheet(isPresented: Binding(
             get: { assignCalendarPresetName != nil },

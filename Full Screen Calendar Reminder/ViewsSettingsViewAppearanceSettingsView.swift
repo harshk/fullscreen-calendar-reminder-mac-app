@@ -396,7 +396,7 @@ struct PresetsSettingsView: View {
                 }
             } else {
                 if let imageFileName = workingTheme.imageFileName,
-                   let nsImage = ImageStore.load(imageFileName) {
+                   let nsImage = ImageStore.loadThumbnail(imageFileName, maxDimension: 200 * (NSScreen.main?.backingScaleFactor ?? 2)) {
                     HStack {
                         Image(nsImage: nsImage)
                             .resizable()

@@ -37,34 +37,31 @@ enum ImageStore {
     }
 
     /// Load an NSImage from a filename. Returns nil if not found.
+    /// The image has caching disabled to avoid AppKit's internal image cache
+    /// retaining decoded bitmap data after the NSImage is released.
     static func load(_ filename: String) -> NSImage? {
-        // Check app-support Images dir first
-        let url = imagesDir.appendingPathComponent(filename)
-        if let image = NSImage(contentsOf: url) { return image }
-        // Check bundle resources (for bundled preset images)
-        if let bundleURL = Bundle.main.resourceURL?.appendingPathComponent("Images/\(filename)"),
-           let image = NSImage(contentsOf: bundleURL) { return image }
-        return nil
+        guard let url = resolveURL(filename) else { return nil }
+        guard let image = NSImage(contentsOf: url) else { return nil }
+        image.cacheMode = .never
+        return image
     }
 
-    /// Load an NSImage downscaled so its longest edge fits within `maxPixels`.
-    /// Callers should pass the target size in pixels (points × backingScaleFactor).
-    /// This prevents SwiftUI blur from operating on multi-megapixel source images.
+    /// Load an image downscaled so its longest edge fits within `maxPixels`,
+    /// using Core Image to avoid loading the full-resolution image into an NSImage.
     static func loadThumbnail(_ filename: String, maxDimension maxPixels: CGFloat) -> NSImage? {
-        guard let original = load(filename) else { return nil }
-        let pixelSize = original.representations.first.map {
-            CGSize(width: $0.pixelsWide, height: $0.pixelsHigh)
-        } ?? original.size
-        let scale = min(maxPixels / pixelSize.width, maxPixels / pixelSize.height, 1.0)
-        if scale >= 1.0 { return original } // Already small enough
-        let newW = pixelSize.width * scale
-        let newH = pixelSize.height * scale
-        let newImage = NSImage(size: NSSize(width: newW, height: newH))
-        newImage.lockFocus()
-        NSGraphicsContext.current?.imageInterpolation = .high
-        original.draw(in: NSRect(x: 0, y: 0, width: newW, height: newH))
-        newImage.unlockFocus()
-        return newImage
+        guard let url = resolveURL(filename),
+              let ciInput = CIImage(contentsOf: url) else { return nil }
+        let srcW = ciInput.extent.width
+        let srcH = ciInput.extent.height
+        let scale = min(maxPixels / srcW, maxPixels / srcH, 1.0)
+        let output = (scale < 1.0)
+            ? ciInput.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
+            : ciInput
+        guard let cgImage = ciContext.createCGImage(output, from: output.extent) else { return nil }
+        ciContext.clearCaches()
+        let result = NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+        result.cacheMode = .never
+        return result
     }
 
     /// Resolve a filename to its on-disk URL, checking app-support then bundle.
@@ -109,9 +106,12 @@ enum ImageStore {
             blurred = scaled
         }
 
-        // Render using shared context
+        // Render using shared context, then flush GPU resources
         guard let cgImage = ciContext.createCGImage(blurred, from: blurred.extent) else { return nil }
-        return NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+        ciContext.clearCaches()
+        let result = NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
+        result.cacheMode = .never
+        return result
     }
 
     /// Load raw Data from a filename. Returns nil if not found.

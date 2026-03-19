@@ -256,7 +256,7 @@ struct PreAlertPresetsSettingsView: View {
                         }
                     } else {
                         if let imageFileName = workingTheme.imageFileName,
-                           let nsImage = ImageStore.load(imageFileName) {
+                           let nsImage = ImageStore.loadThumbnail(imageFileName, maxDimension: 160 * (NSScreen.main?.backingScaleFactor ?? 2)) {
                             HStack {
                                 Image(nsImage: nsImage)
                                     .resizable()

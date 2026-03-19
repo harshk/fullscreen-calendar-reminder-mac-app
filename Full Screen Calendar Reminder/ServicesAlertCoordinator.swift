@@ -97,6 +97,12 @@ class AlertCoordinator: ObservableObject {
     private var globalKeyMonitor: Any?
     private var snoozeTimers: [Timer] = []
 
+    // Preview state — tracked so we can clean up before opening a new preview
+    private var previewWindows: [NSWindow] = []
+    private var previewLocalMonitor: Any?
+    private var previewGlobalMonitor: Any?
+    private var previewCloseObserver: NSObjectProtocol?
+
     private init() {
         setupKeyMonitor()
     }
@@ -365,6 +371,8 @@ class AlertCoordinator: ObservableObject {
     }
 
     private func showPreviewAlert(theme: AlertTheme, item: AlertItem) {
+        // Clean up any previous preview first
+        closePreviewWindows()
 
         let screens = NSScreen.screens
         guard !screens.isEmpty else { return }
@@ -375,7 +383,6 @@ class AlertCoordinator: ObservableObject {
         let bgImage: NSImage? = theme.imageFileName.flatMap {
             ImageStore.loadBlurred($0, targetSize: CGSize(width: largestScreen.frame.width * scale, height: largestScreen.frame.height * scale), blurRadius: blurRadius)
         }
-        var previewWindows: [NSWindow] = []
 
         for (index, screen) in screens.enumerated() {
             let isPrimary = index == 0
@@ -389,52 +396,53 @@ class AlertCoordinator: ObservableObject {
         previewWindows.first?.makeKeyAndOrderFront(nil)
 
         // Local monitor for when the app is active
-        let localMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+        previewLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if event.keyCode == 53 {
-                for window in previewWindows {
-                    window.contentView = nil
-                    window.close()
-                }
+                self?.closePreviewWindows()
                 return nil
             }
             return event
         }
 
         // Global monitor as safety net
-        let globalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { event in
+        previewGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if event.keyCode == 53 {
-                DispatchQueue.main.async {
-                    for window in previewWindows {
-                        window.contentView = nil
-                        window.close()
-                    }
-                }
+                DispatchQueue.main.async { self?.closePreviewWindows() }
             }
         }
 
-        // Clean up monitors when the first window closes
-        NotificationCenter.default.addObserver(
+        // Clean up when the first window closes (e.g. via dismiss/snooze button)
+        previewCloseObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification,
             object: previewWindows.first,
             queue: .main
-        ) { _ in
-            NSEvent.removeMonitor(localMonitor as Any)
-            if let gm = globalMonitor { NSEvent.removeMonitor(gm) }
+        ) { [weak self] _ in
+            self?.closePreviewWindows()
+        }
+    }
 
-            // If the settings window is still open, keep .regular and re-focus it;
-            // otherwise fall back to .accessory so the dock icon disappears.
-            if let settingsWindow = NSApp.windows.first(where: {
-                $0.isVisible && $0.title == "Settings"
-            }) {
-                // Small delay so the closing animation finishes first
-                DispatchQueue.main.async {
-                    NSApp.setActivationPolicy(.regular)
-                    settingsWindow.makeKeyAndOrderFront(nil)
-                    NSApp.activate(ignoringOtherApps: true)
-                }
-            } else {
-                NSApp.setActivationPolicy(.accessory)
+    private func closePreviewWindows() {
+        // Remove event monitors
+        if let m = previewLocalMonitor { NSEvent.removeMonitor(m); previewLocalMonitor = nil }
+        if let m = previewGlobalMonitor { NSEvent.removeMonitor(m); previewGlobalMonitor = nil }
+        if let o = previewCloseObserver { NotificationCenter.default.removeObserver(o); previewCloseObserver = nil }
+
+        // Release view hierarchy and close windows
+        for window in previewWindows {
+            window.contentView = nil
+            window.close()
+        }
+        previewWindows.removeAll()
+
+        // Restore activation policy
+        if let settingsWindow = NSApp.windows.first(where: { $0.isVisible && $0.title == "Settings" }) {
+            DispatchQueue.main.async {
+                NSApp.setActivationPolicy(.regular)
+                settingsWindow.makeKeyAndOrderFront(nil)
+                NSApp.activate(ignoringOtherApps: true)
             }
+        } else {
+            NSApp.setActivationPolicy(.accessory)
         }
     }
     
@@ -469,13 +477,11 @@ class AlertCoordinator: ObservableObject {
             queuePosition: 1,
             queueTotal: 1,
             isPrimaryScreen: isPrimary,
-            onDismiss: { [weak window] in
-                window?.contentView = nil
-                window?.close()
+            onDismiss: { [weak self] in
+                self?.closePreviewWindows()
             },
-            onSnooze: { [weak window] _ in
-                window?.contentView = nil
-                window?.close()
+            onSnooze: { [weak self] _ in
+                self?.closePreviewWindows()
             },
             onJoinMeeting: { _ in },
             backgroundImage: backgroundImage

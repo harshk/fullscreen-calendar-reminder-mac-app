@@ -172,6 +172,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func windowDidClose(_ notification: Notification) {
         guard let closedWindow = notification.object as? NSWindow,
               closedWindow == settingsWindow else { return }
+        closedWindow.contentView = nil
         settingsWindow = nil
         NSApp.setActivationPolicy(.accessory)
     }

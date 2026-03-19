@@ -238,8 +238,8 @@ struct PreAlertPresetsSettingsView: View {
                             Text("Opacity: \(Int(workingTheme.backgroundOpacity * 100))%")
                         }
                     } else {
-                        if let imageData = workingTheme.imageData,
-                           let nsImage = NSImage(data: imageData) {
+                        if let imageFileName = workingTheme.imageFileName,
+                           let nsImage = ImageStore.load(imageFileName) {
                             HStack {
                                 Image(nsImage: nsImage)
                                     .resizable()
@@ -250,7 +250,7 @@ struct PreAlertPresetsSettingsView: View {
                                 Spacer()
 
                                 Button("Remove") {
-                                    workingTheme.imageData = nil
+                                    workingTheme.imageFileName = nil
                                     workingTheme.backgroundType = .solidColor
                                 }
                                 .buttonStyle(.borderless)
@@ -410,8 +410,8 @@ struct PreAlertPresetsSettingsView: View {
         panel.allowedContentTypes = [.png, .jpeg, .webP]
 
         if panel.runModal() == .OK, let url = panel.url {
-            if let imageData = try? Data(contentsOf: url) {
-                workingTheme.imageData = imageData
+            if let data = try? Data(contentsOf: url) {
+                workingTheme.imageFileName = ImageStore.save(data)
                 workingTheme.backgroundType = .image
             }
         }

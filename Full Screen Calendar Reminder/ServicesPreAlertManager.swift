@@ -287,8 +287,8 @@ struct PreAlertBannerView: View {
             RoundedRectangle(cornerRadius: 14)
                 .fill(preAlertTheme.backgroundColor.color.opacity(preAlertTheme.backgroundOpacity))
         case .image:
-            if let imageData = preAlertTheme.imageData,
-               let nsImage = NSImage(data: imageData) {
+            if let imageFileName = preAlertTheme.imageFileName,
+               let nsImage = ImageStore.load(imageFileName) {
                 GeometryReader { geo in
                     let blurRadius = (preAlertTheme.imageBlurRadius ?? 0.3) * 30
                     Image(nsImage: nsImage)

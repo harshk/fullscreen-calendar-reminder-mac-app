@@ -16,7 +16,7 @@ struct PreAlertTheme: Codable, Identifiable {
     var backgroundType: BackgroundType
     var backgroundColor: CodableColor
     var backgroundOpacity: Double
-    var imageData: Data?
+    var imageFileName: String?
     var overlayColor: CodableColor
     var overlayOpacity: Double
     var imageBlurRadius: Double?
@@ -47,7 +47,7 @@ struct PreAlertTheme: Codable, Identifiable {
 
     init(id: String, name: String, backgroundType: BackgroundType = .solidColor,
          backgroundColor: CodableColor, backgroundOpacity: Double,
-         imageData: Data? = nil, overlayColor: CodableColor = CodableColor(.black),
+         imageFileName: String? = nil, overlayColor: CodableColor = CodableColor(.black),
          overlayOpacity: Double = 0.3, imageBlurRadius: Double? = 0.3,
          titleColor: CodableColor, countdownColor: CodableColor,
          dismissButtonColor: CodableColor, dismissIconColor: CodableColor,
@@ -59,7 +59,7 @@ struct PreAlertTheme: Codable, Identifiable {
         self.backgroundType = backgroundType
         self.backgroundColor = backgroundColor
         self.backgroundOpacity = backgroundOpacity
-        self.imageData = imageData
+        self.imageFileName = imageFileName
         self.overlayColor = overlayColor
         self.overlayOpacity = overlayOpacity
         self.imageBlurRadius = imageBlurRadius
@@ -101,7 +101,7 @@ struct PreAlertTheme: Codable, Identifiable {
 
     enum CodingKeys: String, CodingKey {
         case id, name, backgroundType, backgroundColor, backgroundOpacity
-        case imageData, overlayColor, overlayOpacity, imageBlurRadius
+        case imageFileName, overlayColor, overlayOpacity, imageBlurRadius
         case titleColor, countdownColor
         case dismissButtonColor, dismissIconColor, progressRingColor
         case disableButtonTextColor, disableButtonBackgroundColor
@@ -115,7 +115,7 @@ struct PreAlertTheme: Codable, Identifiable {
         backgroundType = try container.decodeIfPresent(BackgroundType.self, forKey: .backgroundType) ?? .solidColor
         backgroundColor = try container.decode(CodableColor.self, forKey: .backgroundColor)
         backgroundOpacity = try container.decode(Double.self, forKey: .backgroundOpacity)
-        imageData = try container.decodeIfPresent(Data.self, forKey: .imageData)
+        imageFileName = try container.decodeIfPresent(String.self, forKey: .imageFileName)
         overlayColor = try container.decodeIfPresent(CodableColor.self, forKey: .overlayColor) ?? CodableColor(.black)
         overlayOpacity = try container.decodeIfPresent(Double.self, forKey: .overlayOpacity) ?? 0.3
         imageBlurRadius = try container.decodeIfPresent(Double.self, forKey: .imageBlurRadius)

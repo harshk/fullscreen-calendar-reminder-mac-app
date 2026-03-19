@@ -18,7 +18,7 @@ struct AlertTheme: Codable, Identifiable {
     var backgroundType: BackgroundType
     var solidColor: CodableColor
     var solidColorOpacity: Double
-    var imageData: Data?
+    var imageFileName: String?
     var overlayColor: CodableColor
     var overlayOpacity: Double
     var imageBlurRadius: Double?
@@ -30,6 +30,9 @@ struct AlertTheme: Codable, Identifiable {
         case solidColor
         case image
     }
+
+    // MARK: - Codable (backwards compatibility with imageData)
+
     
     // MARK: - Default Theme
     
@@ -40,7 +43,7 @@ struct AlertTheme: Codable, Identifiable {
             backgroundType: .solidColor,
             solidColor: CodableColor(Color(red: 0.1, green: 0.1, blue: 0.15)),
             solidColorOpacity: 0.98,
-            imageData: nil,
+            imageFileName: nil,
             overlayColor: CodableColor(.black),
             overlayOpacity: 0.3,
             imageBlurRadius: 0.3,

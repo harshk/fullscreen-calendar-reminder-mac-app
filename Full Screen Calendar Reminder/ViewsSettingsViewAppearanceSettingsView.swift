@@ -380,8 +380,8 @@ struct PresetsSettingsView: View {
                     Text("Opacity: \(Int(workingTheme.solidColorOpacity * 100))%")
                 }
             } else {
-                if let imageData = workingTheme.imageData,
-                   let nsImage = NSImage(data: imageData) {
+                if let imageFileName = workingTheme.imageFileName,
+                   let nsImage = ImageStore.load(imageFileName) {
                     HStack {
                         Image(nsImage: nsImage)
                             .resizable()
@@ -392,7 +392,7 @@ struct PresetsSettingsView: View {
                         Spacer()
 
                         Button("Remove") {
-                            workingTheme.imageData = nil
+                            workingTheme.imageFileName = nil
                             workingTheme.backgroundType = .solidColor
                         }
                         .buttonStyle(.borderless)
@@ -656,8 +656,8 @@ struct PresetsSettingsView: View {
         panel.allowedContentTypes = [.png, .jpeg, .webP]
 
         if panel.runModal() == .OK, let url = panel.url {
-            if let imageData = try? Data(contentsOf: url) {
-                workingTheme.imageData = imageData
+            if let data = try? Data(contentsOf: url) {
+                workingTheme.imageFileName = ImageStore.save(data)
                 workingTheme.backgroundType = .image
             }
         }

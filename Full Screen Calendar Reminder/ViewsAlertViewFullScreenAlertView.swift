@@ -58,8 +58,8 @@ struct FullScreenAlertView: View {
             theme.solidColor.color
                 .opacity(theme.solidColorOpacity)
         case .image:
-            if let imageData = theme.imageData,
-               let nsImage = NSImage(data: imageData) {
+            if let imageFileName = theme.imageFileName,
+               let nsImage = ImageStore.load(imageFileName) {
                 GeometryReader { geo in
                     let blurRadius = (theme.imageBlurRadius ?? 0.3) * 50
                     Image(nsImage: nsImage)

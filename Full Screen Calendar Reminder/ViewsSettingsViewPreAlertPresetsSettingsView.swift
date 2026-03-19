@@ -54,6 +54,7 @@ struct PreAlertPresetsSettingsView: View {
                                 .foregroundColor(.secondary)
                             Text(preset.name)
                                 .lineLimit(1)
+                            Spacer()
                         }
                         .contentShape(Rectangle())
                         .tag(preset.name)
@@ -73,11 +74,13 @@ struct PreAlertPresetsSettingsView: View {
                 }
                 Section("Custom Presets") {
                     ForEach(presetManager.presets.filter { !presetManager.isBuiltIn($0.name) }) { preset in
-                        Text(preset.name)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .lineLimit(1)
-                            .contentShape(Rectangle())
-                            .tag(preset.name)
+                        HStack {
+                            Text(preset.name)
+                                .lineLimit(1)
+                            Spacer()
+                        }
+                        .contentShape(Rectangle())
+                        .tag(preset.name)
                             .contextMenu {
                                 Button("Copy") {
                                     duplicateName = presetManager.uniqueName(base: preset.name)

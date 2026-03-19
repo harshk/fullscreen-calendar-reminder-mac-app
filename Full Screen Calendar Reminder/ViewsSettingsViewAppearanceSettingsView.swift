@@ -78,6 +78,7 @@ struct PresetsSettingsView: View {
                                 .foregroundColor(.secondary)
                             Text(preset.name)
                                 .lineLimit(1)
+                            Spacer()
                         }
                         .contentShape(Rectangle())
                         .tag(preset.name)

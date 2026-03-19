@@ -19,11 +19,8 @@ struct PreAlertPresetsSettingsView: View {
     @State private var showingDeleteConfirmation = false
     @State private var showingDuplicateDialog = false
     @State private var duplicateName = ""
-    @State private var duplicateError = ""
     @State private var showingRenameDialog = false
-    @State private var renameName = ""
     @State private var renameTarget = ""
-    @State private var renameError = ""
     @State private var assignCalendarPresetName: String? = nil
 
     init() {
@@ -89,7 +86,6 @@ struct PreAlertPresetsSettingsView: View {
                                 }
                                 Button("Rename") {
                                     renameTarget = preset.name
-                                    renameName = preset.name
                                     showingRenameDialog = true
                                 }
                                 if !selectedCalendars.isEmpty {
@@ -128,27 +124,18 @@ struct PreAlertPresetsSettingsView: View {
             .padding(8)
         }
         .frame(width: 180)
-        .alert("Copy Preset", isPresented: $showingDuplicateDialog) {
-            TextField("Name", text: $duplicateName)
-            Button("Cancel", role: .cancel) { duplicateError = "" }
-            Button("Copy") {
-                let name = duplicateName.trimmingCharacters(in: .whitespaces)
-                guard !name.isEmpty else { return }
-                if presetManager.preset(named: name) != nil {
-                    duplicateError = "A preset named \"\(name)\" already exists."
-                    DispatchQueue.main.async { showingDuplicateDialog = true }
-                    return
+        .sheet(isPresented: $showingDuplicateDialog) {
+            PresetNameSheet(
+                title: "Copy Preset",
+                message: "Enter a name for the new preset.",
+                actionLabel: "Copy",
+                initialName: duplicateName,
+                validate: { presetManager.preset(named: $0) == nil },
+                onSubmit: { name in
+                    presetManager.duplicatePreset(from: selectedPresetName, newName: name)
+                    selectedPresetName = name
                 }
-                duplicateError = ""
-                presetManager.duplicatePreset(from: selectedPresetName, newName: name)
-                selectedPresetName = name
-            }
-        } message: {
-            if duplicateError.isEmpty {
-                Text("Enter a name for the new preset.")
-            } else {
-                Text(duplicateError)
-            }
+            )
         }
         .alert("Delete Preset?", isPresented: $showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }
@@ -160,28 +147,19 @@ struct PreAlertPresetsSettingsView: View {
         } message: {
             Text("This will permanently delete \"\(selectedPresetName)\" and reset any calendars using it.")
         }
-        .alert("Rename Preset", isPresented: $showingRenameDialog) {
-            TextField("Name", text: $renameName)
-            Button("Cancel", role: .cancel) { renameError = "" }
-            Button("Rename") {
-                let name = renameName.trimmingCharacters(in: .whitespaces)
-                guard !name.isEmpty, name != renameTarget else { return }
-                if presetManager.preset(named: name) != nil {
-                    renameError = "A preset named \"\(name)\" already exists."
-                    DispatchQueue.main.async { showingRenameDialog = true }
-                    return
+        .sheet(isPresented: $showingRenameDialog) {
+            PresetNameSheet(
+                title: "Rename Preset",
+                message: "Enter a new name for \"\(renameTarget)\".",
+                actionLabel: "Rename",
+                initialName: renameTarget,
+                validate: { $0 == renameTarget || presetManager.preset(named: $0) == nil },
+                onSubmit: { name in
+                    ThemeService.shared.updatePreAlertAssignments(from: renameTarget, to: name)
+                    presetManager.renamePreset(from: renameTarget, to: name)
+                    selectedPresetName = name
                 }
-                renameError = ""
-                ThemeService.shared.updatePreAlertAssignments(from: renameTarget, to: name)
-                presetManager.renamePreset(from: renameTarget, to: name)
-                selectedPresetName = name
-            }
-        } message: {
-            if renameError.isEmpty {
-                Text("Enter a new name for \"\(renameTarget)\".")
-            } else {
-                Text(renameError)
-            }
+            )
         }
         .sheet(isPresented: Binding(
             get: { assignCalendarPresetName != nil },

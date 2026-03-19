@@ -15,6 +15,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var panel: NSPanel?
     private var settingsWindow: NSWindow?
     private var eventMonitor: Any?
+    private var localEventMonitor: Any?
     var modelContainer: ModelContainer!
     
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -257,12 +258,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
             self?.closePanel()
         }
+        localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            guard let self = self, let panel = self.panel, panel.isVisible else { return event }
+            // If the click is inside the panel, let it through
+            if event.window === panel { return event }
+            self.closePanel()
+            return event
+        }
     }
 
     private func stopEventMonitor() {
         if let monitor = eventMonitor {
             NSEvent.removeMonitor(monitor)
             eventMonitor = nil
+        }
+        if let monitor = localEventMonitor {
+            NSEvent.removeMonitor(monitor)
+            localEventMonitor = nil
         }
     }
 }

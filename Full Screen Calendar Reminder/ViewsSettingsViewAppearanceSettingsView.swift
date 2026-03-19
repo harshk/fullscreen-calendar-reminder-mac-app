@@ -689,7 +689,7 @@ struct AssignCalendarsSheet: View {
             Divider()
 
             List {
-                Toggle("All Calendars", isOn: Binding(
+                toggleRow(label: "All Calendars", isOn: Binding(
                     get: { allAssigned },
                     set: { newValue in
                         for calendar in calendars {
@@ -704,25 +704,20 @@ struct AssignCalendarsSheet: View {
                 .fontWeight(.medium)
 
                 ForEach(calendars, id: \.calendarIdentifier) { calendar in
-                    Toggle(isOn: Binding(
-                        get: { isAssigned(calendar) },
-                        set: { newValue in
-                            if newValue {
-                                assign(presetName, to: calendar)
-                            } else {
-                                resetAssignment(for: calendar)
+                    toggleRow(
+                        label: calendar.title,
+                        color: calendar.cgColor.map { Color(cgColor: $0) },
+                        isOn: Binding(
+                            get: { isAssigned(calendar) },
+                            set: { newValue in
+                                if newValue {
+                                    assign(presetName, to: calendar)
+                                } else {
+                                    resetAssignment(for: calendar)
+                                }
                             }
-                        }
-                    )) {
-                        HStack(spacing: 8) {
-                            if let cgColor = calendar.cgColor {
-                                RoundedRectangle(cornerRadius: 3)
-                                    .fill(Color(cgColor: cgColor))
-                                    .frame(width: 14, height: 14)
-                            }
-                            Text(calendar.title)
-                        }
-                    }
+                        )
+                    )
                 }
             }
 
@@ -736,6 +731,23 @@ struct AssignCalendarsSheet: View {
             .padding()
         }
         .frame(width: 300, height: min(CGFloat(calendars.count * 28 + 150), 400))
+    }
+
+    private func toggleRow(label: String, color: Color? = nil, isOn: Binding<Bool>) -> some View {
+        HStack(spacing: 8) {
+            Toggle("", isOn: isOn)
+                .labelsHidden()
+                .toggleStyle(.checkbox)
+            if let color {
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(color)
+                    .frame(width: 14, height: 14)
+            }
+            Text(label)
+            Spacer()
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { isOn.wrappedValue.toggle() }
     }
 
     private func isAssigned(_ calendar: EKCalendar) -> Bool {

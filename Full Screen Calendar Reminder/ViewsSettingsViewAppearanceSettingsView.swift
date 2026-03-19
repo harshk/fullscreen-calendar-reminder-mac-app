@@ -44,16 +44,32 @@ struct PresetsSettingsView: View {
     @State private var renameTarget = ""
     @State private var assignCalendarPresetName: String? = nil
     @State private var cachedBackgroundImage: NSImage? = nil
+    @State private var cachedThumbnail: NSImage? = nil
 
     init() {
         _workingTheme = State(initialValue: PresetManager.shared.theme(named: "Coral Paper FS"))
     }
 
     private func recomputeBackgroundImage() {
-        cachedBackgroundImage = workingTheme.imageFileName.flatMap {
-            let scaleFactor = NSScreen.main?.backingScaleFactor ?? 2
-            let blurRadius = (workingTheme.imageBlurRadius ?? 0.3) * 50
-            return ImageStore.loadBlurred($0, targetSize: CGSize(width: 800 * scaleFactor, height: 500 * scaleFactor), blurRadius: blurRadius)
+        guard let filename = workingTheme.imageFileName else {
+            cachedBackgroundImage = nil
+            return
+        }
+        let scaleFactor = NSScreen.main?.backingScaleFactor ?? 2
+        let blurRadius = (workingTheme.imageBlurRadius ?? 0.3) * 50
+        ImageStore.loadBlurredAsync(filename, targetSize: CGSize(width: 800 * scaleFactor, height: 500 * scaleFactor), blurRadius: blurRadius) { image in
+            cachedBackgroundImage = image
+        }
+    }
+
+    private func recomputeThumbnail() {
+        guard let filename = workingTheme.imageFileName else {
+            cachedThumbnail = nil
+            return
+        }
+        let maxDim = 200 * (NSScreen.main?.backingScaleFactor ?? 2)
+        ImageStore.loadThumbnailAsync(filename, maxDimension: maxDim) { image in
+            cachedThumbnail = image
         }
     }
 
@@ -72,10 +88,10 @@ struct PresetsSettingsView: View {
             // Editor pane
             editorPane
         }
-        .onAppear { recomputeBackgroundImage() }
-        .onChange(of: workingTheme.imageFileName) { _ in recomputeBackgroundImage() }
+        .onAppear { recomputeBackgroundImage(); recomputeThumbnail() }
+        .onChange(of: workingTheme.imageFileName) { _ in recomputeBackgroundImage(); recomputeThumbnail() }
         .onChange(of: workingTheme.imageBlurRadius) { _ in recomputeBackgroundImage() }
-        .onChange(of: workingTheme.backgroundType) { _ in recomputeBackgroundImage() }
+        .onChange(of: workingTheme.backgroundType) { _ in recomputeBackgroundImage(); recomputeThumbnail() }
     }
 
     // MARK: - Preset List
@@ -395,8 +411,8 @@ struct PresetsSettingsView: View {
                     Text("Opacity: \(Int(workingTheme.solidColorOpacity * 100))%")
                 }
             } else {
-                if let imageFileName = workingTheme.imageFileName,
-                   let nsImage = ImageStore.loadThumbnail(imageFileName, maxDimension: 200 * (NSScreen.main?.backingScaleFactor ?? 2)) {
+                if workingTheme.imageFileName != nil,
+                   let nsImage = cachedThumbnail {
                     HStack {
                         Image(nsImage: nsImage)
                             .resizable()

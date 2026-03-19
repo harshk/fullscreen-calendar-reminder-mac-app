@@ -19,6 +19,9 @@ enum ImageStore {
         .cacheIntermediates: false
     ])
 
+    /// Serial queue for all Core Image rendering — keeps GPU work off the main thread.
+    private static let renderQueue = DispatchQueue(label: "com.app.ImageStore.render", qos: .userInitiated)
+
     private static var imagesDir: URL {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let dir = appSupport
@@ -58,7 +61,7 @@ enum ImageStore {
             ? ciInput.transformed(by: CGAffineTransform(scaleX: scale, y: scale))
             : ciInput
         guard let cgImage = ciContext.createCGImage(output, from: output.extent) else { return nil }
-        ciContext.clearCaches()
+
         let result = NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
         result.cacheMode = .never
         return result
@@ -108,10 +111,36 @@ enum ImageStore {
 
         // Render using shared context, then flush GPU resources
         guard let cgImage = ciContext.createCGImage(blurred, from: blurred.extent) else { return nil }
-        ciContext.clearCaches()
+
         let result = NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
         result.cacheMode = .never
         return result
+    }
+
+    /// Async version of loadBlurred — runs Core Image work on a background queue
+    /// so the main thread stays responsive.
+    static func loadBlurredAsync(
+        _ filename: String,
+        targetSize: CGSize,
+        blurRadius: CGFloat,
+        completion: @escaping @MainActor (NSImage?) -> Void
+    ) {
+        renderQueue.async {
+            let result = loadBlurred(filename, targetSize: targetSize, blurRadius: blurRadius)
+            DispatchQueue.main.async { completion(result) }
+        }
+    }
+
+    /// Async version of loadThumbnail.
+    static func loadThumbnailAsync(
+        _ filename: String,
+        maxDimension maxPixels: CGFloat,
+        completion: @escaping @MainActor (NSImage?) -> Void
+    ) {
+        renderQueue.async {
+            let result = loadThumbnail(filename, maxDimension: maxPixels)
+            DispatchQueue.main.async { completion(result) }
+        }
     }
 
     /// Load raw Data from a filename. Returns nil if not found.

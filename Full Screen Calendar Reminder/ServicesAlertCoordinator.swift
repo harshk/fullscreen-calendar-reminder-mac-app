@@ -380,22 +380,36 @@ class AlertCoordinator: ObservableObject {
         let largestScreen = screens.max(by: { $0.frame.width < $1.frame.width }) ?? screens[0]
         let scale = largestScreen.backingScaleFactor
         let blurRadius = (theme.imageBlurRadius ?? 0.3) * 50
-        let bgImage: NSImage? = theme.imageFileName.flatMap {
-            ImageStore.loadBlurred($0, targetSize: CGSize(width: largestScreen.frame.width * scale, height: largestScreen.frame.height * scale), blurRadius: blurRadius)
+
+        // Load/blur image on background thread to keep UI responsive
+        let loadAndShow = { [weak self] (bgImage: NSImage?) in
+            guard let self = self else { return }
+
+            for (index, screen) in screens.enumerated() {
+                let isPrimary = index == 0
+                let window = self.createPreviewWindow(for: screen, item: item, theme: theme, backgroundImage: bgImage, isPrimary: isPrimary)
+                self.previewWindows.append(window)
+                window.orderFrontRegardless()
+            }
+
+            NSApp.setActivationPolicy(.regular)
+            NSApp.activate(ignoringOtherApps: true)
+            self.previewWindows.first?.makeKeyAndOrderFront(nil)
+
+            self.installPreviewMonitors()
         }
 
-        for (index, screen) in screens.enumerated() {
-            let isPrimary = index == 0
-            let window = createPreviewWindow(for: screen, item: item, theme: theme, backgroundImage: bgImage, isPrimary: isPrimary)
-            previewWindows.append(window)
-            window.orderFrontRegardless()
+        if let filename = theme.imageFileName {
+            ImageStore.loadBlurredAsync(filename, targetSize: CGSize(width: largestScreen.frame.width * scale, height: largestScreen.frame.height * scale), blurRadius: blurRadius) { image in
+                loadAndShow(image)
+            }
+        } else {
+            loadAndShow(nil)
         }
 
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-        previewWindows.first?.makeKeyAndOrderFront(nil)
+    }
 
-        // Local monitor for when the app is active
+    private func installPreviewMonitors() {
         previewLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if event.keyCode == 53 {
                 self?.closePreviewWindows()
@@ -404,14 +418,12 @@ class AlertCoordinator: ObservableObject {
             return event
         }
 
-        // Global monitor as safety net
         previewGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if event.keyCode == 53 {
                 DispatchQueue.main.async { self?.closePreviewWindows() }
             }
         }
 
-        // Clean up when the first window closes (e.g. via dismiss/snooze button)
         previewCloseObserver = NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification,
             object: previewWindows.first,

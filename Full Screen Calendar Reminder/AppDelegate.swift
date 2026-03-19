@@ -262,6 +262,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self = self, let panel = self.panel, panel.isVisible else { return event }
             // If the click is inside the panel, let it through
             if event.window === panel { return event }
+            // If the click is on the status bar button, let togglePanel handle it
+            if event.window === self.statusItem?.button?.window { return event }
             self.closePanel()
             return event
         }

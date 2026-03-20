@@ -85,10 +85,16 @@ struct PresetsSettingsView: View {
             editorPane
         }
         .onAppear { recomputeBackgroundImage(); recomputeThumbnail() }
-        .onDisappear { cachedBackgroundImage = nil; cachedThumbnail = nil }
         .onChange(of: workingTheme.imageFileName) { _ in recomputeBackgroundImage(); recomputeThumbnail() }
         .onChange(of: workingTheme.imageBlurRadius) { _ in recomputeBackgroundImage() }
         .onChange(of: workingTheme.backgroundType) { _ in recomputeBackgroundImage(); recomputeThumbnail() }
+        .onReceive(SettingsWindowVisible.shared.$isVisible) { visible in
+            if visible {
+                recomputeBackgroundImage(); recomputeThumbnail()
+            } else {
+                cachedBackgroundImage = nil; cachedThumbnail = nil
+            }
+        }
     }
 
     // MARK: - Preset List
@@ -231,25 +237,34 @@ struct PresetsSettingsView: View {
 
     private var previewPane: some View {
         VStack(spacing: 0) {
-            // Preview — rendered at the preview pane size directly (not at full
-            // screen size then scaled down, which created ~130 MB of Metal textures).
-            ZStack {
-                Color.black.opacity(0.9)
+            // Preview - render at actual screen size and scale down to fit
+            GeometryReader { geometry in
+                let screenSize = NSScreen.main?.frame.size ?? CGSize(width: 1440, height: 900)
+                let scaleX = geometry.size.width / screenSize.width
+                let scaleY = geometry.size.height / screenSize.height
+                let scale = min(scaleX, scaleY)
 
-                FullScreenAlertView(
-                    alertItem: .calendarEvent(CalendarEvent.mock()),
-                    theme: workingTheme,
-                    queuePosition: 1,
-                    queueTotal: 3,
-                    isPrimaryScreen: true,
-                    onDismiss: {},
-                    onSnooze: { _ in },
-                    onJoinMeeting: { _ in },
-                    onElementTap: { element in
-                        selectedElement = element
-                    },
-                    backgroundImage: cachedBackgroundImage
-                )
+                ZStack {
+                    Color.black.opacity(0.9)
+
+                    FullScreenAlertView(
+                        alertItem: .calendarEvent(CalendarEvent.mock()),
+                        theme: workingTheme,
+                        queuePosition: 1,
+                        queueTotal: 3,
+                        isPrimaryScreen: true,
+                        onDismiss: {},
+                        onSnooze: { _ in },
+                        onJoinMeeting: { _ in },
+                        onElementTap: { element in
+                            selectedElement = element
+                        },
+                        backgroundImage: cachedBackgroundImage
+                    )
+                    .frame(width: screenSize.width, height: screenSize.height)
+                    .scaleEffect(scale)
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                }
             }
 
             // Actions

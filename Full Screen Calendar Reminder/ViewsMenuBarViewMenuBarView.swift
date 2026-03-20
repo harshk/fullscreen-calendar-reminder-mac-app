@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AppKit
+import Combine
 
 // MARK: - Menu Bar List Item
 
@@ -40,11 +41,10 @@ struct MenuBarView: View {
     @ObservedObject var calendarService = CalendarService.shared
     @ObservedObject var reminderService = ReminderService.shared
     @ObservedObject var settings = AppSettings.shared
-    
     @State private var showingAddReminder = false
     @State private var showingAddReminderInfo = false
     @State private var showingManageReminders = false
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // App name and settings gear
@@ -221,7 +221,7 @@ struct MenuBarView: View {
                 ForEach(group.items) { item in
                     switch item {
                     case .calendarEvent(let event):
-                        EventRow(event: event)
+                        EventRow(event: event, isDisabled: calendarService.isEventDisabled(event.id))
                     case .customReminder(let reminder):
                         MenuBarReminderRow(reminder: reminder)
                     }
@@ -309,24 +309,27 @@ struct MenuBarView: View {
         return grouped.sorted { $0.key < $1.key }.map { (date: $0.key, items: $0.value) }
     }
     
+    private static let dayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEEE, MMMM d"
+        return f
+    }()
+
+    private static let monthDayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMMM d"
+        return f
+    }()
+
     private func formatDateHeader(_ date: Date) -> String {
         let calendar = Calendar.current
-        
         if calendar.isDateInToday(date) {
-            return "Today — \(formatDate(date))"
+            return "Today — \(Self.monthDayFormatter.string(from: date))"
         } else if calendar.isDateInTomorrow(date) {
-            return "Tomorrow — \(formatDate(date))"
+            return "Tomorrow — \(Self.monthDayFormatter.string(from: date))"
         } else {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "EEEE, MMMM d"
-            return formatter.string(from: date)
+            return Self.dayFormatter.string(from: date)
         }
-    }
-    
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM d"
-        return formatter.string(from: date)
     }
 
     private func openSettings() {
@@ -361,12 +364,8 @@ struct MenuBarView: View {
 
 struct EventRow: View {
     let event: CalendarEvent
-    @ObservedObject private var calendarService = CalendarService.shared
+    let isDisabled: Bool
     @State private var showingDisabledPopover = false
-
-    private var isDisabled: Bool {
-        calendarService.isEventDisabled(event.id)
-    }
 
     var body: some View {
         HStack(spacing: 8) {
@@ -444,33 +443,39 @@ struct EventRow: View {
         .onTapGesture {
             CalendarService.shared.openEventInCalendarApp(event)
         }
-        .contextMenu {
-            Button("Show Preview: Full Screen Alert") {
+        .nativeContextMenu {
+            let menu = NSMenu()
+            menu.addItem(ClosureMenuItem("Show Preview: Full Screen Alert") {
                 NotificationCenter.default.post(name: .dismissPopover, object: nil)
                 AlertCoordinator.shared.showPreviewAlert(for: event)
-            }
-            Button("Show Preview: Pre-Alert") {
+            })
+            menu.addItem(ClosureMenuItem("Show Preview: Pre-Alert") {
                 NotificationCenter.default.post(name: .dismissPopover, object: nil)
                 PreAlertManager.shared.showTestPreAlert(for: event)
-            }
-            Divider()
+            })
+            menu.addItem(NSMenuItem.separator())
             if isDisabled {
-                Button(AppStrings.reEnableAlertsForEvent) {
+                menu.addItem(ClosureMenuItem(AppStrings.reEnableAlertsForEvent) {
                     CalendarService.shared.reEnableEvent(event.id)
-                }
+                })
             } else {
-                Button(AppStrings.disableAlertsForEvent) {
+                menu.addItem(ClosureMenuItem(AppStrings.disableAlertsForEvent) {
                     CalendarService.shared.markEventAsFired(event.id)
                     PreAlertManager.shared.markAsPreAlerted(event.id)
-                }
+                })
             }
+            return menu
         }
     }
     
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        return f
+    }()
+
     private func formatTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
+        Self.timeFormatter.string(from: date)
     }
 }
 
@@ -505,18 +510,24 @@ struct MenuBarReminderRow: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .contentShape(Rectangle())
-        .contextMenu {
-            Button("Show Preview: Full Screen Alert") {
+        .nativeContextMenu {
+            let menu = NSMenu()
+            menu.addItem(ClosureMenuItem("Show Preview: Full Screen Alert") {
                 NotificationCenter.default.post(name: .dismissPopover, object: nil)
                 AlertCoordinator.shared.showPreviewAlert(for: reminder)
-            }
+            })
+            return menu
         }
     }
 
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        return f
+    }()
+
     private func formatTime(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter.string(from: date)
+        Self.timeFormatter.string(from: date)
     }
 }
 

@@ -19,10 +19,21 @@ struct FullScreenAlertView: View {
     let onJoinMeeting: (URL) -> Void
     var onElementTap: ((AlertElementIdentifier?) -> Void)? = nil
     var backgroundImage: NSImage? = nil
+    /// When true, body returns Color.clear — tears down SwiftUI's entire
+    /// rendering tree (Metal textures, CALayers) without destroying the hosting view.
+    var isEmpty: Bool = false
 
     @State private var contentOpacity: Double = 0
 
     var body: some View {
+        if isEmpty {
+            Color.clear
+        } else {
+            alertContent
+        }
+    }
+
+    private var alertContent: some View {
         GeometryReader { geometry in
             ZStack {
                 // Background
@@ -45,7 +56,8 @@ struct FullScreenAlertView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onAppear {
-                contentOpacity = 1.0
+                contentOpacity = 0
+                withAnimation(.easeIn(duration: 1.0)) { contentOpacity = 1.0 }
             }
         }
     }

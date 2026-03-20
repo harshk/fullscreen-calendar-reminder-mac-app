@@ -61,10 +61,16 @@ struct PreAlertPresetsSettingsView: View {
             editorPane
         }
         .onAppear { recomputeBackgroundImage(); recomputeThumbnail() }
-        .onDisappear { cachedBackgroundImage = nil; cachedThumbnail = nil }
         .onChange(of: workingTheme.imageFileName) { _ in recomputeBackgroundImage(); recomputeThumbnail() }
         .onChange(of: workingTheme.imageBlurRadius) { _ in recomputeBackgroundImage() }
         .onChange(of: workingTheme.backgroundType) { _ in recomputeBackgroundImage() }
+        .onReceive(SettingsWindowVisible.shared.$isVisible) { visible in
+            if visible {
+                recomputeBackgroundImage(); recomputeThumbnail()
+            } else {
+                cachedBackgroundImage = nil; cachedThumbnail = nil
+            }
+        }
     }
 
     // MARK: - Preset List

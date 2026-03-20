@@ -16,7 +16,7 @@ import Combine
 class PreAlertManager: ObservableObject {
     static let shared = PreAlertManager()
 
-    @Published var isShowingPreAlert = false
+    var isShowingPreAlert = false
 
     private var bannerWindow: NSPanel?
     private var countdownTimer: Timer?
@@ -92,6 +92,9 @@ class PreAlertManager: ObservableObject {
 
     // MARK: - Floating Banner
 
+    /// Observable state for the reusable banner view.
+    private let bannerState = PreAlertBannerState()
+
     private func showBanner(eventID: String, title: String, startDate: Date, color: Color, videoURL: URL?, preAlertTheme: PreAlertTheme) {
         dismissBanner()
 
@@ -99,70 +102,74 @@ class PreAlertManager: ObservableObject {
         let bannerWidth: CGFloat = 460
         let bannerHeight: CGFloat = 108
 
-        // Pre-render the background image: downscale to banner pixel size and bake in
-        // the blur using Core Image. The resulting flat NSImage is all SwiftUI displays,
-        // so the blur never re-runs on each timer tick.
+        // Pre-render background image
         let blurRadius = (preAlertTheme.imageBlurRadius ?? 0.3) * 30
         let scale = screen.backingScaleFactor
         let bgImage: NSImage? = preAlertTheme.imageFileName.flatMap {
             ImageStore.loadBlurred($0, targetSize: CGSize(width: bannerWidth * scale, height: bannerHeight * scale), blurRadius: blurRadius)
         }
 
+        // Update all state in a single batch — one SwiftUI re-render
+        bannerState.show(eventID: eventID, title: title, startDate: startDate, color: color, videoURL: videoURL, theme: preAlertTheme, backgroundImage: bgImage)
+
         let x = screen.frame.midX - bannerWidth / 2
         let menuBarHeight: CGFloat = NSApplication.shared.mainMenu?.menuBarHeight ?? 24
         let yVisible = screen.frame.maxY - menuBarHeight - bannerHeight - 12
 
-        let panel = NSPanel(
-            contentRect: NSRect(x: x, y: yVisible, width: bannerWidth, height: bannerHeight),
-            styleMask: [.borderless, .nonactivatingPanel],
-            backing: .buffered,
-            defer: false,
-            screen: screen
-        )
-        panel.isFloatingPanel = true
-        panel.level = .floating
-        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        panel.isOpaque = false
-        panel.backgroundColor = .clear
-        panel.hasShadow = true
-        panel.ignoresMouseEvents = false
-        panel.hidesOnDeactivate = false
-        panel.acceptsMouseMovedEvents = true
+        if let panel = bannerWindow {
+            // Reuse existing window — just reposition and show
+            panel.setFrame(NSRect(x: x, y: yVisible, width: bannerWidth, height: bannerHeight), display: false)
+            panel.orderFrontRegardless()
+        } else {
+            // First time — create the window and hosting view
+            let panel = NSPanel(
+                contentRect: NSRect(x: x, y: yVisible, width: bannerWidth, height: bannerHeight),
+                styleMask: [.borderless, .nonactivatingPanel],
+                backing: .buffered,
+                defer: false,
+                screen: screen
+            )
+            panel.isFloatingPanel = true
+            panel.level = .floating
+            panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+            panel.isOpaque = false
+            panel.backgroundColor = .clear
+            panel.hasShadow = true
+            panel.ignoresMouseEvents = false
+            panel.hidesOnDeactivate = false
+            panel.acceptsMouseMovedEvents = true
 
-        let bannerContent = PreAlertBannerView(
-            title: title,
-            startDate: startDate,
-            color: color,
-            videoURL: videoURL,
-            preAlertTheme: preAlertTheme,
-            backgroundImage: bgImage,
-            onDismiss: { [weak self] in
-                DispatchQueue.main.async { self?.dismiss() }
-            },
-            onJoin: { url in
-                DispatchQueue.main.async { NSWorkspace.shared.open(url) }
-            },
-            onDisableAlerts: { [weak self] in
-                DispatchQueue.main.async {
-                    CalendarService.shared.markEventAsFired(eventID)
-                    self?.markAsPreAlerted(eventID)
-                    self?.dismiss()
+            let bannerContent = PreAlertBannerView(
+                bannerState: bannerState,
+                onDismiss: { [weak self] in
+                    DispatchQueue.main.async { self?.dismiss() }
+                },
+                onJoin: { url in
+                    DispatchQueue.main.async { NSWorkspace.shared.open(url) }
+                },
+                onDisableAlerts: { [weak self] in
+                    DispatchQueue.main.async {
+                        guard let self = self else { return }
+                        let eid = self.bannerState.eventID
+                        CalendarService.shared.markEventAsFired(eid)
+                        self.markAsPreAlerted(eid)
+                        self.dismiss()
+                    }
                 }
-            }
-        )
+            )
 
-        let hostingView = TransparentHostingView(rootView: bannerContent)
-        hostingView.frame = NSRect(origin: .zero, size: NSSize(width: bannerWidth, height: bannerHeight))
-        hostingView.autoresizingMask = [.width, .height]
-        panel.contentView = hostingView
+            let hostingView = TransparentHostingView(rootView: bannerContent)
+            hostingView.frame = NSRect(origin: .zero, size: NSSize(width: bannerWidth, height: bannerHeight))
+            hostingView.autoresizingMask = [.width, .height]
+            panel.contentView = hostingView
 
-        bannerWindow = panel
-        panel.orderFrontRegardless()
+            bannerWindow = panel
+            panel.orderFrontRegardless()
+        }
 
         // Auto-dismiss banner if configured
         let bannerDuration = AppSettings.shared.preAlertDuration
         if bannerDuration > 0 {
-            // 0 means persist until event starts
             countdownTimer?.invalidate()
             countdownTimer = Timer.scheduledTimer(withTimeInterval: bannerDuration, repeats: false) { [weak self] _ in
                 DispatchQueue.main.async { self?.dismiss() }
@@ -171,35 +178,126 @@ class PreAlertManager: ObservableObject {
     }
 
     private func dismissBanner() {
-        guard let panel = bannerWindow else { return }
-        bannerWindow = nil
-        panel.contentView = nil
-        panel.orderOut(nil)
-        DispatchQueue.main.async {
-            panel.close()
-        }
+        bannerState.hide()
+        bannerWindow?.orderOut(nil)
+    }
+}
+
+// MARK: - Pre-Alert Banner State
+
+/// Observable state for the reusable banner window. Uses manual
+/// objectWillChange to batch all updates into a single re-render.
+class PreAlertBannerState: ObservableObject {
+    var title: String = ""
+    var startDate: Date = Date()
+    var color: Color = .blue
+    var videoURL: URL? = nil
+    var preAlertTheme: PreAlertTheme = PreAlertTheme.defaultTheme()
+    var backgroundImage: NSImage? = nil
+    var eventID: String = ""
+    var isVisible: Bool = false
+
+    func show(eventID: String, title: String, startDate: Date, color: Color, videoURL: URL?, theme: PreAlertTheme, backgroundImage: NSImage?) {
+        self.eventID = eventID
+        self.title = title
+        self.startDate = startDate
+        self.color = color
+        self.videoURL = videoURL
+        self.preAlertTheme = theme
+        self.backgroundImage = backgroundImage
+        self.isVisible = true
+        objectWillChange.send()
+    }
+
+    func hide() {
+        isVisible = false
+        backgroundImage = nil
+        objectWillChange.send()
     }
 }
 
 // MARK: - SwiftUI Banner View
 
 struct PreAlertBannerView: View {
-    let title: String
-    let startDate: Date
-    let color: Color
-    let videoURL: URL?
-    let preAlertTheme: PreAlertTheme
-    let backgroundImage: NSImage?
+    @ObservedObject private var bannerState: PreAlertBannerState
     let onDismiss: () -> Void
     let onJoin: (URL) -> Void
     let onDisableAlerts: () -> Void
+
+    // Direct-mode overrides (for settings preview)
+    private let directTitle: String?
+    private let directStartDate: Date?
+    private let directColor: Color?
+    private let directVideoURL: URL??
+    private let directTheme: PreAlertTheme?
+    private let directBackgroundImage: NSImage??
+
+    private var title: String { directTitle ?? bannerState.title }
+    private var startDate: Date { directStartDate ?? bannerState.startDate }
+    private var color: Color { directColor ?? bannerState.color }
+    private var videoURL: URL? { directVideoURL ?? bannerState.videoURL }
+    private var preAlertTheme: PreAlertTheme { directTheme ?? bannerState.preAlertTheme }
+    private var backgroundImage: NSImage? { directBackgroundImage ?? bannerState.backgroundImage }
 
     @State private var countdown: String = ""
     @State private var progress: CGFloat = 1.0
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     private let bannerDuration = AppSettings.shared.preAlertDuration
 
+    /// State-driven init — used by the reusable banner window.
+    init(
+        bannerState: PreAlertBannerState,
+        onDismiss: @escaping () -> Void,
+        onJoin: @escaping (URL) -> Void,
+        onDisableAlerts: @escaping () -> Void
+    ) {
+        self.bannerState = bannerState
+        self.onDismiss = onDismiss
+        self.onJoin = onJoin
+        self.onDisableAlerts = onDisableAlerts
+        self.directTitle = nil
+        self.directStartDate = nil
+        self.directColor = nil
+        self.directVideoURL = nil
+        self.directTheme = nil
+        self.directBackgroundImage = nil
+    }
+
+    /// Direct init — used by settings preview.
+    init(
+        title: String,
+        startDate: Date,
+        color: Color,
+        videoURL: URL?,
+        preAlertTheme: PreAlertTheme,
+        backgroundImage: NSImage?,
+        onDismiss: @escaping () -> Void,
+        onJoin: @escaping (URL) -> Void,
+        onDisableAlerts: @escaping () -> Void
+    ) {
+        self.bannerState = PreAlertBannerState()
+        self.onDismiss = onDismiss
+        self.onJoin = onJoin
+        self.onDisableAlerts = onDisableAlerts
+        self.directTitle = title
+        self.directStartDate = startDate
+        self.directColor = color
+        self.directVideoURL = .some(videoURL)
+        self.directTheme = preAlertTheme
+        self.directBackgroundImage = .some(backgroundImage)
+    }
+
+    private var isStateDriven: Bool { directTitle == nil }
+
     var body: some View {
+        if isStateDriven && !bannerState.isVisible {
+            Color.clear.frame(width: 0, height: 0)
+        } else {
+            bannerContent
+        }
+    }
+
+    private var bannerContent: some View {
         HStack(alignment: .top, spacing: 12) {
             // Dismiss X button with progress ring
             ZStack {
@@ -288,7 +386,21 @@ struct PreAlertBannerView: View {
                 }
             }
         }
-        .onReceive(timer) { _ in updateCountdown() }
+        .onChange(of: bannerState.isVisible) { visible in
+            if visible {
+                progress = 1.0
+                updateCountdown()
+                if bannerDuration > 0 {
+                    withAnimation(.linear(duration: bannerDuration)) {
+                        progress = 0.0
+                    }
+                }
+            }
+        }
+        .onReceive(timer) { _ in
+            if isStateDriven && !bannerState.isVisible { return }
+            updateCountdown()
+        }
     }
 
     @ViewBuilder
@@ -299,8 +411,6 @@ struct PreAlertBannerView: View {
                 .fill(preAlertTheme.backgroundColor.color.opacity(preAlertTheme.backgroundOpacity))
         case .image:
             if let nsImage = backgroundImage {
-                // backgroundImage is already downscaled + blurred by the caller,
-                // so just display it — no .blur() modifier, no per-frame processing.
                 Image(nsImage: nsImage)
                     .resizable()
                     .aspectRatio(contentMode: .fill)

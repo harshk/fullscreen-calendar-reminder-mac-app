@@ -173,6 +173,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard let closedWindow = notification.object as? NSWindow,
               closedWindow == settingsWindow else { return }
         SettingsWindowVisible.shared.isVisible = false
+
         NSApp.setActivationPolicy(.accessory)
     }
 
@@ -246,26 +247,39 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let x = buttonFrame.midX - panelSize.width / 2
             let y = buttonFrame.minY - panelSize.height
             panel.setFrameOrigin(NSPoint(x: x, y: y))
+            // Reactivate the visual effect blur before showing
+            if let visualEffect = panel.contentView as? NSVisualEffectView {
+                visualEffect.state = .active
+            }
             panel.orderFrontRegardless()
             startEventMonitor()
         }
     }
 
     private func closePanel() {
+        // Deactivate the visual effect blur to release GPU textures
+        if let visualEffect = panel?.contentView as? NSVisualEffectView {
+            visualEffect.state = .inactive
+        }
         panel?.orderOut(nil)
         stopEventMonitor()
     }
 
+    /// Whether the panel dismiss monitors should act. Set instead of
+    /// creating/destroying monitors each open/close (which leaks ~0.3 MB/cycle).
+    private var panelMonitorsActive = false
+
     private func startEventMonitor() {
-        stopEventMonitor()
+        panelMonitorsActive = true
+        guard eventMonitor == nil else { return }  // already installed
+
         eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            guard self?.panelMonitorsActive == true else { return }
             self?.closePanel()
         }
         localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
-            guard let self = self, let panel = self.panel, panel.isVisible else { return event }
-            // If the click is inside the panel, let it through
+            guard let self = self, self.panelMonitorsActive, let panel = self.panel, panel.isVisible else { return event }
             if event.window === panel { return event }
-            // If the click is on the status bar button, let togglePanel handle it
             if event.window === self.statusItem?.button?.window { return event }
             self.closePanel()
             return event
@@ -273,14 +287,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func stopEventMonitor() {
-        if let monitor = eventMonitor {
-            NSEvent.removeMonitor(monitor)
-            eventMonitor = nil
-        }
-        if let monitor = localEventMonitor {
-            NSEvent.removeMonitor(monitor)
-            localEventMonitor = nil
-        }
+        panelMonitorsActive = false
     }
 }
 

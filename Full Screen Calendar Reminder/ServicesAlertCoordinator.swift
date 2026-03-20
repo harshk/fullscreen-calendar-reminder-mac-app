@@ -90,18 +90,17 @@ class FirstClickHostingView<Content: View>: NSHostingView<Content> {
 class AlertCoordinator: ObservableObject {
     static let shared = AlertCoordinator()
     
-    @Published var alertQueue: [AlertItem] = []
-    @Published var isShowingAlert = false
+    var alertQueue: [AlertItem] = []
+    var isShowingAlert = false
 
     private var alertWindows: [NSWindow] = []
+    private var alertHostingViews: [FirstClickHostingView<FullScreenAlertView>] = []
     private var globalKeyMonitor: Any?
     private var snoozeTimers: [Timer] = []
 
-    // Preview state — tracked so we can clean up before opening a new preview
-    private var previewWindows: [NSWindow] = []
     private var previewLocalMonitor: Any?
     private var previewGlobalMonitor: Any?
-    private var previewCloseObserver: NSObjectProtocol?
+    private var isPreviewMode = false
 
     private init() {
         setupKeyMonitor()
@@ -160,14 +159,7 @@ class AlertCoordinator: ObservableObject {
         guard !alertQueue.isEmpty else { return }
         let snoozedItem = alertQueue[0]
 
-        // Close windows and release view hierarchy to free image memory
-        autoreleasepool {
-            for window in alertWindows {
-                window.contentView = nil
-                window.close()
-            }
-        }
-        alertWindows.removeAll()
+        hideAlertWindows()
         alertQueue.removeFirst()
 
         // Schedule the snoozed alert to re-appear after the duration
@@ -193,19 +185,13 @@ class AlertCoordinator: ObservableObject {
         } else {
             isShowingAlert = false
             removeGlobalKeyMonitor()
+
             NSApp.setActivationPolicy(.accessory)
         }
     }
 
     func dismissCurrentAlert() {
-        // Release view hierarchy to free image memory, then close
-        autoreleasepool {
-            for window in alertWindows {
-                window.contentView = nil
-                window.close()
-            }
-        }
-        alertWindows.removeAll()
+        hideAlertWindows()
 
         // Remove from queue
         if !alertQueue.isEmpty {
@@ -218,63 +204,109 @@ class AlertCoordinator: ObservableObject {
         } else {
             isShowingAlert = false
             removeGlobalKeyMonitor()
-            // Restore accessory mode so the dock icon is hidden
+
             NSApp.setActivationPolicy(.accessory)
         }
     }
     
     // MARK: - Alert Display
-    
-    private func displayFullScreenAlert(for item: AlertItem) {
-        // Release view hierarchy and close any existing windows
-        autoreleasepool {
-            for window in alertWindows {
-                window.contentView = nil
-                window.close()
-            }
-        }
-        alertWindows.removeAll()
 
+    private func displayFullScreenAlert(for item: AlertItem) {
         let screens = NSScreen.screens
         guard !screens.isEmpty else { return }
 
         let theme = ThemeService.shared.getTheme(for: item.calendarIdentifier)
-        // Pre-render background: downscale to screen pixel size and bake in blur.
         let largestScreen = screens.max(by: { $0.frame.width < $1.frame.width }) ?? screens[0]
         let scale = largestScreen.backingScaleFactor
         let blurRadius = (theme.imageBlurRadius ?? 0.3) * 50
-        let bgImage: NSImage? = theme.imageFileName.flatMap {
-            ImageStore.loadBlurred($0, targetSize: CGSize(width: largestScreen.frame.width * scale, height: largestScreen.frame.height * scale), blurRadius: blurRadius)
+
+        let showWindows = { [weak self] (bgImage: NSImage?) in
+            guard let self = self else { return }
+
+            self.reconcileAlertWindows(for: screens)
+            self.updateAlertContent(item: item, theme: theme, backgroundImage: bgImage, screens: screens)
+
+            for window in self.alertWindows {
+                window.orderFrontRegardless()
+            }
+
+            NSApp.setActivationPolicy(.regular)
+            NSApp.activate(ignoringOtherApps: true)
+            self.alertWindows.first?.makeKeyAndOrderFront(nil)
+            self.installGlobalKeyMonitor()
+        }
+
+        if let filename = theme.imageFileName {
+            ImageStore.loadBlurredAsync(filename, targetSize: CGSize(width: largestScreen.frame.width * scale, height: largestScreen.frame.height * scale), blurRadius: blurRadius) { image in
+                showWindows(image)
+            }
+        } else {
+            showWindows(nil)
+        }
+    }
+
+    /// Update the rootView of each hosting view directly — no Combine, no @ObservedObject.
+    private func updateAlertContent(item: AlertItem, theme: AlertTheme, backgroundImage: NSImage?, screens: [NSScreen]) {
+        for (index, hostingView) in alertHostingViews.enumerated() {
+            let isPrimary = index == 0
+            hostingView.rootView = FullScreenAlertView(
+                alertItem: item,
+                theme: theme,
+                queuePosition: 1,
+                queueTotal: alertQueue.count,
+                isPrimaryScreen: isPrimary,
+                onDismiss: { [weak self] in
+                    if self?.isPreviewMode == true { self?.dismissPreview() }
+                    else { self?.dismissCurrentAlert() }
+                },
+                onSnooze: { [weak self] duration in
+                    if self?.isPreviewMode == true { self?.dismissPreview() }
+                    else { self?.snoozeCurrentAlert(for: duration) }
+                },
+                onJoinMeeting: { url in
+                    NSWorkspace.shared.open(url)
+                },
+                backgroundImage: backgroundImage
+            )
+        }
+    }
+
+    private func hideAlertWindows() {
+        for window in alertWindows {
+            window.orderOut(nil)
+        }
+        // Replace content with Color.clear — tears down SwiftUI's rendering
+        // tree while keeping the hosting view attached to the window.
+        for hostingView in alertHostingViews {
+            var view = hostingView.rootView
+            view.isEmpty = true
+            view.backgroundImage = nil
+            hostingView.rootView = view
+        }
+    }
+
+    /// Create or reuse windows so there's one per screen.
+    private func reconcileAlertWindows(for screens: [NSScreen]) {
+        // Remove excess windows if screens decreased
+        while alertWindows.count > screens.count {
+            alertWindows.removeLast()
+            alertHostingViews.removeLast()
         }
 
         for (index, screen) in screens.enumerated() {
-            let isPrimary = index == 0
-            let window = createAlertWindow(for: screen, item: item, theme: theme, backgroundImage: bgImage, isPrimary: isPrimary)
-            alertWindows.append(window)
-            window.orderFrontRegardless()
+            if index < alertWindows.count {
+                // Reuse existing window — just reposition
+                alertWindows[index].setFrame(screen.frame, display: false)
+            } else {
+                // Create a new window for this screen
+                let (window, hostingView) = createAlertWindow(for: screen, isPrimary: index == 0)
+                alertWindows.append(window)
+                alertHostingViews.append(hostingView)
+            }
         }
-
-        // Become a .regular app so macOS fully activates us and routes
-        // keyboard/mouse events to our overlay windows.  Without this,
-        // .accessory apps can show windows but never properly receive
-        // input — causing the "frozen overlay" bug.
-        // We stay .regular for the entire alert duration (the full-screen
-        // overlay covers any dock icon anyway) and restore .accessory
-        // in dismissCurrentAlert once all alerts are gone.
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-        alertWindows.first?.makeKeyAndOrderFront(nil)
-
-        installGlobalKeyMonitor()
     }
 
-    private func createAlertWindow(
-        for screen: NSScreen,
-        item: AlertItem,
-        theme: AlertTheme,
-        backgroundImage: NSImage?,
-        isPrimary: Bool
-    ) -> NSPanel {
+    private func createAlertWindow(for screen: NSScreen, isPrimary: Bool) -> (NSPanel, FirstClickHostingView<FullScreenAlertView>) {
         let window = KeyablePanel(
             contentRect: screen.frame,
             styleMask: [.borderless, .nonactivatingPanel],
@@ -293,30 +325,24 @@ class AlertCoordinator: ObservableObject {
         window.hidesOnDeactivate = false
         window.isFloatingPanel = true
 
-        let contentView = FullScreenAlertView(
-            alertItem: item,
-            theme: theme,
+        // Create a placeholder view — will be replaced by updateAlertContent
+        let placeholder = FullScreenAlertView(
+            alertItem: .calendarEvent(CalendarEvent.mock()),
+            theme: AlertTheme.defaultTheme(),
             queuePosition: 1,
-            queueTotal: alertQueue.count,
+            queueTotal: 1,
             isPrimaryScreen: isPrimary,
-            onDismiss: { [weak self] in
-                self?.dismissCurrentAlert()
-            },
-            onSnooze: { [weak self] duration in
-                self?.snoozeCurrentAlert(for: duration)
-            },
-            onJoinMeeting: { url in
-                NSWorkspace.shared.open(url)
-            },
-            backgroundImage: backgroundImage
+            onDismiss: {},
+            onSnooze: { _ in },
+            onJoinMeeting: { _ in }
         )
 
-        let hostingView = FirstClickHostingView(rootView: contentView)
+        let hostingView = FirstClickHostingView(rootView: placeholder)
         hostingView.frame = NSRect(origin: .zero, size: screen.frame.size)
         hostingView.autoresizingMask = [.width, .height]
         window.contentView = hostingView
 
-        return window
+        return (window, hostingView)
     }
 
     // MARK: - Keyboard Monitoring
@@ -377,8 +403,7 @@ class AlertCoordinator: ObservableObject {
     }
 
     private func showPreviewAlert(theme: AlertTheme, item: AlertItem) {
-        // Clean up any previous preview first
-        closePreviewWindows()
+        isPreviewMode = true
 
         let screens = NSScreen.screens
         guard !screens.isEmpty else { return }
@@ -387,38 +412,39 @@ class AlertCoordinator: ObservableObject {
         let scale = largestScreen.backingScaleFactor
         let blurRadius = (theme.imageBlurRadius ?? 0.3) * 50
 
-        // Load/blur image on background thread to keep UI responsive
-        let loadAndShow = { [weak self] (bgImage: NSImage?) in
+        let showWindows = { [weak self] (bgImage: NSImage?) in
             guard let self = self else { return }
 
-            for (index, screen) in screens.enumerated() {
-                let isPrimary = index == 0
-                let window = self.createPreviewWindow(for: screen, item: item, theme: theme, backgroundImage: bgImage, isPrimary: isPrimary)
-                self.previewWindows.append(window)
+            self.reconcileAlertWindows(for: screens)
+            self.updateAlertContent(item: item, theme: theme, backgroundImage: bgImage, screens: screens)
+
+            for window in self.alertWindows {
                 window.orderFrontRegardless()
             }
 
             NSApp.setActivationPolicy(.regular)
             NSApp.activate(ignoringOtherApps: true)
-            self.previewWindows.first?.makeKeyAndOrderFront(nil)
-
+            self.alertWindows.first?.makeKeyAndOrderFront(nil)
             self.installPreviewMonitors()
         }
 
         if let filename = theme.imageFileName {
             ImageStore.loadBlurredAsync(filename, targetSize: CGSize(width: largestScreen.frame.width * scale, height: largestScreen.frame.height * scale), blurRadius: blurRadius) { image in
-                loadAndShow(image)
+                showWindows(image)
             }
         } else {
-            loadAndShow(nil)
+            showWindows(nil)
         }
-
     }
 
     private func installPreviewMonitors() {
+        // Remove any existing monitors first
+        if let m = previewLocalMonitor { NSEvent.removeMonitor(m); previewLocalMonitor = nil }
+        if let m = previewGlobalMonitor { NSEvent.removeMonitor(m); previewGlobalMonitor = nil }
+
         previewLocalMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if event.keyCode == 53 {
-                self?.closePreviewWindows()
+                self?.dismissPreview()
                 return nil
             }
             return event
@@ -426,33 +452,17 @@ class AlertCoordinator: ObservableObject {
 
         previewGlobalMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             if event.keyCode == 53 {
-                DispatchQueue.main.async { self?.closePreviewWindows() }
+                DispatchQueue.main.async { self?.dismissPreview() }
             }
-        }
-
-        previewCloseObserver = NotificationCenter.default.addObserver(
-            forName: NSWindow.willCloseNotification,
-            object: previewWindows.first,
-            queue: .main
-        ) { [weak self] _ in
-            self?.closePreviewWindows()
         }
     }
 
-    private func closePreviewWindows() {
-        // Remove event monitors
+    private func dismissPreview() {
         if let m = previewLocalMonitor { NSEvent.removeMonitor(m); previewLocalMonitor = nil }
         if let m = previewGlobalMonitor { NSEvent.removeMonitor(m); previewGlobalMonitor = nil }
-        if let o = previewCloseObserver { NotificationCenter.default.removeObserver(o); previewCloseObserver = nil }
 
-        // Release view hierarchy and close windows
-        autoreleasepool {
-            for window in previewWindows {
-                window.contentView = nil
-                window.close()
-            }
-        }
-        previewWindows.removeAll()
+        hideAlertWindows()
+        isPreviewMode = false
 
         // Restore activation policy
         if let settingsWindow = NSApp.windows.first(where: { $0.isVisible && $0.title == "Settings" }) {
@@ -464,54 +474,5 @@ class AlertCoordinator: ObservableObject {
         } else {
             NSApp.setActivationPolicy(.accessory)
         }
-    }
-    
-    private func createPreviewWindow(
-        for screen: NSScreen,
-        item: AlertItem,
-        theme: AlertTheme,
-        backgroundImage: NSImage?,
-        isPrimary: Bool
-    ) -> NSPanel {
-        let window = KeyablePanel(
-            contentRect: screen.frame,
-            styleMask: [.borderless, .nonactivatingPanel],
-            backing: .buffered,
-            defer: false,
-            screen: screen
-        )
-
-        window.level = .screenSaver
-        window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
-        window.isOpaque = false
-        window.backgroundColor = .clear
-        window.ignoresMouseEvents = false
-        window.hasShadow = false
-        window.acceptsMouseMovedEvents = true
-        window.hidesOnDeactivate = false
-        window.isFloatingPanel = true
-
-        let contentView = FullScreenAlertView(
-            alertItem: item,
-            theme: theme,
-            queuePosition: 1,
-            queueTotal: 1,
-            isPrimaryScreen: isPrimary,
-            onDismiss: { [weak self] in
-                self?.closePreviewWindows()
-            },
-            onSnooze: { [weak self] _ in
-                self?.closePreviewWindows()
-            },
-            onJoinMeeting: { _ in },
-            backgroundImage: backgroundImage
-        )
-
-        let hostingView = FirstClickHostingView(rootView: contentView)
-        hostingView.frame = NSRect(origin: .zero, size: screen.frame.size)
-        hostingView.autoresizingMask = [.width, .height]
-        window.contentView = hostingView
-
-        return window
     }
 }

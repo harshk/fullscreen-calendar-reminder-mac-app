@@ -10,10 +10,15 @@ import SwiftUI
 import SwiftData
 import Combine
 
+extension Notification.Name {
+    static let menuBarPanelDidClose = Notification.Name("menuBarPanelDidClose")
+}
+
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var panel: NSPanel?
     private var settingsWindow: NSWindow?
+    private var manageRemindersWindow: NSWindow?
     private var eventMonitor: Any?
     private var localEventMonitor: Any?
     var modelContainer: ModelContainer!
@@ -128,6 +133,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             object: nil
         )
 
+        // Observe open manage reminders requests
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(openManageReminders),
+            name: .openManageReminders,
+            object: nil
+        )
+
         // Observe dismiss popover requests
         NotificationCenter.default.addObserver(
             self,
@@ -173,11 +186,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func windowDidClose(_ notification: Notification) {
-        guard let closedWindow = notification.object as? NSWindow,
-              closedWindow == settingsWindow else { return }
-        SettingsWindowVisible.shared.isVisible = false
+        guard let closedWindow = notification.object as? NSWindow else { return }
 
-        NSApp.setActivationPolicy(.accessory)
+        if closedWindow == settingsWindow {
+            SettingsWindowVisible.shared.isVisible = false
+        } else if closedWindow == manageRemindersWindow {
+            // No extra state to reset
+        } else {
+            return
+        }
+
+        // Hide dock icon if no managed windows are visible
+        let anyVisible = (settingsWindow?.isVisible == true) || (manageRemindersWindow?.isVisible == true)
+        if !anyVisible {
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
 
     @objc private func openSettings() {
@@ -204,6 +227,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.center()
         window.isReleasedWhenClosed = false
         self.settingsWindow = window
+
+        NSApp.setActivationPolicy(.regular)
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    @objc private func openManageReminders() {
+        closePanel()
+
+        if let manageRemindersWindow = manageRemindersWindow {
+            NSApp.setActivationPolicy(.regular)
+            manageRemindersWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 600, height: 500),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Manage Reminders"
+        window.contentView = NSHostingView(rootView: ManageRemindersView())
+        window.center()
+        window.isReleasedWhenClosed = false
+        self.manageRemindersWindow = window
 
         NSApp.setActivationPolicy(.regular)
         window.makeKeyAndOrderFront(nil)
@@ -266,6 +316,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         panel?.orderOut(nil)
         stopEventMonitor()
+        NotificationCenter.default.post(name: .menuBarPanelDidClose, object: nil)
     }
 
     /// Whether the panel dismiss monitors should act. Set instead of

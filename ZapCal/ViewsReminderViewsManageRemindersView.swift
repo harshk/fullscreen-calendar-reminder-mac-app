@@ -8,13 +8,12 @@
 import SwiftUI
 
 struct ManageRemindersView: View {
-    @Environment(\.dismiss) private var dismiss
     @ObservedObject var reminderService = ReminderService.shared
-    
+
     @State private var selectedReminder: CustomReminder?
     @State private var showingEditSheet = false
     @State private var showingDeleteConfirmation = false
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -22,11 +21,11 @@ struct ManageRemindersView: View {
                 Text("Manage Reminders")
                     .font(.title2)
                     .fontWeight(.semibold)
-                
+
                 Spacer()
-                
+
                 Button("Done") {
-                    dismiss()
+                    NSApp.keyWindow?.close()
                 }
             }
             .padding()

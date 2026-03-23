@@ -43,7 +43,6 @@ struct MenuBarView: View {
     @ObservedObject var settings = AppSettings.shared
     @State private var showingAddReminder = false
     @State private var showingAddReminderInfo = false
-    @State private var showingManageReminders = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -261,15 +260,12 @@ struct MenuBarView: View {
             }
             
             Button("Manage Reminders") {
-                showingManageReminders = true
+                NotificationCenter.default.post(name: .openManageReminders, object: nil)
             }
             .buttonStyle(.plain)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .sheet(isPresented: $showingManageReminders) {
-                ManageRemindersView()
-            }
 
             Divider()
                 .padding(.horizontal, 10)
@@ -293,8 +289,11 @@ struct MenuBarView: View {
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .menuBarPanelDidClose)) { _ in
+            showingAddReminder = false
+        }
     }
-    
+
     // MARK: - Helper Functions
     
     private var groupedItems: [(date: Date, items: [MenuBarListItem])] {
@@ -536,6 +535,7 @@ struct MenuBarReminderRow: View {
 extension Notification.Name {
     static let dismissPopover = Notification.Name("DismissPopover")
     static let openSettings = Notification.Name("OpenSettings")
+    static let openManageReminders = Notification.Name("OpenManageReminders")
 }
 
 // MARK: - Preview

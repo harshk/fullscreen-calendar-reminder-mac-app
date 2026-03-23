@@ -33,7 +33,7 @@ struct PresetsSettingsView: View {
     @ObservedObject private var appSettings = AppSettings.shared
     @ObservedObject private var themeService = ThemeService.shared
 
-    @State private var selectedPresetName: String = "Coral Paper FS"
+    @State private var selectedPresetName: String = "Pinka Blua FS"
     @State private var selectedElement: AlertElementIdentifier? = .title
     @State private var workingTheme: AlertTheme
     @State private var showingSavedConfirmation = false
@@ -47,7 +47,7 @@ struct PresetsSettingsView: View {
     @State private var cachedThumbnail: NSImage? = nil
 
     init() {
-        _workingTheme = State(initialValue: PresetManager.shared.theme(named: "Coral Paper FS"))
+        _workingTheme = State(initialValue: PresetManager.shared.theme(named: "Pinka Blua FS"))
     }
 
     private func recomputeBackgroundImage() {

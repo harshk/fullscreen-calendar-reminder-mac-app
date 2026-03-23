@@ -18,8 +18,8 @@ class ThemeService: ObservableObject {
     /// Maps calendar identifier → pre-alert preset name.
     @Published private(set) var calendarPreAlertAssignments: [String: String] = [:]
 
-    private static let defaultPresetName = "Pinka Blua"
-    private static let defaultPreAlertPresetName = "Basic"
+    private static let defaultPresetName = "Pinka Blua FS"
+    private static let defaultPreAlertPresetName = "Coral Paper"
 
     private init() {
         loadAssignments()

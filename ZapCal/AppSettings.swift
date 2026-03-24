@@ -65,6 +65,20 @@ class AppSettings: ObservableObject {
         didSet { UserDefaults.standard.set(snoozeDurations, forKey: "snoozeDurations") }
     }
 
+    /// Whether Apple Reminders integration is enabled.
+    @Published var appleRemindersEnabled: Bool {
+        didSet { UserDefaults.standard.set(appleRemindersEnabled, forKey: "appleRemindersEnabled") }
+    }
+
+    /// Selected reminder list identifiers for Apple Reminders.
+    @Published var selectedReminderListIdentifiers: Set<String> {
+        didSet {
+            if let encoded = try? JSONEncoder().encode(Array(selectedReminderListIdentifiers)) {
+                UserDefaults.standard.set(encoded, forKey: "selectedReminderListIdentifiers")
+            }
+        }
+    }
+
     private init() {
         self.launchAtLogin = UserDefaults.standard.bool(forKey: "launchAtLogin")
         let storedEventCount = UserDefaults.standard.integer(forKey: "numberOfEventsInMenuBar")
@@ -99,6 +113,15 @@ class AppSettings: ObservableObject {
             self.selectedCalendarIdentifiers = Set(identifiers)
         } else {
             self.selectedCalendarIdentifiers = []
+        }
+
+        // Apple Reminders
+        self.appleRemindersEnabled = UserDefaults.standard.bool(forKey: "appleRemindersEnabled")
+        if let data = UserDefaults.standard.data(forKey: "selectedReminderListIdentifiers"),
+           let identifiers = try? JSONDecoder().decode([String].self, from: data) {
+            self.selectedReminderListIdentifiers = Set(identifiers)
+        } else {
+            self.selectedReminderListIdentifiers = []
         }
         
         // Set default launch at login to true on first launch

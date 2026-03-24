@@ -381,40 +381,15 @@ struct FullScreenAlertView: View {
     }
     
     private var locationText: String? {
-        switch alertItem {
-        case .calendarEvent(let event):
-            guard let location = event.location, !location.isEmpty else { return nil }
-            // Don't show the location if it's just a video conference URL
-            if let url = URL(string: location), CalendarEvent.isVideoConferenceURL(url) {
-                return nil
-            }
-            // Also check if the location contains a video conference URL as part of the text
-            if CalendarEvent.findVideoConferenceURL(in: location) != nil,
-               location.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("http") {
-                return nil
-            }
-            return location
-        case .customReminder:
-            return nil
-        }
+        alertItem.location
     }
-    
+
     private var calendarNameText: String {
-        switch alertItem {
-        case .calendarEvent(let event):
-            return "Calendar: \(event.calendar.title)"
-        case .customReminder:
-            return "Custom Reminder"
-        }
+        alertItem.sourceLabel
     }
-    
+
     private var videoConferenceURL: URL? {
-        switch alertItem {
-        case .calendarEvent(let event):
-            return event.videoConferenceURL
-        case .customReminder:
-            return nil
-        }
+        alertItem.videoConferenceURL
     }
 
     private func videoConferenceServiceName(for url: URL) -> String? {

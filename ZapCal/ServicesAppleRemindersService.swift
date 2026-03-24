@@ -1,0 +1,246 @@
+//
+//  AppleRemindersService.swift
+//  ZapCal
+//
+//  Created by Harsh Kalra on 3/24/26.
+//
+
+import Foundation
+import EventKit
+import AppKit
+import Combine
+
+@MainActor
+class AppleRemindersService: ObservableObject {
+    static let shared = AppleRemindersService()
+
+    /// Shared event store from CalendarService to avoid EventKit conflicts.
+    private var eventStore: EKEventStore { CalendarService.shared.eventStore }
+
+    @Published var authorizationStatus: EKAuthorizationStatus = .notDetermined
+    @Published var availableReminderLists: [EKCalendar] = []
+    @Published var upcomingReminders: [AppleReminder] = []
+
+    private var firedReminderIDs = Set<String>()
+    private var pollingTimer: Timer?
+    private var fireCheckTimer: Timer?
+    private var cancellables = Set<AnyCancellable>()
+    private var lastFireCheckDate = Date()
+
+    private init() {
+        setupNotifications()
+        checkAuthorizationStatus()
+    }
+
+    // MARK: - Authorization
+
+    func checkAuthorizationStatus() {
+        authorizationStatus = EKEventStore.authorizationStatus(for: .reminder)
+    }
+
+    func requestAccess() async throws {
+        if #available(macOS 14.0, *) {
+            let granted = try await eventStore.requestFullAccessToReminders()
+            authorizationStatus = granted ? .fullAccess : .denied
+        } else {
+            let granted = try await eventStore.requestAccess(to: .reminder)
+            authorizationStatus = granted ? .authorized : .denied
+        }
+
+        if hasAccess {
+            await loadReminderLists()
+            startPolling()
+        }
+    }
+
+    var hasAccess: Bool {
+        if #available(macOS 14.0, *) {
+            return authorizationStatus == .fullAccess || authorizationStatus == .authorized
+        } else {
+            return authorizationStatus == .authorized
+        }
+    }
+
+    var permissionDenied: Bool {
+        authorizationStatus == .denied
+    }
+
+    // MARK: - Reminder List Management
+
+    func loadReminderLists() async {
+        guard hasAccess else { return }
+
+        availableReminderLists = eventStore.calendars(for: .reminder)
+            .sorted { $0.title < $1.title }
+
+        // Auto-select all lists on first enable if none selected
+        if AppSettings.shared.selectedReminderListIdentifiers.isEmpty {
+            AppSettings.shared.selectedReminderListIdentifiers = Set(
+                availableReminderLists.map { $0.calendarIdentifier }
+            )
+        }
+
+        await fetchUpcomingReminders()
+    }
+
+    // MARK: - Fetching
+
+    func fetchUpcomingReminders() async {
+        guard hasAccess else { return }
+
+        let selectedIdentifiers = AppSettings.shared.selectedReminderListIdentifiers
+        guard !selectedIdentifiers.isEmpty else {
+            upcomingReminders = []
+            return
+        }
+
+        let selectedLists = availableReminderLists.filter {
+            selectedIdentifiers.contains($0.calendarIdentifier)
+        }
+        guard !selectedLists.isEmpty else {
+            upcomingReminders = []
+            return
+        }
+
+        let store = self.eventStore
+        let now = Date()
+        let twoWeeks = Calendar.current.date(byAdding: .weekOfYear, value: 2, to: now) ?? now
+
+        // Only fetch incomplete reminders with due dates in the relevant window
+        let predicate = store.predicateForIncompleteReminders(
+            withDueDateStarting: now,
+            ending: twoWeeks,
+            calendars: selectedLists
+        )
+
+        let ekReminders: [EKReminder] = await withCheckedContinuation { continuation in
+            store.fetchReminders(matching: predicate) { reminders in
+                continuation.resume(returning: reminders ?? [])
+            }
+        }
+
+        upcomingReminders = ekReminders
+            .compactMap { AppleReminder(from: $0) }
+            .sorted { $0.dueDate < $1.dueDate }
+    }
+
+    // MARK: - Polling
+
+    func startPolling() {
+        stopPolling()
+
+        pollingTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                await self?.fetchUpcomingReminders()
+            }
+        }
+
+        fireCheckTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.checkForRemindersToFire()
+            }
+        }
+
+        Task {
+            await fetchUpcomingReminders()
+            checkForRemindersToFire()
+        }
+    }
+
+    func stopPolling() {
+        pollingTimer?.invalidate()
+        pollingTimer = nil
+        fireCheckTimer?.invalidate()
+        fireCheckTimer = nil
+    }
+
+    // MARK: - Alert Triggering
+
+    func checkForRemindersToFire() {
+        guard !AppSettings.shared.isPaused else { return }
+        guard AppSettings.shared.appleRemindersEnabled else { return }
+
+        let now = Date()
+        let elapsed = now.timeIntervalSince(lastFireCheckDate)
+        lastFireCheckDate = now
+
+        // Sleep detection — silently mark all past reminders as fired
+        if elapsed > 10 {
+            for reminder in upcomingReminders where reminder.dueDate <= now {
+                firedReminderIDs.insert(reminder.id)
+            }
+            return
+        }
+
+        // Pre-alert check
+        if AppSettings.shared.preAlertEnabled {
+            let leadTime = AppSettings.shared.preAlertLeadTime
+            for reminder in upcomingReminders {
+                let timeUntilDue = reminder.dueDate.timeIntervalSince(now)
+                if timeUntilDue > 0 && timeUntilDue <= leadTime &&
+                   !firedReminderIDs.contains(reminder.id) {
+                    PreAlertManager.shared.showPreAlert(for: reminder)
+                }
+            }
+        }
+
+        // Full-screen alert check
+        let remindersToFire = upcomingReminders.filter { reminder in
+            !firedReminderIDs.contains(reminder.id) &&
+            reminder.dueDate <= now &&
+            reminder.dueDate.timeIntervalSince(now) > -120
+        }
+
+        for reminder in remindersToFire {
+            firedReminderIDs.insert(reminder.id)
+            PreAlertManager.shared.dismiss()
+            AlertCoordinator.shared.queueAlert(for: reminder)
+        }
+    }
+
+    func markReminderAsFired(_ reminderID: String) {
+        firedReminderIDs.insert(reminderID)
+        objectWillChange.send()
+    }
+
+    func isReminderDisabled(_ reminderID: String) -> Bool {
+        firedReminderIDs.contains(reminderID)
+    }
+
+    func reEnableReminder(_ reminderID: String) {
+        firedReminderIDs.remove(reminderID)
+        PreAlertManager.shared.reEnablePreAlert(reminderID)
+        objectWillChange.send()
+    }
+
+    // MARK: - Notifications
+
+    private func setupNotifications() {
+        // EKEventStoreChanged fires for both calendar and reminder changes
+        NotificationCenter.default.publisher(for: .EKEventStoreChanged)
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    await self?.loadReminderLists()
+                }
+            }
+            .store(in: &cancellables)
+
+        NotificationCenter.default.publisher(for: NSNotification.Name("NSSystemClockDidChangeNotification"))
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    await self?.fetchUpcomingReminders()
+                    self?.firedReminderIDs.removeAll()
+                    PreAlertManager.shared.resetTracking()
+                }
+            }
+            .store(in: &cancellables)
+
+        NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didWakeNotification)
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    await self?.fetchUpcomingReminders()
+                }
+            }
+            .store(in: &cancellables)
+    }
+}

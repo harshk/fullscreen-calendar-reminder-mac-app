@@ -14,11 +14,13 @@ import Combine
 enum MenuBarListItem: Identifiable {
     case calendarEvent(CalendarEvent)
     case customReminder(CustomReminder)
+    case appleReminder(AppleReminder)
 
     var id: String {
         switch self {
         case .calendarEvent(let e): return "event-\(e.id)"
         case .customReminder(let r): return "reminder-\(r.id.uuidString)"
+        case .appleReminder(let r): return "apple-reminder-\(r.id)"
         }
     }
 
@@ -26,6 +28,7 @@ enum MenuBarListItem: Identifiable {
         switch self {
         case .calendarEvent(let e): return e.startDate
         case .customReminder(let r): return r.scheduledDate
+        case .appleReminder(let r): return r.dueDate
         }
     }
 
@@ -33,6 +36,7 @@ enum MenuBarListItem: Identifiable {
         switch self {
         case .calendarEvent(let e): return e.title
         case .customReminder(let r): return r.title
+        case .appleReminder(let r): return r.title
         }
     }
 }
@@ -40,6 +44,7 @@ enum MenuBarListItem: Identifiable {
 struct MenuBarView: View {
     @ObservedObject var calendarService = CalendarService.shared
     @ObservedObject var reminderService = ReminderService.shared
+    @ObservedObject var appleRemindersService = AppleRemindersService.shared
     @ObservedObject var settings = AppSettings.shared
     @State private var showingAddReminder = false
     @State private var showingAddReminderInfo = false
@@ -192,6 +197,8 @@ struct MenuBarView: View {
                         EventRow(event: event, isDisabled: calendarService.isEventDisabled(event.id))
                     case .customReminder(let reminder):
                         MenuBarReminderRow(reminder: reminder)
+                    case .appleReminder(let reminder):
+                        AppleReminderRow(reminder: reminder)
                     }
                 }
             }
@@ -260,6 +267,9 @@ struct MenuBarView: View {
         let cal = Calendar.current
         var allItems: [MenuBarListItem] = calendarService.upcomingEvents.map { .calendarEvent($0) }
         allItems += reminderService.upcomingReminders.map { .customReminder($0) }
+        if settings.appleRemindersEnabled {
+            allItems += appleRemindersService.upcomingReminders.map { .appleReminder($0) }
+        }
         allItems.sort { $0.startDate < $1.startDate }
 
         let grouped = Dictionary(grouping: allItems) { item in
@@ -474,6 +484,63 @@ struct MenuBarReminderRow: View {
             menu.addItem(ClosureMenuItem("Show Preview: Full Screen Alert") {
                 NotificationCenter.default.post(name: .dismissPopover, object: nil)
                 AlertCoordinator.shared.showPreviewAlert(for: reminder)
+            })
+            return menu
+        }
+    }
+
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.timeStyle = .short
+        return f
+    }()
+
+    private func formatTime(_ date: Date) -> String {
+        Self.timeFormatter.string(from: date)
+    }
+}
+
+// MARK: - Apple Reminder Row
+
+struct AppleReminderRow: View {
+    let reminder: AppleReminder
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(formatTime(reminder.dueDate))
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(width: 50, alignment: .trailing)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(reminder.title)
+                    .font(.subheadline)
+                    .lineLimit(2)
+
+                HStack(spacing: 4) {
+                    Image(systemName: "checklist")
+                        .font(.caption2)
+                    Text(reminder.reminderList.title)
+                        .font(.caption)
+                }
+                .foregroundColor(.green)
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(reminder.reminderList.color.opacity(0.1))
+        .contentShape(Rectangle())
+        .nativeContextMenu {
+            let menu = NSMenu()
+            menu.addItem(ClosureMenuItem("Show Preview: Full Screen Alert") {
+                NotificationCenter.default.post(name: .dismissPopover, object: nil)
+                AlertCoordinator.shared.showPreviewAlert(for: reminder)
+            })
+            menu.addItem(ClosureMenuItem("Show Preview: Pre-Alert") {
+                NotificationCenter.default.post(name: .dismissPopover, object: nil)
+                PreAlertManager.shared.showPreAlert(for: reminder)
             })
             return menu
         }

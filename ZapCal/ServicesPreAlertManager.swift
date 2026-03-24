@@ -35,6 +35,15 @@ class PreAlertManager: ObservableObject {
         showBanner(eventID: event.id, title: event.title, startDate: event.startDate, color: event.calendar.color, videoURL: event.videoConferenceURL, preAlertTheme: theme)
     }
 
+    /// Show pre-alert for an upcoming Apple Reminder.
+    func showPreAlert(for appleReminder: AppleReminder) {
+        guard !preAlertEventIDs.contains(appleReminder.id) else { return }
+        preAlertEventIDs.insert(appleReminder.id)
+        isShowingPreAlert = true
+        let theme = ThemeService.shared.getPreAlertTheme(for: appleReminder.reminderList.identifier)
+        showBanner(eventID: appleReminder.id, title: appleReminder.title, startDate: appleReminder.dueDate, color: appleReminder.reminderList.color, videoURL: nil, preAlertTheme: theme)
+    }
+
     /// Show pre-alert for an upcoming custom reminder.
     func showPreAlert(for reminder: CustomReminder) {
         let id = reminder.id.uuidString

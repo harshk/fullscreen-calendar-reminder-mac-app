@@ -15,7 +15,7 @@ import UniformTypeIdentifiers
 class CalendarService: ObservableObject {
     static let shared = CalendarService()
 
-    private let eventStore = EKEventStore()
+    let eventStore = EKEventStore()
     
     @Published var authorizationStatus: EKAuthorizationStatus = .notDetermined
     @Published var availableCalendars: [EKCalendar] = []

@@ -1,5 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict/>
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>ZapCal</string>
+	<key>LSUIElement</key>
+	<true/>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>ZapCal needs full access to your calendars to monitor events and display full-screen alerts at the right time.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>ZapCal needs access to your reminders to display full-screen alerts when reminders are due.</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>13.0</string>
+</dict>
 </plist>

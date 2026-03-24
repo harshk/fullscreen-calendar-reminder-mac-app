@@ -13,49 +13,79 @@ import Combine
 enum AlertItem: Identifiable {
     case calendarEvent(CalendarEvent)
     case customReminder(CustomReminder)
-    
+    case appleReminder(AppleReminder)
+
     var id: String {
         switch self {
-        case .calendarEvent(let event):
-            return event.id
-        case .customReminder(let reminder):
-            return reminder.id.uuidString
+        case .calendarEvent(let event): return event.id
+        case .customReminder(let reminder): return reminder.id.uuidString
+        case .appleReminder(let reminder): return reminder.id
         }
     }
-    
+
     var title: String {
         switch self {
-        case .calendarEvent(let event):
-            return event.title
-        case .customReminder(let reminder):
-            return reminder.title
+        case .calendarEvent(let event): return event.title
+        case .customReminder(let reminder): return reminder.title
+        case .appleReminder(let reminder): return reminder.title
         }
     }
-    
+
     var startDate: Date {
         switch self {
-        case .calendarEvent(let event):
-            return event.startDate
-        case .customReminder(let reminder):
-            return reminder.scheduledDate
+        case .calendarEvent(let event): return event.startDate
+        case .customReminder(let reminder): return reminder.scheduledDate
+        case .appleReminder(let reminder): return reminder.dueDate
         }
     }
 
     var endDate: Date? {
         switch self {
-        case .calendarEvent(let event):
-            return event.endDate
-        case .customReminder:
-            return nil
+        case .calendarEvent(let event): return event.endDate
+        case .customReminder, .appleReminder: return nil
         }
     }
 
     var calendarIdentifier: String? {
         switch self {
+        case .calendarEvent(let event): return event.calendar.identifier
+        case .customReminder: return nil
+        case .appleReminder(let reminder): return reminder.reminderList.identifier
+        }
+    }
+
+    var location: String? {
+        switch self {
         case .calendarEvent(let event):
-            return event.calendar.identifier
-        case .customReminder:
-            return nil
+            guard let location = event.location, !location.isEmpty else { return nil }
+            if let url = URL(string: location), CalendarEvent.isVideoConferenceURL(url) { return nil }
+            if CalendarEvent.findVideoConferenceURL(in: location) != nil,
+               location.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("http") { return nil }
+            return location
+        case .customReminder, .appleReminder: return nil
+        }
+    }
+
+    var sourceLabel: String {
+        switch self {
+        case .calendarEvent(let event): return "Calendar: \(event.calendar.title)"
+        case .customReminder: return "Custom Reminder"
+        case .appleReminder(let reminder): return "Reminder: \(reminder.reminderList.title)"
+        }
+    }
+
+    var calendarColor: Color? {
+        switch self {
+        case .calendarEvent(let event): return event.calendar.color
+        case .customReminder: return nil
+        case .appleReminder(let reminder): return reminder.reminderList.color
+        }
+    }
+
+    var videoConferenceURL: URL? {
+        switch self {
+        case .calendarEvent(let event): return event.videoConferenceURL
+        case .customReminder, .appleReminder: return nil
         }
     }
 }
@@ -109,35 +139,23 @@ class AlertCoordinator: ObservableObject {
     // MARK: - Queue Management
     
     func queueAlert(for event: CalendarEvent) {
-        let item = AlertItem.calendarEvent(event)
-        
-        // Check if already in queue
+        queueAlert(item: .calendarEvent(event))
+    }
+
+    func queueAlert(for reminder: CustomReminder) {
+        queueAlert(item: .customReminder(reminder))
+    }
+
+    func queueAlert(for appleReminder: AppleReminder) {
+        queueAlert(item: .appleReminder(appleReminder))
+    }
+
+    private func queueAlert(item: AlertItem) {
         guard !alertQueue.contains(where: { $0.id == item.id }) else { return }
-        
+
         alertQueue.append(item)
         alertQueue.sort { $0.startDate < $1.startDate }
-        
-        if !isShowingAlert {
-            showNextAlert()
-        }
-    }
-    
-    func queueAlert(for reminder: CustomReminder) {
-        let item = AlertItem.customReminder(reminder)
-        
-        // Check if already in queue
-        guard !alertQueue.contains(where: { $0.id == item.id }) else { return }
-        
-        // Calendar events take priority, so append custom reminders after
-        if let lastEventIndex = alertQueue.lastIndex(where: {
-            if case .calendarEvent = $0 { return true }
-            return false
-        }) {
-            alertQueue.insert(item, at: lastEventIndex + 1)
-        } else {
-            alertQueue.append(item)
-        }
-        
+
         if !isShowingAlert {
             showNextAlert()
         }
@@ -394,6 +412,11 @@ class AlertCoordinator: ObservableObject {
     func showPreviewAlert(for reminder: CustomReminder) {
         let theme = ThemeService.shared.getTheme(for: nil)
         showPreviewAlert(theme: theme, item: .customReminder(reminder))
+    }
+
+    func showPreviewAlert(for appleReminder: AppleReminder) {
+        let theme = ThemeService.shared.getTheme(for: appleReminder.reminderList.identifier)
+        showPreviewAlert(theme: theme, item: .appleReminder(appleReminder))
     }
 
     func showPreviewAlert(theme: AlertTheme) {

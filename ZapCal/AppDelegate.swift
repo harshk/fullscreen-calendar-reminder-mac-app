@@ -60,7 +60,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             showWelcomeWindow()
         }
-        
+
+        // Start Apple Reminders service if enabled and has access
+        if AppSettings.shared.appleRemindersEnabled && AppleRemindersService.shared.hasAccess {
+            Task { @MainActor in
+                await AppleRemindersService.shared.loadReminderLists()
+                AppleRemindersService.shared.startPolling()
+            }
+        }
+
         // Setup reminder service with model context
         let context = modelContainer.mainContext
         ReminderService.shared.setModelContext(context)

@@ -19,6 +19,7 @@ struct SettingsView: View {
     enum SettingsTab: Hashable {
         case general
         case calendars
+        case reminders
         case presets
         case preAlertPresets
     }
@@ -38,6 +39,12 @@ struct SettingsView: View {
                     Label("Calendars", systemImage: "calendar")
                 }
                 .tag(SettingsTab.calendars)
+
+            RemindersSettingsView()
+                .tabItem {
+                    Label("Reminders", systemImage: "checklist")
+                }
+                .tag(SettingsTab.reminders)
 
             PresetsSettingsView()
                 .tabItem {

@@ -17,8 +17,15 @@ struct RemindersSettingsView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Toggle("Enable Apple Reminders", isOn: $settings.appleRemindersEnabled)
-                .padding()
+            HStack {
+                Text("Enable Apple Reminders")
+                Spacer()
+                Toggle("", isOn: $settings.appleRemindersEnabled)
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .labelsHidden()
+            }
+            .padding()
                 .onChange(of: settings.appleRemindersEnabled) { _, enabled in
                     if enabled && !remindersService.hasAccess {
                         Task { try? await remindersService.requestAccess() }

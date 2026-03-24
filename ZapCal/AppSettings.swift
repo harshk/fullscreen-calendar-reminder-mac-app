@@ -45,6 +45,11 @@ class AppSettings: ObservableObject {
         }
     }
 
+    /// Whether calendar alerts are enabled.
+    @Published var calendarAlertsEnabled: Bool {
+        didSet { UserDefaults.standard.set(calendarAlertsEnabled, forKey: "calendarAlertsEnabled") }
+    }
+
     /// Whether the pre-alert system (glow + banner) is enabled.
     @Published var preAlertEnabled: Bool {
         didSet { UserDefaults.standard.set(preAlertEnabled, forKey: "preAlertEnabled") }
@@ -84,6 +89,13 @@ class AppSettings: ObservableObject {
         let storedEventCount = UserDefaults.standard.integer(forKey: "numberOfEventsInMenuBar")
         self.numberOfEventsInMenuBar = storedEventCount == 0 ? 10 : storedEventCount
         self.isPaused = UserDefaults.standard.bool(forKey: "isPaused")
+
+        // Calendar alerts (default true)
+        if UserDefaults.standard.object(forKey: "calendarAlertsEnabled") != nil {
+            self.calendarAlertsEnabled = UserDefaults.standard.bool(forKey: "calendarAlertsEnabled")
+        } else {
+            self.calendarAlertsEnabled = true
+        }
 
         // Pre-alert defaults
         if UserDefaults.standard.object(forKey: "preAlertEnabled") != nil {

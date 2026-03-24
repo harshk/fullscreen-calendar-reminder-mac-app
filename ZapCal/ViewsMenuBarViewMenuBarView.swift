@@ -265,7 +265,9 @@ struct MenuBarView: View {
     
     private var groupedItems: [(date: Date, items: [MenuBarListItem])] {
         let cal = Calendar.current
-        var allItems: [MenuBarListItem] = calendarService.upcomingEvents.map { .calendarEvent($0) }
+        var allItems: [MenuBarListItem] = settings.calendarAlertsEnabled
+            ? calendarService.upcomingEvents.map { .calendarEvent($0) }
+            : []
         allItems += reminderService.upcomingReminders.map { .customReminder($0) }
         if settings.appleRemindersEnabled {
             allItems += appleRemindersService.upcomingReminders.map { .appleReminder($0) }

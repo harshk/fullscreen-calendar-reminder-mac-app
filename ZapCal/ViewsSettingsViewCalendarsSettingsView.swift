@@ -17,7 +17,21 @@ struct CalendarsSettingsView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if !calendarService.hasAccess {
+            HStack {
+                Text("Enable Calendar Alerts")
+                Spacer()
+                Toggle("", isOn: $settings.calendarAlertsEnabled)
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                    .labelsHidden()
+            }
+            .padding()
+
+            Divider()
+
+            if !settings.calendarAlertsEnabled {
+                disabledView
+            } else if !calendarService.hasAccess {
                 noAccessView
             } else if calendarService.availableCalendars.isEmpty {
                 noCalendarsView
@@ -26,6 +40,26 @@ struct CalendarsSettingsView: View {
             }
         }
         .padding()
+    }
+
+    // MARK: - Disabled View
+
+    private var disabledView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "calendar")
+                .font(.system(size: 60))
+                .foregroundColor(.secondary)
+
+            Text("Calendar Alerts Disabled")
+                .font(.title3)
+                .fontWeight(.semibold)
+
+            Text("Enable the toggle above to receive full-screen alerts for your calendar events.")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     // MARK: - No Access View

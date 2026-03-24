@@ -46,7 +46,6 @@ struct MenuBarView: View {
     @ObservedObject var reminderService = ReminderService.shared
     @ObservedObject var appleRemindersService = AppleRemindersService.shared
     @ObservedObject var settings = AppSettings.shared
-    @State private var showingAddReminder = false
     @State private var showingAddReminderInfo = false
 
     var body: some View {
@@ -211,7 +210,9 @@ struct MenuBarView: View {
         VStack(alignment: .leading, spacing: 0) {
             Spacer().frame(height: 5)
 
-            Button(action: { showingAddReminder = true }) {
+            Button(action: {
+                NotificationCenter.default.post(name: .openAddReminder, object: nil)
+            }) {
                 HStack {
                     Text("Add Full Screen Reminder")
                     Button(action: { showingAddReminderInfo.toggle() }) {
@@ -229,9 +230,6 @@ struct MenuBarView: View {
                 }
             }
             .buttonStyle(MenuRowButtonStyle())
-            .sheet(isPresented: $showingAddReminder) {
-                AddReminderView()
-            }
 
             Button("Manage Reminders") {
                 NotificationCenter.default.post(name: .openManageReminders, object: nil)
@@ -255,9 +253,6 @@ struct MenuBarView: View {
             .buttonStyle(MenuRowButtonStyle())
 
             Spacer().frame(height: 5)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .menuBarPanelDidClose)) { _ in
-            showingAddReminder = false
         }
     }
 
@@ -589,6 +584,7 @@ extension Notification.Name {
     static let openSettings = Notification.Name("OpenSettings")
     static let openManageReminders = Notification.Name("OpenManageReminders")
     static let showWelcomeScreen = Notification.Name("ShowWelcomeScreen")
+    static let openAddReminder = Notification.Name("OpenAddReminder")
 }
 
 // MARK: - Preview

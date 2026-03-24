@@ -20,6 +20,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: NSWindow?
     private var manageRemindersWindow: NSWindow?
     private var welcomeWindow: NSWindow?
+    private var addReminderWindow: NSWindow?
     private var eventMonitor: Any?
     private var localEventMonitor: Any?
     var modelContainer: ModelContainer!
@@ -162,6 +163,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             object: nil
         )
 
+        // Observe open add reminder requests
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleOpenAddReminder),
+            name: .openAddReminder,
+            object: nil
+        )
+
         // Observe dismiss popover requests
         NotificationCenter.default.addObserver(
             self,
@@ -215,6 +224,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             // No extra state to reset
         } else if closedWindow == welcomeWindow {
             // No extra state to reset
+        } else if closedWindow == addReminderWindow {
+            // No extra state to reset
         } else {
             return
         }
@@ -224,7 +235,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let settingsVisible = settingsWindow != closedWindow && settingsWindow?.isVisible == true
         let manageVisible = manageRemindersWindow != closedWindow && manageRemindersWindow?.isVisible == true
         let welcomeVisible = welcomeWindow != closedWindow && welcomeWindow?.isVisible == true
-        if !settingsVisible && !manageVisible && !welcomeVisible {
+        let addReminderVisible = addReminderWindow != closedWindow && addReminderWindow?.isVisible == true
+        if !settingsVisible && !manageVisible && !welcomeVisible && !addReminderVisible {
             NSApp.setActivationPolicy(.accessory)
         }
     }
@@ -315,6 +327,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func handleShowWelcomeScreen() {
         showWelcomeWindow()
+    }
+
+    @objc private func handleOpenAddReminder() {
+        closePanel()
+
+        if let addReminderWindow = addReminderWindow {
+            NSApp.setActivationPolicy(.regular)
+            addReminderWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 350),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Add Full Screen Reminder"
+        window.contentView = NSHostingView(rootView: AddReminderView())
+        window.center()
+        window.isReleasedWhenClosed = false
+        self.addReminderWindow = window
+
+        NSApp.setActivationPolicy(.regular)
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     @objc private func handleDismissPopover() {

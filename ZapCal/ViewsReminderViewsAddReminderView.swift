@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct AddReminderView: View {
-    @Environment(\.dismiss) private var dismiss
     @ObservedObject var reminderService = ReminderService.shared
     
     @State private var title = ""
@@ -44,7 +43,7 @@ struct AddReminderView: View {
             
             HStack(spacing: 12) {
                 Button("Cancel") {
-                    dismiss()
+                    NSApp.keyWindow?.close()
                 }
                 .keyboardShortcut(.cancelAction)
                 
@@ -95,7 +94,7 @@ struct AddReminderView: View {
         
         do {
             try reminderService.addReminder(title: title, scheduledDate: combinedDateTime)
-            dismiss()
+            NSApp.keyWindow?.close()
         } catch {
             errorMessage = "Failed to save reminder: \(error.localizedDescription)"
             showError = true

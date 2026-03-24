@@ -16,49 +16,58 @@ class SettingsWindowVisible: ObservableObject {
 }
 
 struct SettingsView: View {
-    enum SettingsTab: Hashable {
-        case general
-        case calendars
-        case reminders
-        case presets
-        case preAlertPresets
+    enum SettingsTab: String, CaseIterable, Identifiable {
+        case general = "General"
+        case calendars = "Calendars"
+        case reminders = "Reminders"
+        case presets = "Alert Presets"
+        case preAlertPresets = "Pre-Alert Presets"
+
+        var id: String { rawValue }
+
+        var icon: String {
+            switch self {
+            case .general: return "gear"
+            case .calendars: return "calendar"
+            case .reminders: return "checklist"
+            case .presets: return "paintbrush"
+            case .preAlertPresets: return "bell.badge"
+            }
+        }
     }
 
     @State private var selectedTab: SettingsTab = .general
 
+    private var contentWidth: CGFloat {
+        (selectedTab == .presets || selectedTab == .preAlertPresets) ? 1100 : 600
+    }
+
     var body: some View {
-        TabView(selection: $selectedTab) {
-            GeneralSettingsView()
-                .tabItem {
-                    Label("General", systemImage: "gear")
+        NavigationSplitView {
+            List(SettingsTab.allCases, selection: $selectedTab) { tab in
+                Label(tab.rawValue, systemImage: tab.icon)
+                    .tag(tab)
+            }
+            .listStyle(.sidebar)
+            .navigationSplitViewColumnWidth(200)
+        } detail: {
+            Group {
+                switch selectedTab {
+                case .general:
+                    GeneralSettingsView()
+                case .calendars:
+                    CalendarsSettingsView()
+                case .reminders:
+                    RemindersSettingsView()
+                case .presets:
+                    PresetsSettingsView()
+                case .preAlertPresets:
+                    PreAlertPresetsSettingsView()
                 }
-                .tag(SettingsTab.general)
-
-            CalendarsSettingsView()
-                .tabItem {
-                    Label("Calendars", systemImage: "calendar")
-                }
-                .tag(SettingsTab.calendars)
-
-            RemindersSettingsView()
-                .tabItem {
-                    Label("Reminders", systemImage: "checklist")
-                }
-                .tag(SettingsTab.reminders)
-
-            PresetsSettingsView()
-                .tabItem {
-                    Label("Full Screen Alert Presets", systemImage: "paintbrush")
-                }
-                .tag(SettingsTab.presets)
-
-            PreAlertPresetsSettingsView()
-                .tabItem {
-                    Label("Pre-Alert Presets", systemImage: "bell.badge")
-                }
-                .tag(SettingsTab.preAlertPresets)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(width: (selectedTab == .presets || selectedTab == .preAlertPresets) ? 1300 : 800, height: 600)
+        .frame(width: contentWidth + 200, height: 600)
         .animation(.easeInOut(duration: 0.2), value: selectedTab)
     }
 }

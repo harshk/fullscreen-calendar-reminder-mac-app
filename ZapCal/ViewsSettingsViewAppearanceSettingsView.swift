@@ -30,6 +30,7 @@ struct PresetsSettingsView: View {
     @ObservedObject var presetManager = PresetManager.shared
     @ObservedObject private var fontCache = FontCache.shared
     @ObservedObject private var calendarService = CalendarService.shared
+    @ObservedObject private var appleRemindersService = AppleRemindersService.shared
     @ObservedObject private var appSettings = AppSettings.shared
     @ObservedObject private var themeService = ThemeService.shared
 
@@ -43,6 +44,7 @@ struct PresetsSettingsView: View {
     @State private var showingRenameDialog = false
     @State private var renameTarget = ""
     @State private var assignCalendarPresetName: String? = nil
+    @State private var assignReminderPresetName: String? = nil
     @State private var cachedBackgroundImage: NSImage? = nil
     @State private var cachedThumbnail: NSImage? = nil
 
@@ -125,6 +127,11 @@ struct PresetsSettingsView: View {
                                     assignCalendarPresetName = preset.name
                                 }
                             }
+                            if !selectedReminderLists.isEmpty {
+                                Button("Assign to Reminder List...") {
+                                    assignReminderPresetName = preset.name
+                                }
+                            }
                         }
                     }
                 }
@@ -148,6 +155,11 @@ struct PresetsSettingsView: View {
                                 if !selectedCalendars.isEmpty {
                                     Button("Assign to Calendar...") {
                                         assignCalendarPresetName = preset.name
+                                    }
+                                }
+                                if !selectedReminderLists.isEmpty {
+                                    Button("Assign to Reminder List...") {
+                                        assignReminderPresetName = preset.name
                                     }
                                 }
                                 Divider()
@@ -228,6 +240,20 @@ struct PresetsSettingsView: View {
                     calendars: selectedCalendars,
                     themeService: themeService,
                     kind: .fullScreen
+                )
+            }
+        }
+        .sheet(isPresented: Binding(
+            get: { assignReminderPresetName != nil },
+            set: { if !$0 { assignReminderPresetName = nil } }
+        )) {
+            if let presetName = assignReminderPresetName {
+                AssignCalendarsSheet(
+                    presetName: presetName,
+                    calendars: selectedReminderLists,
+                    themeService: themeService,
+                    kind: .fullScreen,
+                    itemLabel: "Reminder Lists"
                 )
             }
         }
@@ -671,6 +697,12 @@ struct PresetsSettingsView: View {
             .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
     }
 
+    private var selectedReminderLists: [EKCalendar] {
+        appleRemindersService.availableReminderLists
+            .filter { appSettings.selectedReminderListIdentifiers.contains($0.calendarIdentifier) }
+            .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+    }
+
     private func loadPreset(named name: String) {
         workingTheme = presetManager.theme(named: name)
         selectedElement = .title
@@ -764,6 +796,7 @@ struct AssignCalendarsSheet: View {
     let calendars: [EKCalendar]
     @ObservedObject var themeService: ThemeService
     let kind: Kind
+    var itemLabel: String = "Calendars"
 
     @Environment(\.dismiss) private var dismiss
 
@@ -780,7 +813,7 @@ struct AssignCalendarsSheet: View {
             Divider()
 
             List {
-                toggleRow(label: "All Calendars", isOn: Binding(
+                toggleRow(label: "All \(itemLabel)", isOn: Binding(
                     get: { allAssigned },
                     set: { newValue in
                         for calendar in calendars {

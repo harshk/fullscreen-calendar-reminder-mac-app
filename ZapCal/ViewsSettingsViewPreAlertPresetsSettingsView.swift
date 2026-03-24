@@ -10,6 +10,7 @@ import UniformTypeIdentifiers
 struct PreAlertPresetsSettingsView: View {
     @ObservedObject var presetManager = PreAlertPresetManager.shared
     @ObservedObject private var calendarService = CalendarService.shared
+    @ObservedObject private var appleRemindersService = AppleRemindersService.shared
     @ObservedObject private var appSettings = AppSettings.shared
     @ObservedObject private var themeService = ThemeService.shared
 
@@ -22,6 +23,7 @@ struct PreAlertPresetsSettingsView: View {
     @State private var showingRenameDialog = false
     @State private var renameTarget = ""
     @State private var assignCalendarPresetName: String? = nil
+    @State private var assignReminderPresetName: String? = nil
     @State private var cachedBackgroundImage: NSImage? = nil
     @State private var cachedThumbnail: NSImage? = nil
 
@@ -101,6 +103,11 @@ struct PreAlertPresetsSettingsView: View {
                                     assignCalendarPresetName = preset.name
                                 }
                             }
+                            if !selectedReminderLists.isEmpty {
+                                Button("Assign to Reminder List...") {
+                                    assignReminderPresetName = preset.name
+                                }
+                            }
                         }
                     }
                 }
@@ -126,6 +133,11 @@ struct PreAlertPresetsSettingsView: View {
                                 if !selectedCalendars.isEmpty {
                                     Button("Assign to Calendar...") {
                                         assignCalendarPresetName = preset.name
+                                    }
+                                }
+                                if !selectedReminderLists.isEmpty {
+                                    Button("Assign to Reminder List...") {
+                                        assignReminderPresetName = preset.name
                                     }
                                 }
                                 Divider()
@@ -206,6 +218,20 @@ struct PreAlertPresetsSettingsView: View {
                     calendars: selectedCalendars,
                     themeService: themeService,
                     kind: .preAlert
+                )
+            }
+        }
+        .sheet(isPresented: Binding(
+            get: { assignReminderPresetName != nil },
+            set: { if !$0 { assignReminderPresetName = nil } }
+        )) {
+            if let presetName = assignReminderPresetName {
+                AssignCalendarsSheet(
+                    presetName: presetName,
+                    calendars: selectedReminderLists,
+                    themeService: themeService,
+                    kind: .preAlert,
+                    itemLabel: "Reminder Lists"
                 )
             }
         }
@@ -427,6 +453,12 @@ struct PreAlertPresetsSettingsView: View {
     private var selectedCalendars: [EKCalendar] {
         calendarService.availableCalendars
             .filter { appSettings.selectedCalendarIdentifiers.contains($0.calendarIdentifier) }
+            .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
+    }
+
+    private var selectedReminderLists: [EKCalendar] {
+        appleRemindersService.availableReminderLists
+            .filter { appSettings.selectedReminderListIdentifiers.contains($0.calendarIdentifier) }
             .sorted { $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending }
     }
 

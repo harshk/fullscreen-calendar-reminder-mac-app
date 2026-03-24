@@ -199,39 +199,34 @@ struct MenuBarView: View {
     
     private var menuActions: some View {
         VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Button("Add Full Screen Reminder") {
-                    showingAddReminder = true
-                }
-                .buttonStyle(.plain)
+            Spacer().frame(height: 5)
 
-                Button(action: { showingAddReminderInfo.toggle() }) {
-                    Image(systemName: "info.circle")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                }
-                .buttonStyle(.plain)
-                .popover(isPresented: $showingAddReminderInfo) {
-                    Text("Adds a Full Screen reminder without having to add an event to your calendar.")
-                        .font(.caption)
-                        .padding(8)
-                        .frame(width: 200)
+            Button(action: { showingAddReminder = true }) {
+                HStack {
+                    Text("Add Full Screen Reminder")
+                    Button(action: { showingAddReminderInfo.toggle() }) {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 12))
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .popover(isPresented: $showingAddReminderInfo) {
+                        Text("Adds a Full Screen reminder without having to add an event to your calendar.")
+                            .font(.caption)
+                            .padding(8)
+                            .frame(width: 200)
+                    }
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .buttonStyle(MenuRowButtonStyle())
             .sheet(isPresented: $showingAddReminder) {
                 AddReminderView()
             }
-            
+
             Button("Manage Reminders") {
                 NotificationCenter.default.post(name: .openManageReminders, object: nil)
             }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .buttonStyle(MenuRowButtonStyle())
 
             Divider()
                 .padding(.horizontal, 10)
@@ -239,21 +234,17 @@ struct MenuBarView: View {
             Button(settings.isPaused ? "Unpause Full Screen Reminders" : "Pause Full Screen Reminders") {
                 settings.isPaused.toggle()
             }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            
+            .buttonStyle(MenuRowButtonStyle())
+
             Divider()
                 .padding(.horizontal, 10)
 
             Button("Quit") {
                 NSApplication.shared.terminate(nil)
             }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .buttonStyle(MenuRowButtonStyle())
+
+            Spacer().frame(height: 5)
         }
         .onReceive(NotificationCenter.default.publisher(for: .menuBarPanelDidClose)) { _ in
             showingAddReminder = false
@@ -493,6 +484,29 @@ struct MenuBarReminderRow: View {
 
     private func formatTime(_ date: Date) -> String {
         Self.timeFormatter.string(from: date)
+    }
+}
+
+// MARK: - Menu Row Button Style
+
+struct MenuRowButtonStyle: ButtonStyle {
+    @State private var isHovered = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 5)
+                    .fill(configuration.isPressed ? Color.accentColor.opacity(0.3) :
+                          isHovered ? Color.primary.opacity(0.1) : Color.clear)
+            )
+            .padding(.horizontal, 5)
+            .contentShape(Rectangle())
+            .onHover { hovering in
+                isHovered = hovering
+            }
     }
 }
 

@@ -39,8 +39,6 @@ struct RemindersSettingsView: View {
                     }
                 }
 
-            Divider()
-
             if settings.appleRemindersEnabled {
                 if remindersService.permissionDenied {
                     noAccessView
@@ -159,11 +157,12 @@ struct RemindersSettingsView: View {
             }
 
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 0) {
                     ForEach(groupedLists, id: \.source) { group in
                         reminderListGroup(group)
                     }
                 }
+                .frame(maxWidth: .infinity)
             }
         }
     }
@@ -172,29 +171,17 @@ struct RemindersSettingsView: View {
 
     @ViewBuilder
     private func reminderListGroup(_ group: (source: String, lists: [EKCalendar])) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack {
-                Text(group.source)
-                    .font(.headline)
-
-                Spacer()
-
-                Button(allSelected(group.lists) ? "Deselect All" : "Select All") {
-                    toggleAll(group.lists)
-                }
-                .buttonStyle(.borderless)
-                .controlSize(.small)
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-            .background(Color.secondary.opacity(0.1))
+        VStack(spacing: 0) {
+            Text(group.source)
+                .font(.headline)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 8)
+                .padding(.horizontal)
 
             ForEach(group.lists, id: \.calendarIdentifier) { list in
                 reminderListRow(list)
             }
 
-            Divider()
-                .padding(.top, 8)
         }
     }
 
@@ -202,58 +189,70 @@ struct RemindersSettingsView: View {
 
     @ViewBuilder
     private func reminderListRow(_ list: EKCalendar) -> some View {
-        HStack(spacing: 12) {
-            Toggle("", isOn: Binding(
-                get: { settings.selectedReminderListIdentifiers.contains(list.calendarIdentifier) },
-                set: { isSelected in
-                    if isSelected {
-                        settings.selectedReminderListIdentifiers.insert(list.calendarIdentifier)
-                    } else {
-                        settings.selectedReminderListIdentifiers.remove(list.calendarIdentifier)
+        let isSelected = settings.selectedReminderListIdentifiers.contains(list.calendarIdentifier)
+
+        HStack(spacing: 0) {
+            // Column 1: checkbox, color, name
+            HStack(spacing: 12) {
+                Toggle("", isOn: Binding(
+                    get: { isSelected },
+                    set: { on in
+                        if on {
+                            settings.selectedReminderListIdentifiers.insert(list.calendarIdentifier)
+                        } else {
+                            settings.selectedReminderListIdentifiers.remove(list.calendarIdentifier)
+                        }
                     }
+                ))
+                .labelsHidden()
+
+                if let cgColor = list.cgColor {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color(cgColor: cgColor))
+                        .frame(width: 20, height: 20)
                 }
-            ))
-            .labelsHidden()
 
-            if let cgColor = list.cgColor {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color(cgColor: cgColor))
-                    .frame(width: 20, height: 20)
+                Text(list.title)
+                    .font(.subheadline)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
             }
-
-            Text(list.title)
-                .font(.subheadline)
+            .frame(width: 200, alignment: .leading)
 
             Spacer()
 
-            if settings.selectedReminderListIdentifiers.contains(list.calendarIdentifier) {
-                Text("Preset:")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                Picker("Preset", selection: Binding(
-                    get: { themeService.assignedPresetName(for: list.calendarIdentifier) },
-                    set: { themeService.setPreset($0, for: list.calendarIdentifier) }
-                )) {
-                    ForEach(presetManager.presets) { preset in
-                        Text(preset.name).tag(preset.name)
+            // Column 2: presets
+            if isSelected {
+                VStack(alignment: .leading, spacing: 2) {
+                    Picker("Full Screen Preset", selection: Binding(
+                        get: { themeService.assignedPresetName(for: list.calendarIdentifier) },
+                        set: { themeService.setPreset($0, for: list.calendarIdentifier) }
+                    )) {
+                        ForEach(presetManager.presets) { preset in
+                            Text(preset.name).tag(preset.name)
+                        }
                     }
+                    .labelsHidden()
+                    Text("Full Screen Preset")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                 }
-                .frame(width: 150)
-                .labelsHidden()
+                .padding(.trailing, 12)
 
-                Text("Pre-Alert:")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                Picker("Pre-Alert", selection: Binding(
-                    get: { themeService.assignedPreAlertPresetName(for: list.calendarIdentifier) },
-                    set: { themeService.setPreAlertPreset($0, for: list.calendarIdentifier) }
-                )) {
-                    ForEach(preAlertPresetManager.presets) { preset in
-                        Text(preset.name).tag(preset.name)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Picker("Pre-Alert Preset", selection: Binding(
+                        get: { themeService.assignedPreAlertPresetName(for: list.calendarIdentifier) },
+                        set: { themeService.setPreAlertPreset($0, for: list.calendarIdentifier) }
+                    )) {
+                        ForEach(preAlertPresetManager.presets) { preset in
+                            Text(preset.name).tag(preset.name)
+                        }
                     }
+                    .labelsHidden()
+                    Text("Pre-Alert Preset")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                 }
-                .frame(width: 150)
-                .labelsHidden()
             }
         }
         .padding(.horizontal)

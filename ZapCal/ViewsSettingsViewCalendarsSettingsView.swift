@@ -27,8 +27,6 @@ struct CalendarsSettingsView: View {
             }
             .padding()
 
-            Divider()
-
             if !settings.calendarAlertsEnabled {
                 disabledView
             } else if !calendarService.hasAccess {
@@ -124,11 +122,12 @@ struct CalendarsSettingsView: View {
             }
             
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 0) {
                     ForEach(groupedCalendars, id: \.source) { group in
                         calendarGroup(group)
                     }
                 }
+                .frame(maxWidth: .infinity)
             }
         }
     }
@@ -137,31 +136,19 @@ struct CalendarsSettingsView: View {
     
     @ViewBuilder
     private func calendarGroup(_ group: (source: String, calendars: [EKCalendar])) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(spacing: 0) {
             // Source header
-            HStack {
-                Text(group.source)
-                    .font(.headline)
-                
-                Spacer()
-                
-                Button(allSelected(group.calendars) ? "Deselect All" : "Select All") {
-                    toggleAll(group.calendars)
-                }
-                .buttonStyle(.borderless)
-                .controlSize(.small)
-            }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-            .background(Color.secondary.opacity(0.1))
+            Text(group.source)
+                .font(.headline)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 8)
+                .padding(.horizontal)
             
             // Calendars
             ForEach(group.calendars, id: \.calendarIdentifier) { calendar in
                 calendarRow(calendar)
             }
             
-            Divider()
-                .padding(.top, 8)
         }
     }
     
@@ -169,65 +156,76 @@ struct CalendarsSettingsView: View {
     
     @ViewBuilder
     private func calendarRow(_ calendar: EKCalendar) -> some View {
-        HStack(spacing: 12) {
-            Toggle("", isOn: Binding(
-                get: { settings.selectedCalendarIdentifiers.contains(calendar.calendarIdentifier) },
-                set: { isSelected in
-                    if isSelected {
-                        settings.selectedCalendarIdentifiers.insert(calendar.calendarIdentifier)
-                    } else {
-                        settings.selectedCalendarIdentifiers.remove(calendar.calendarIdentifier)
+        let isSelected = settings.selectedCalendarIdentifiers.contains(calendar.calendarIdentifier)
+
+        HStack(spacing: 0) {
+            // Column 1: checkbox, color, name
+            HStack(spacing: 12) {
+                Toggle("", isOn: Binding(
+                    get: { isSelected },
+                    set: { on in
+                        if on {
+                            settings.selectedCalendarIdentifiers.insert(calendar.calendarIdentifier)
+                        } else {
+                            settings.selectedCalendarIdentifiers.remove(calendar.calendarIdentifier)
+                        }
                     }
+                ))
+                .labelsHidden()
+
+                if let cgColor = calendar.cgColor {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color(cgColor: cgColor))
+                        .frame(width: 20, height: 20)
                 }
-            ))
-            .labelsHidden()
-            
-            // Color swatch
-            if let cgColor = calendar.cgColor {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color(cgColor: cgColor))
-                    .frame(width: 20, height: 20)
+
+                Text(calendar.title)
+                    .font(.subheadline)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
             }
-            
-            Text(calendar.title)
-                .font(.subheadline)
+            .frame(width: 200, alignment: .leading)
 
             Spacer()
 
-            if settings.selectedCalendarIdentifiers.contains(calendar.calendarIdentifier) {
-                Text("Preset:")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                Picker("Preset", selection: Binding(
-                    get: { themeService.assignedPresetName(for: calendar.calendarIdentifier) },
-                    set: { themeService.setPreset($0, for: calendar.calendarIdentifier) }
-                )) {
-                    ForEach(presetManager.presets) { preset in
-                        Text(preset.name).tag(preset.name)
+            // Column 2: presets
+            if isSelected {
+                VStack(alignment: .leading, spacing: 2) {
+                    Picker("Full Screen Preset", selection: Binding(
+                        get: { themeService.assignedPresetName(for: calendar.calendarIdentifier) },
+                        set: { themeService.setPreset($0, for: calendar.calendarIdentifier) }
+                    )) {
+                        ForEach(presetManager.presets) { preset in
+                            Text(preset.name).tag(preset.name)
+                        }
                     }
+                    .labelsHidden()
+                    Text("Full Screen Preset")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                 }
-                .frame(width: 150)
-                .labelsHidden()
+                .padding(.trailing, 12)
 
-                Text("Pre-Alert:")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                Picker("Pre-Alert", selection: Binding(
-                    get: { themeService.assignedPreAlertPresetName(for: calendar.calendarIdentifier) },
-                    set: { themeService.setPreAlertPreset($0, for: calendar.calendarIdentifier) }
-                )) {
-                    ForEach(preAlertPresetManager.presets) { preset in
-                        Text(preset.name).tag(preset.name)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Picker("Pre-Alert Preset", selection: Binding(
+                        get: { themeService.assignedPreAlertPresetName(for: calendar.calendarIdentifier) },
+                        set: { themeService.setPreAlertPreset($0, for: calendar.calendarIdentifier) }
+                    )) {
+                        ForEach(preAlertPresetManager.presets) { preset in
+                            Text(preset.name).tag(preset.name)
+                        }
                     }
+                    .labelsHidden()
+                    Text("Pre-Alert Preset")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
                 }
-                .frame(width: 150)
-                .labelsHidden()
             }
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
     }
-    
+
     // MARK: - Helper Functions
     
     private var groupedCalendars: [(source: String, calendars: [EKCalendar])] {

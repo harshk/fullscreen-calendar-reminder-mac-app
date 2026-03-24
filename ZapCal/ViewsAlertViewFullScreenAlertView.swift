@@ -217,20 +217,6 @@ struct FullScreenAlertView: View {
                     .frame(maxWidth: geometry.size.width * 0.9, alignment: .center)
                 }
 
-                // Queue Counter
-                if queueTotal > 1,
-                   let style = theme.elementStyles[.queueCounter] {
-                    Text("\(queuePosition) of \(queueTotal)")
-                        .font(style.font)
-                        .tracking(style.letterSpacing ?? 0)
-                        .foregroundColor(style.fontColor.color)
-                        .textCase(style.uppercased == true ? .uppercase : nil)
-                        .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
-                        .frame(maxWidth: geometry.size.width * 0.9, alignment: .center)
-                        .contentShape(Rectangle())
-                        .onTapGesture { onElementTap?(.queueCounter) }
-                }
-
                 // Snooze buttons
                 snoozeButtons
 //                    .padding(.top, 72)

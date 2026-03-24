@@ -1,146 +1,134 @@
 {
-  "name" : "Teal Lavender FS",
-  "theme" : {
-    "backgroundType" : "solidColor",
-    "elementStyles" : [
+  "name": "Teal Lavender FS",
+  "theme": {
+    "backgroundType": "solidColor",
+    "elementStyles": [
       "title",
       {
-        "fontColor" : {
-          "blue" : 0.33,
-          "green" : 0.3,
-          "opacity" : 1,
-          "red" : 0.09
+        "fontColor": {
+          "blue": 0.33,
+          "green": 0.3,
+          "opacity": 1,
+          "red": 0.09
         },
-        "fontFamily" : "SF Pro Rounded",
-        "fontSize" : 72,
-        "fontWeight" : 0.6
+        "fontFamily": "SF Pro Rounded",
+        "fontSize": 72,
+        "fontWeight": 0.6
       },
       "calendarName",
       {
-        "fontColor" : {
-          "blue" : 0.33,
-          "green" : 0.3,
-          "opacity" : 0.6,
-          "red" : 0.09
+        "fontColor": {
+          "blue": 0.33,
+          "green": 0.3,
+          "opacity": 0.6,
+          "red": 0.09
         },
-        "fontFamily" : "SF Pro Rounded",
-        "fontSize" : 24,
-        "fontWeight" : 0.2
+        "fontFamily": "SF Pro Rounded",
+        "fontSize": 24,
+        "fontWeight": 0.2
       },
       "joinButton",
       {
-        "buttonBackgroundColor" : {
-          "blue" : 0.33,
-          "green" : 0.3,
-          "opacity" : 1,
-          "red" : 0.09
+        "buttonBackgroundColor": {
+          "blue": 0.33,
+          "green": 0.3,
+          "opacity": 1,
+          "red": 0.09
         },
-        "fontColor" : {
-          "blue" : 0.91,
-          "green" : 0.72,
-          "opacity" : 1,
-          "red" : 0.78
+        "fontColor": {
+          "blue": 0.91,
+          "green": 0.72,
+          "opacity": 1,
+          "red": 0.78
         },
-        "fontFamily" : "SF Pro Rounded",
-        "fontSize" : 14,
-        "fontWeight" : 0.2
-      },
-      "queueCounter",
-      {
-        "fontColor" : {
-          "blue" : 0.33,
-          "green" : 0.3,
-          "opacity" : 0.5,
-          "red" : 0.09
-        },
-        "fontFamily" : "SF Pro Rounded",
-        "fontSize" : 20,
-        "fontWeight" : 0.2
+        "fontFamily": "SF Pro Rounded",
+        "fontSize": 14,
+        "fontWeight": 0.2
       },
       "location",
       {
-        "fontColor" : {
-          "blue" : 0.33,
-          "green" : 0.3,
-          "opacity" : 0.8,
-          "red" : 0.09
+        "fontColor": {
+          "blue": 0.33,
+          "green": 0.3,
+          "opacity": 0.8,
+          "red": 0.09
         },
-        "fontFamily" : "SF Pro Rounded",
-        "fontSize" : 32,
-        "fontWeight" : 0
+        "fontFamily": "SF Pro Rounded",
+        "fontSize": 32,
+        "fontWeight": 0
       },
       "snoozeButton",
       {
-        "buttonBackgroundColor" : {
-          "blue" : 0.33,
-          "green" : 0.3,
-          "opacity" : 0.15,
-          "red" : 0.09
+        "buttonBackgroundColor": {
+          "blue": 0.33,
+          "green": 0.3,
+          "opacity": 0.15,
+          "red": 0.09
         },
-        "fontColor" : {
-          "blue" : 0.33,
-          "green" : 0.3,
-          "opacity" : 0.9,
-          "red" : 0.09
+        "fontColor": {
+          "blue": 0.33,
+          "green": 0.3,
+          "opacity": 0.9,
+          "red": 0.09
         },
-        "fontFamily" : "SF Pro Rounded",
-        "fontSize" : 14,
-        "fontWeight" : 0.2
+        "fontFamily": "SF Pro Rounded",
+        "fontSize": 14,
+        "fontWeight": 0.2
       },
       "startTime",
       {
-        "fontColor" : {
-          "blue" : 0.33,
-          "green" : 0.3,
-          "opacity" : 1,
-          "red" : 0.09
+        "fontColor": {
+          "blue": 0.33,
+          "green": 0.3,
+          "opacity": 1,
+          "red": 0.09
         },
-        "fontFamily" : "SF Pro Rounded",
-        "fontSize" : 48,
-        "fontWeight" : 0.4
+        "fontFamily": "SF Pro Rounded",
+        "fontSize": 48,
+        "fontWeight": 0.4
       },
       "dismissButton",
       {
-        "buttonBackgroundColor" : {
-          "blue" : 0.33,
-          "green" : 0.3,
-          "opacity" : 0.2,
-          "red" : 0.09
+        "buttonBackgroundColor": {
+          "blue": 0.33,
+          "green": 0.3,
+          "opacity": 0.2,
+          "red": 0.09
         },
-        "fontColor" : {
-          "blue" : 0.33,
-          "green" : 0.3,
-          "opacity" : 0.7,
-          "red" : 0.09
+        "fontColor": {
+          "blue": 0.33,
+          "green": 0.3,
+          "opacity": 0.7,
+          "red": 0.09
         },
-        "fontFamily" : "SF Pro Rounded",
-        "fontSize" : 24,
-        "fontWeight" : 0,
-        "iconColor" : {
-          "blue" : 0.33,
-          "green" : 0.3,
-          "opacity" : 0.7,
-          "red" : 0.09
+        "fontFamily": "SF Pro Rounded",
+        "fontSize": 24,
+        "fontWeight": 0,
+        "iconColor": {
+          "blue": 0.33,
+          "green": 0.3,
+          "opacity": 0.7,
+          "red": 0.09
         },
-        "iconSize" : 32
+        "iconSize": 32
       }
     ],
-    "id" : "default",
-    "imageBlurRadius" : 0.3,
-    "name" : "Teal Lavender FS",
-    "overlayColor" : {
-      "blue" : 0,
-      "green" : 0,
-      "opacity" : 1,
-      "red" : 0
+    "id": "default",
+    "imageBlurRadius": 0.3,
+    "name": "Teal Lavender FS",
+    "overlayColor": {
+      "blue": 0,
+      "green": 0,
+      "opacity": 1,
+      "red": 0
     },
-    "overlayOpacity" : 0,
-    "solidColor" : {
-      "blue" : 0.91,
-      "green" : 0.72,
-      "opacity" : 1,
-      "red" : 0.78
+    "overlayOpacity": 0,
+    "solidColor": {
+      "blue": 0.91,
+      "green": 0.72,
+      "opacity": 1,
+      "red": 0.78
     },
-    "solidColorOpacity" : 0.98
+    "solidColorOpacity": 0.98
   }
 }

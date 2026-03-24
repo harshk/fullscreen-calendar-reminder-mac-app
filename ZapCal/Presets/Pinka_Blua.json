@@ -45,18 +45,6 @@
         "fontSize": 14,
         "fontWeight": 0.2
       },
-      "queueCounter",
-      {
-        "fontColor": {
-          "blue": 0.7,
-          "green": 0.08,
-          "opacity": 0.5,
-          "red": 0.83
-        },
-        "fontFamily": "SF Pro Rounded",
-        "fontSize": 20,
-        "fontWeight": 0.2
-      },
       "location",
       {
         "fontColor": {

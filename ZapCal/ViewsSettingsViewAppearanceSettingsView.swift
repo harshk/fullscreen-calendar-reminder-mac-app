@@ -649,7 +649,6 @@ struct PresetsSettingsView: View {
         case .calendarName: return "calendar"
         case .joinButton: return "video.fill"
         case .snoozeButton: return "bell.badge"
-        case .queueCounter: return "number"
         case .dismissButton: return "xmark"
         }
     }
@@ -662,7 +661,6 @@ struct PresetsSettingsView: View {
         case .calendarName: return "Calendar"
         case .joinButton: return "Join Button"
         case .snoozeButton: return "Snooze"
-        case .queueCounter: return "Counter"
         case .dismissButton: return "Dismiss"
         }
     }

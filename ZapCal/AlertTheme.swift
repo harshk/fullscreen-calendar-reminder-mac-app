@@ -95,12 +95,6 @@ struct AlertTheme: Codable, Identifiable {
                     iconSize: 32,
                     iconColor: CodableColor(Color.white.opacity(0.7))
                 ),
-                .queueCounter: AlertElementStyle(
-                    fontFamily: "SF Pro",
-                    fontSize: 20,
-                    fontWeight: .medium,
-                    fontColor: CodableColor(Color.white.opacity(0.5))
-                )
             ]
         )
     }
@@ -116,7 +110,6 @@ enum AlertElementIdentifier: String, CaseIterable, Codable {
     case joinButton
     case snoozeButton
     case dismissButton
-    case queueCounter
 
     var displayName: String {
         switch self {
@@ -127,7 +120,6 @@ enum AlertElementIdentifier: String, CaseIterable, Codable {
         case .joinButton: return "Join Meeting Button"
         case .snoozeButton: return "Snooze Button"
         case .dismissButton: return "Dismiss Button (X)"
-        case .queueCounter: return "Queue Counter"
         }
     }
 }

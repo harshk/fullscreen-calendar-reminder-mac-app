@@ -355,7 +355,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let buttonFrame = button.window!.convertToScreen(button.convert(button.bounds, to: nil))
             let panelSize = panel.frame.size
             let x = buttonFrame.midX - panelSize.width / 2
-            let y = buttonFrame.minY - panelSize.height
+            // visibleFrame.maxY is the exact bottom edge of the menu bar,
+            // independent of screen resolution or scaling.
+            let screen = button.window!.screen ?? NSScreen.main!
+            let y = screen.visibleFrame.maxY - panelSize.height
             panel.setFrameOrigin(NSPoint(x: x, y: y))
             // Reactivate the visual effect blur before showing
             if let visualEffect = panel.contentView as? NSVisualEffectView {

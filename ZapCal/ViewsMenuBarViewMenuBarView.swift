@@ -95,13 +95,16 @@ struct MenuBarView: View {
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)
 
-            Button("Grant Calendar Access") {
-                NotificationCenter.default.post(name: .showWelcomeScreen, object: nil)
-            }
-            .buttonStyle(.borderedProminent)
-            
-            Button("Open System Settings") {
-                openSystemSettingsCalendarPrivacy()
+            if calendarService.permissionDenied {
+                Button("Open System Settings") {
+                    openSystemSettingsCalendarPrivacy()
+                }
+                .buttonStyle(.borderedProminent)
+            } else {
+                Button("Grant Calendar Access") {
+                    NotificationCenter.default.post(name: .showWelcomeScreen, object: nil)
+                }
+                .buttonStyle(.borderedProminent)
             }
         }
         .padding()

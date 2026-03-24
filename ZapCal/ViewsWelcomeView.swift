@@ -10,7 +10,6 @@ import EventKit
 
 struct WelcomeView: View {
     @ObservedObject private var calendarService = CalendarService.shared
-    @State private var permissionDenied = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -55,7 +54,7 @@ struct WelcomeView: View {
             }
             .padding(.bottom, 32)
 
-            if permissionDenied {
+            if calendarService.permissionDenied {
                 VStack(spacing: 12) {
                     Text("Calendar access was denied. Please grant access in System Settings.")
                         .font(.system(size: 12))
@@ -92,14 +91,7 @@ struct WelcomeView: View {
 
     private func requestPermission() {
         Task {
-            do {
-                try await calendarService.requestAccess()
-                if !calendarService.hasAccess {
-                    permissionDenied = true
-                }
-            } catch {
-                permissionDenied = true
-            }
+            try? await calendarService.requestAccess()
         }
     }
 

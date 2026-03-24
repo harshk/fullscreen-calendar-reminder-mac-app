@@ -92,6 +92,10 @@ class CalendarService: ObservableObject {
             return authorizationStatus == .authorized
         }
     }
+
+    var permissionDenied: Bool {
+        authorizationStatus == .denied
+    }
     
     // MARK: - Calendar Management
     

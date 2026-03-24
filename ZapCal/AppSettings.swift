@@ -96,7 +96,7 @@ class AppSettings: ObservableObject {
         if let storedDuration = UserDefaults.standard.object(forKey: "preAlertDuration") as? Double {
             self.preAlertDuration = storedDuration
         } else {
-            self.preAlertDuration = 0 // persist until event starts
+            self.preAlertDuration = 15
         }
         let defaultSnooze: [Double] = [60, 300, 900] // 1m, 5m, 15m
         if let storedSnooze = UserDefaults.standard.array(forKey: "snoozeDurations") as? [Double], !storedSnooze.isEmpty {

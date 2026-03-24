@@ -19,6 +19,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var panel: NSPanel?
     private var settingsWindow: NSWindow?
     private var manageRemindersWindow: NSWindow?
+    private var welcomeWindow: NSWindow?
     private var eventMonitor: Any?
     private var localEventMonitor: Any?
     var modelContainer: ModelContainer!
@@ -47,13 +48,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Setup menu bar
         setupMenuBar()
         
-        // Request calendar access
-        Task { @MainActor in
-            do {
-                try await CalendarService.shared.requestAccess()
-            } catch {
-                print("Failed to request calendar access: \(error)")
+        // Show welcome screen if no calendar access, otherwise request silently
+        if CalendarService.shared.hasAccess {
+            Task { @MainActor in
+                do {
+                    try await CalendarService.shared.requestAccess()
+                } catch {
+                    print("Failed to request calendar access: \(error)")
+                }
             }
+        } else {
+            showWelcomeWindow()
         }
         
         // Setup reminder service with model context
@@ -141,6 +146,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             object: nil
         )
 
+        // Observe show welcome screen requests
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleShowWelcomeScreen),
+            name: .showWelcomeScreen,
+            object: nil
+        )
+
         // Observe dismiss popover requests
         NotificationCenter.default.addObserver(
             self,
@@ -192,13 +205,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             SettingsWindowVisible.shared.isVisible = false
         } else if closedWindow == manageRemindersWindow {
             // No extra state to reset
+        } else if closedWindow == welcomeWindow {
+            // No extra state to reset
         } else {
             return
         }
 
-        // Hide dock icon if no managed windows are visible
-        let anyVisible = (settingsWindow?.isVisible == true) || (manageRemindersWindow?.isVisible == true)
-        if !anyVisible {
+        // Hide dock icon if no other managed windows are visible
+        // Exclude the window being closed since it's still technically visible during willClose
+        let settingsVisible = settingsWindow != closedWindow && settingsWindow?.isVisible == true
+        let manageVisible = manageRemindersWindow != closedWindow && manageRemindersWindow?.isVisible == true
+        let welcomeVisible = welcomeWindow != closedWindow && welcomeWindow?.isVisible == true
+        if !settingsVisible && !manageVisible && !welcomeVisible {
             NSApp.setActivationPolicy(.accessory)
         }
     }
@@ -258,6 +276,37 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.regular)
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func showWelcomeWindow() {
+        closePanel()
+
+        if let welcomeWindow = welcomeWindow {
+            NSApp.setActivationPolicy(.regular)
+            welcomeWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 460),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Welcome to ZapCal"
+        window.contentView = NSHostingView(rootView: WelcomeView())
+        window.center()
+        window.isReleasedWhenClosed = false
+        self.welcomeWindow = window
+
+        NSApp.setActivationPolicy(.regular)
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    @objc private func handleShowWelcomeScreen() {
+        showWelcomeWindow()
     }
 
     @objc private func handleDismissPopover() {

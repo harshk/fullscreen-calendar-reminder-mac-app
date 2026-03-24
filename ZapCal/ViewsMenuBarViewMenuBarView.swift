@@ -86,51 +86,17 @@ struct MenuBarView: View {
             Image(systemName: "calendar.badge.exclamationmark")
                 .font(.system(size: 40))
                 .foregroundColor(.secondary)
-            
+
             Text("Calendar Access Required")
                 .font(.headline)
-            
+
             Text("Grant calendar access to receive full-screen alerts for your events.")
                 .font(.caption)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)
-            
-            Button("Request Calendar Access") {
-                // Show immediate alert to prove button works
-                let alert = NSAlert()
-                alert.messageText = "Button Clicked!"
-                alert.informativeText = "The button is working. Now requesting calendar access..."
-                alert.alertStyle = .informational
-                alert.addButton(withTitle: "OK")
-                alert.runModal()
-                
-                print("Button clicked!")
-                Task { @MainActor in
-                    print("Task started on MainActor")
-                    do {
-                        print("About to call requestAccess()")
-                        try await CalendarService.shared.requestAccess()
-                        print("requestAccess() completed successfully")
-                        
-                        // Show success alert
-                        let successAlert = NSAlert()
-                        successAlert.messageText = "Access Granted!"
-                        successAlert.informativeText = "Calendar access was granted successfully."
-                        successAlert.alertStyle = .informational
-                        successAlert.addButton(withTitle: "OK")
-                        successAlert.runModal()
-                    } catch {
-                        print("Error in button handler: \(error)")
-                        
-                        // Show error alert
-                        let errorAlert = NSAlert()
-                        errorAlert.messageText = "Error"
-                        errorAlert.informativeText = "Failed to request access: \(error.localizedDescription)"
-                        errorAlert.alertStyle = .critical
-                        errorAlert.addButton(withTitle: "OK")
-                        errorAlert.runModal()
-                    }
-                }
+
+            Button("Grant Calendar Access") {
+                NotificationCenter.default.post(name: .showWelcomeScreen, object: nil)
             }
             .buttonStyle(.borderedProminent)
             
@@ -139,32 +105,32 @@ struct MenuBarView: View {
             }
         }
         .padding()
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-    
+
     // MARK: - No Calendars Selected View
-    
+
     private var noCalendarsSelectedView: some View {
         VStack(spacing: 12) {
             Image(systemName: "calendar.badge.minus")
                 .font(.system(size: 40))
                 .foregroundColor(.secondary)
-            
+
             Text("No Calendars Selected")
                 .font(.headline)
-            
+
             Text("Select calendars in Settings to receive alerts.")
                 .font(.caption)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)
-            
+
             Button("Open Settings") {
                 openSettings()
             }
             .buttonStyle(.borderedProminent)
         }
         .padding()
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
     // MARK: - Upcoming Events Section
@@ -536,6 +502,7 @@ extension Notification.Name {
     static let dismissPopover = Notification.Name("DismissPopover")
     static let openSettings = Notification.Name("OpenSettings")
     static let openManageReminders = Notification.Name("OpenManageReminders")
+    static let showWelcomeScreen = Notification.Name("ShowWelcomeScreen")
 }
 
 // MARK: - Preview

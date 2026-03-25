@@ -375,20 +375,20 @@ struct MenuBarEventContent: View {
                 if let location, !location.lowercased().hasPrefix("http") {
                     HStack(alignment: .top, spacing: 4) {
                         Image(systemName: "location.fill")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.system(size: 11, weight: .bold))
                             .offset(y: 2)
                         Text(location)
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.system(size: 12, weight: .bold))
                     }
-                    .foregroundColor(theme.titleColor.color.opacity(0.7))
+                    .foregroundColor(theme.titleColor.color)
                 }
 
                 if hasVideoCall {
                     HStack(spacing: 4) {
                         Image(systemName: "video.fill")
-                            .font(.system(size: 11, weight: .semibold))
+                            .font(.system(size: 11, weight: .bold))
                         Text("Video Call")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.system(size: 12, weight: .bold))
                     }
                     .foregroundColor(theme.joinButtonBackgroundColor.color)
                 }
@@ -451,11 +451,11 @@ struct MenuBarSubtitleRow: View {
 
                 HStack(spacing: 4) {
                     Image(systemName: icon)
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.system(size: 11, weight: .bold))
                     Text(subtitle)
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: 12, weight: .bold))
                 }
-                .foregroundColor(theme.titleColor.color.opacity(0.7))
+                .foregroundColor(theme.titleColor.color)
             }
 
             Spacer()

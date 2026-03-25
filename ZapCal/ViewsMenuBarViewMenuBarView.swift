@@ -56,10 +56,17 @@ struct MenuBarView: View {
         VStack(alignment: .leading, spacing: 0) {
             // App name and settings gear
             HStack {
-                Text("ZapCal")
-                    .font(.headline)
-                    .fontWeight(.bold)
-                    .padding(.leading, 12)
+                HStack(alignment: .bottom, spacing: 4) {
+                    Text("ZapCal")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                    if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+                        Text("v\(version)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .padding(.leading, 12)
                 Spacer()
                 Button(action: { openSettings() }) {
                     Image(systemName: "gearshape.fill")
@@ -156,15 +163,15 @@ struct MenuBarView: View {
                 }
             }
             .background(Color(nsColor: .windowBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-            )
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
         }
         .frame(maxHeight: 400)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+        )
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
     }
     
     private var noUpcomingEventsView: some View {

@@ -9,6 +9,7 @@ import SwiftUI
 
 struct GeneralSettingsView: View {
     @ObservedObject var settings = AppSettings.shared
+    @State private var deleteAlertIndex: Int? = nil
 
     var body: some View {
         Form {
@@ -31,7 +32,7 @@ struct GeneralSettingsView: View {
 
                         if settings.alertConfigs.count > 1 {
                             Button(role: .destructive) {
-                                settings.alertConfigs.remove(at: index)
+                                deleteAlertIndex = index
                             } label: {
                                 Image(systemName: "trash")
                                     .foregroundColor(.red)
@@ -131,6 +132,22 @@ struct GeneralSettingsView: View {
         }
         .formStyle(.grouped)
         .padding()
+        .alert("Delete Alert?", isPresented: Binding(
+            get: { deleteAlertIndex != nil },
+            set: { if !$0 { deleteAlertIndex = nil } }
+        )) {
+            Button("Cancel", role: .cancel) { deleteAlertIndex = nil }
+            Button("Delete", role: .destructive) {
+                if let index = deleteAlertIndex {
+                    settings.alertConfigs.remove(at: index)
+                }
+                deleteAlertIndex = nil
+            }
+        } message: {
+            if let index = deleteAlertIndex {
+                Text("Are you sure you want to delete Alert \(index + 1)?")
+            }
+        }
     }
 }
 

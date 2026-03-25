@@ -151,6 +151,7 @@ struct MenuBarView: View {
                     itemsList
                 }
             }
+            .background(Color(nsColor: .windowBackgroundColor))
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
@@ -331,10 +332,15 @@ struct MenuBarView: View {
 struct EventRow: View {
     let event: CalendarEvent
     let isDisabled: Bool
+    @ObservedObject private var themeService = ThemeService.shared
     @State private var showingDisabledPopover = false
 
+    private var preAlertTheme: PreAlertTheme {
+        themeService.getPreAlertTheme(for: event.calendar.identifier)
+    }
+
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(alignment: .top, spacing: 8) {
             // Disabled indicator
             if isDisabled {
                 Image(systemName: "xmark.circle.fill")
@@ -360,34 +366,36 @@ struct EventRow: View {
 
             // Time
             Text(formatTime(event.startDate))
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .frame(width: 50, alignment: .trailing)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(preAlertTheme.countdownColor.color)
+                .frame(width: 70, alignment: .trailing)
 
             // Event details
             VStack(alignment: .leading, spacing: 2) {
                 Text(event.title)
-                    .font(.subheadline)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(preAlertTheme.titleColor.color)
                     .lineLimit(2)
                 
-                if let location = event.location {
-                    HStack(spacing: 4) {
+                if let location = event.location, !location.lowercased().hasPrefix("http") {
+                    HStack(alignment: .top, spacing: 4) {
                         Image(systemName: "location.fill")
-                            .font(.caption2)
+                            .font(.system(size: 11))
+                            .offset(y: 2)
                         Text(location)
-                            .font(.caption)
+                            .font(.system(size: 12, weight: .medium))
                     }
-                    .foregroundColor(.secondary)
+                    .foregroundColor(preAlertTheme.titleColor.color.opacity(0.7))
                 }
                 
                 if event.videoConferenceURL != nil {
                     HStack(spacing: 4) {
                         Image(systemName: "video.fill")
-                            .font(.caption2)
+                            .font(.system(size: 11))
                         Text("Video Call")
-                            .font(.caption)
+                            .font(.system(size: 12, weight: .medium))
                     }
-                    .foregroundColor(.blue)
+                    .foregroundColor(preAlertTheme.joinButtonBackgroundColor.color)
                 }
             }
             
@@ -398,13 +406,18 @@ struct EventRow: View {
                 Button("Join") {
                     NSWorkspace.shared.open(url)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
+                .buttonStyle(.plain)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundColor(preAlertTheme.joinButtonTextColor.color)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(preAlertTheme.joinButtonBackgroundColor.color)
+                .clipShape(RoundedRectangle(cornerRadius: 5))
             }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(event.calendar.color.opacity(0.1))
+        .background(preAlertTheme.backgroundColor.color.opacity(preAlertTheme.backgroundOpacity * 0.3))
         .contentShape(Rectangle())
         .onTapGesture {
             CalendarService.shared.openEventInCalendarApp(event)
@@ -451,22 +464,22 @@ struct MenuBarReminderRow: View {
     let reminder: CustomReminder
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(alignment: .top, spacing: 8) {
             Text(formatTime(reminder.scheduledDate))
-                .font(.caption)
+                .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.secondary)
-                .frame(width: 50, alignment: .trailing)
+                .frame(width: 70, alignment: .trailing)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(reminder.title)
-                    .font(.subheadline)
+                    .font(.system(size: 14, weight: .semibold))
                     .lineLimit(2)
 
                 HStack(spacing: 4) {
                     Image(systemName: "bell.fill")
-                        .font(.caption2)
+                        .font(.system(size: 11))
                     Text("Reminder")
-                        .font(.caption)
+                        .font(.system(size: 12, weight: .medium))
                 }
                 .foregroundColor(.orange)
             }
@@ -503,22 +516,22 @@ struct AppleReminderRow: View {
     let reminder: AppleReminder
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(alignment: .top, spacing: 8) {
             Text(formatTime(reminder.dueDate))
-                .font(.caption)
+                .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.secondary)
-                .frame(width: 50, alignment: .trailing)
+                .frame(width: 70, alignment: .trailing)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(reminder.title)
-                    .font(.subheadline)
+                    .font(.system(size: 14, weight: .semibold))
                     .lineLimit(2)
 
                 HStack(spacing: 4) {
                     Image(systemName: "checklist")
-                        .font(.caption2)
+                        .font(.system(size: 11))
                     Text(reminder.reminderList.title)
-                        .font(.caption)
+                        .font(.system(size: 12, weight: .medium))
                 }
                 .foregroundColor(.green)
             }

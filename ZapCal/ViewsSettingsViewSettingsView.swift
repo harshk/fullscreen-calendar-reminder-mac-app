@@ -20,6 +20,7 @@ struct SettingsView: View {
         case general = "General"
         case calendars = "Calendars"
         case reminders = "Reminders"
+        case menuBarPreset = "Menu Bar"
         case presets = "Alert Presets"
         case preAlertPresets = "Pre-Alert Presets"
 
@@ -30,6 +31,7 @@ struct SettingsView: View {
             case .general: return "gear"
             case .calendars: return "calendar"
             case .reminders: return "checklist"
+            case .menuBarPreset: return "menubar.rectangle"
             case .presets: return "paintbrush"
             case .preAlertPresets: return "bell.badge"
             }
@@ -39,7 +41,11 @@ struct SettingsView: View {
     @State private var selectedTab: SettingsTab = .general
 
     private var contentWidth: CGFloat {
-        (selectedTab == .presets || selectedTab == .preAlertPresets) ? 1100 : 600
+        switch selectedTab {
+        case .presets, .preAlertPresets: return 1100
+        case .menuBarPreset: return 700
+        default: return 600
+        }
     }
 
     var body: some View {
@@ -59,6 +65,8 @@ struct SettingsView: View {
                     CalendarsSettingsView()
                 case .reminders:
                     RemindersSettingsView()
+                case .menuBarPreset:
+                    MenuBarPresetSettingsView()
                 case .presets:
                     PresetsSettingsView()
                 case .preAlertPresets:

@@ -70,6 +70,11 @@ class AppSettings: ObservableObject {
         didSet { UserDefaults.standard.set(snoozeDurations, forKey: "snoozeDurations") }
     }
 
+    /// The Pre-Alert preset name used for menu bar event/reminder rows.
+    @Published var menuBarPresetName: String {
+        didSet { UserDefaults.standard.set(menuBarPresetName, forKey: "menuBarPresetName") }
+    }
+
     /// Whether Apple Reminders integration is enabled.
     @Published var appleRemindersEnabled: Bool {
         didSet { UserDefaults.standard.set(appleRemindersEnabled, forKey: "appleRemindersEnabled") }
@@ -126,6 +131,9 @@ class AppSettings: ObservableObject {
         } else {
             self.selectedCalendarIdentifiers = []
         }
+
+        // Menu bar preset
+        self.menuBarPresetName = UserDefaults.standard.string(forKey: "menuBarPresetName") ?? "Rose Cream"
 
         // Apple Reminders
         self.appleRemindersEnabled = UserDefaults.standard.bool(forKey: "appleRemindersEnabled")

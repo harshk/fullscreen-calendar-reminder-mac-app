@@ -48,6 +48,10 @@ struct MenuBarView: View {
     @ObservedObject var settings = AppSettings.shared
     @State private var showingAddReminderInfo = false
 
+    private var menuBarTheme: PreAlertTheme {
+        PreAlertPresetManager.shared.theme(named: settings.menuBarPresetName)
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // App name and settings gear
@@ -181,14 +185,7 @@ struct MenuBarView: View {
         ForEach(groupedItems, id: \.date) { group in
             VStack(alignment: .leading, spacing: 0) {
                 // Date Header
-                Text(formatDateHeader(group.date))
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.secondary.opacity(0.1))
+                MenuBarDateHeader(title: formatDateHeader(group.date), theme: menuBarTheme)
 
                 // Items for this date
                 ForEach(group.items) { item in
@@ -327,25 +324,153 @@ struct MenuBarView: View {
     }
 }
 
+// MARK: - Shared Menu Bar Presentation Components
+
+struct MenuBarDateHeader: View {
+    let title: String
+    let theme: PreAlertTheme
+
+    var body: some View {
+        Text(title)
+            .font(.caption)
+            .fontWeight(.semibold)
+            .foregroundColor(theme.titleColor.color)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(theme.backgroundColor.color.opacity(theme.backgroundOpacity))
+    }
+}
+
+struct MenuBarEventContent: View {
+    let time: String
+    let title: String
+    var location: String? = nil
+    var hasVideoCall: Bool = false
+    var joinAction: (() -> Void)? = nil
+    let theme: PreAlertTheme
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(time)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(theme.countdownColor.color)
+                .frame(width: 70, alignment: .trailing)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(theme.titleColor.color)
+                    .lineLimit(2)
+
+                if let location, !location.lowercased().hasPrefix("http") {
+                    HStack(alignment: .top, spacing: 4) {
+                        Image(systemName: "location.fill")
+                            .font(.system(size: 11))
+                            .offset(y: 2)
+                        Text(location)
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .foregroundColor(theme.titleColor.color.opacity(0.7))
+                }
+
+                if hasVideoCall {
+                    HStack(spacing: 4) {
+                        Image(systemName: "video.fill")
+                            .font(.system(size: 11))
+                        Text("Video Call")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .foregroundColor(theme.joinButtonBackgroundColor.color)
+                }
+            }
+
+            Spacer()
+
+            if hasVideoCall {
+                if let joinAction {
+                    Button("Join") { joinAction() }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(theme.joinButtonTextColor.color)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(theme.joinButtonBackgroundColor.color)
+                        .clipShape(RoundedRectangle(cornerRadius: 5))
+                } else {
+                    Text("Join")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(theme.joinButtonTextColor.color)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(theme.joinButtonBackgroundColor.color)
+                        .clipShape(RoundedRectangle(cornerRadius: 5))
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(theme.backgroundColor.color.opacity(theme.backgroundOpacity))
+    }
+}
+
+struct MenuBarSubtitleRow: View {
+    let time: String
+    let title: String
+    let subtitle: String
+    let icon: String
+    let theme: PreAlertTheme
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(time)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(theme.countdownColor.color)
+                .frame(width: 70, alignment: .trailing)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(theme.titleColor.color)
+                    .lineLimit(2)
+
+                HStack(spacing: 4) {
+                    Image(systemName: icon)
+                        .font(.system(size: 11))
+                    Text(subtitle)
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .foregroundColor(theme.titleColor.color.opacity(0.7))
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(theme.backgroundColor.color.opacity(theme.backgroundOpacity))
+    }
+}
+
 // MARK: - Event Row
 
 struct EventRow: View {
     let event: CalendarEvent
     let isDisabled: Bool
-    @ObservedObject private var themeService = ThemeService.shared
+    @ObservedObject private var settings = AppSettings.shared
     @State private var showingDisabledPopover = false
 
     private var preAlertTheme: PreAlertTheme {
-        themeService.getPreAlertTheme(for: event.calendar.identifier)
+        PreAlertPresetManager.shared.theme(named: settings.menuBarPresetName)
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            // Disabled indicator
+        HStack(alignment: .top, spacing: 0) {
             if isDisabled {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 14))
                     .foregroundColor(.red.opacity(0.7))
+                    .padding(.leading, 12)
+                    .padding(.top, 8)
                     .popover(isPresented: $showingDisabledPopover) {
                         VStack(spacing: 8) {
                             Text("Alerts for this event have been disabled.")
@@ -364,60 +489,15 @@ struct EventRow: View {
                     }
             }
 
-            // Time
-            Text(formatTime(event.startDate))
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(preAlertTheme.countdownColor.color)
-                .frame(width: 70, alignment: .trailing)
-
-            // Event details
-            VStack(alignment: .leading, spacing: 2) {
-                Text(event.title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(preAlertTheme.titleColor.color)
-                    .lineLimit(2)
-                
-                if let location = event.location, !location.lowercased().hasPrefix("http") {
-                    HStack(alignment: .top, spacing: 4) {
-                        Image(systemName: "location.fill")
-                            .font(.system(size: 11))
-                            .offset(y: 2)
-                        Text(location)
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundColor(preAlertTheme.titleColor.color.opacity(0.7))
-                }
-                
-                if event.videoConferenceURL != nil {
-                    HStack(spacing: 4) {
-                        Image(systemName: "video.fill")
-                            .font(.system(size: 11))
-                        Text("Video Call")
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundColor(preAlertTheme.joinButtonBackgroundColor.color)
-                }
-            }
-            
-            Spacer()
-            
-            // Join button for video calls
-            if let url = event.videoConferenceURL {
-                Button("Join") {
-                    NSWorkspace.shared.open(url)
-                }
-                .buttonStyle(.plain)
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(preAlertTheme.joinButtonTextColor.color)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(preAlertTheme.joinButtonBackgroundColor.color)
-                .clipShape(RoundedRectangle(cornerRadius: 5))
-            }
+            MenuBarEventContent(
+                time: formatTime(event.startDate),
+                title: event.title,
+                location: event.location,
+                hasVideoCall: event.videoConferenceURL != nil,
+                joinAction: event.videoConferenceURL.map { url in { NSWorkspace.shared.open(url) } },
+                theme: preAlertTheme
+            )
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(preAlertTheme.backgroundColor.color.opacity(preAlertTheme.backgroundOpacity * 0.3))
         .contentShape(Rectangle())
         .onTapGesture {
             CalendarService.shared.openEventInCalendarApp(event)
@@ -462,32 +542,20 @@ struct EventRow: View {
 
 struct MenuBarReminderRow: View {
     let reminder: CustomReminder
+    @ObservedObject private var settings = AppSettings.shared
+
+    private var theme: PreAlertTheme {
+        PreAlertPresetManager.shared.theme(named: settings.menuBarPresetName)
+    }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Text(formatTime(reminder.scheduledDate))
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.secondary)
-                .frame(width: 70, alignment: .trailing)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(reminder.title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .lineLimit(2)
-
-                HStack(spacing: 4) {
-                    Image(systemName: "bell.fill")
-                        .font(.system(size: 11))
-                    Text("Reminder")
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .foregroundColor(.orange)
-            }
-
-            Spacer()
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        MenuBarSubtitleRow(
+            time: formatTime(reminder.scheduledDate),
+            title: reminder.title,
+            subtitle: "Reminder",
+            icon: "bell.fill",
+            theme: theme
+        )
         .contentShape(Rectangle())
         .nativeContextMenu {
             let menu = NSMenu()
@@ -514,33 +582,20 @@ struct MenuBarReminderRow: View {
 
 struct AppleReminderRow: View {
     let reminder: AppleReminder
+    @ObservedObject private var settings = AppSettings.shared
+
+    private var theme: PreAlertTheme {
+        PreAlertPresetManager.shared.theme(named: settings.menuBarPresetName)
+    }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Text(formatTime(reminder.dueDate))
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.secondary)
-                .frame(width: 70, alignment: .trailing)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(reminder.title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .lineLimit(2)
-
-                HStack(spacing: 4) {
-                    Image(systemName: "checklist")
-                        .font(.system(size: 11))
-                    Text(reminder.reminderList.title)
-                        .font(.system(size: 12, weight: .medium))
-                }
-                .foregroundColor(.green)
-            }
-
-            Spacer()
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(reminder.reminderList.color.opacity(0.1))
+        MenuBarSubtitleRow(
+            time: formatTime(reminder.dueDate),
+            title: reminder.title,
+            subtitle: reminder.reminderList.title,
+            icon: "checklist",
+            theme: theme
+        )
         .contentShape(Rectangle())
         .nativeContextMenu {
             let menu = NSMenu()

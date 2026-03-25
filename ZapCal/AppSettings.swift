@@ -140,8 +140,10 @@ class AppSettings: ObservableObject {
         if !UserDefaults.standard.bool(forKey: "hasLaunchedBefore") {
             self.launchAtLogin = true
             UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
-            updateLoginItemStatus()
         }
+
+        // Ensure login item registration is in sync on every launch
+        updateLoginItemStatus()
     }
     
     // MARK: - Launch at Login
@@ -151,8 +153,8 @@ class AppSettings: ObservableObject {
             Task {
                 do {
                     if launchAtLogin {
-                        if SMAppService.mainApp.status == .notRegistered {
-                            try await SMAppService.mainApp.register()
+                        if SMAppService.mainApp.status != .enabled {
+                            try SMAppService.mainApp.register()
                         }
                     } else {
                         if SMAppService.mainApp.status == .enabled {

@@ -9,7 +9,7 @@ import SwiftUI
 
 struct GeneralSettingsView: View {
     @ObservedObject var settings = AppSettings.shared
-    
+
     var body: some View {
         Form {
             Section {
@@ -18,22 +18,99 @@ struct GeneralSettingsView: View {
                 Text("General")
                     .font(.headline)
             }
-            
-            Section {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Snooze Durations")
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
 
-                    Text("Set the duration in minutes for each snooze button on the full-screen alert.")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+            ForEach(Array(settings.alertConfigs.enumerated()), id: \.element.id) { index, config in
+                Section {
+                    HStack {
+                        Toggle("Enable", isOn: Binding(
+                            get: { config.enabled },
+                            set: { settings.alertConfigs[index].enabled = $0 }
+                        ))
+
+                        Spacer()
+
+                        if settings.alertConfigs.count > 1 {
+                            Button(role: .destructive) {
+                                settings.alertConfigs.remove(at: index)
+                            } label: {
+                                Image(systemName: "trash")
+                                    .foregroundColor(.red)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+
+                    if config.enabled {
+                        Picker("Alert Type", selection: Binding(
+                            get: { config.style },
+                            set: { settings.alertConfigs[index].style = $0 }
+                        )) {
+                            ForEach(AlertStyle.allCases) { style in
+                                Text(style.label).tag(style)
+                            }
+                        }
+
+                        HStack {
+                            Text("Lead Time")
+                            Spacer()
+                            TextField("Min", value: Binding(
+                                get: { Int(config.leadTime / 60) },
+                                set: { settings.alertConfigs[index].leadTime = Double(max(0, $0)) * 60 }
+                            ), format: .number)
+                            .frame(width: 60)
+                            .multilineTextAlignment(.trailing)
+                            Text("min")
+                                .foregroundColor(.secondary)
+                        }
+
+                        if config.style == .subtle {
+                            HStack {
+                                VStack(alignment: .leading) {
+                                    Text("Duration")
+                                    Text("Set to 0 to persist until event starts.")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                TextField("Sec", value: Binding(
+                                    get: { Int(config.subtleDuration) },
+                                    set: { settings.alertConfigs[index].subtleDuration = Double(max(0, $0)) }
+                                ), format: .number)
+                                .frame(width: 60)
+                                .multilineTextAlignment(.trailing)
+                                Text("sec")
+                                    .foregroundColor(.secondary)
+                            }
+
+                            Button("Show Preview: Subtle Alert") {
+                                PreAlertManager.shared.showTestPreAlert()
+                            }
+                        }
+
+                        if config.style == .fullScreen {
+                            Button("Show Preview: Full Screen Alert") {
+                                AlertCoordinator.shared.showPreviewAlert(theme: ThemeService.shared.getTheme(for: nil))
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Alert \(index + 1)")
+                        .font(.headline)
                 }
+            }
 
+            Section {
+                Button {
+                    settings.alertConfigs.append(AlertConfig())
+                } label: {
+                    Label("Add Alert", systemImage: "plus.circle")
+                }
+            }
+
+            Section {
                 ForEach(0..<3, id: \.self) { index in
                     HStack {
-                        Text("Button \(index + 1)")
+                        Text("Snooze Button \(index + 1)")
                         Spacer()
                         TextField("Min", value: Binding(
                             get: { Int(settings.snoozeDurations[index] / 60) },
@@ -48,95 +125,12 @@ struct GeneralSettingsView: View {
                     }
                 }
             } header: {
-                Text("Snooze")
+                Text("Snooze Durations")
                     .font(.headline)
             }
-
-            alertSection(
-                title: "First Alert",
-                enabled: $settings.firstAlertEnabled,
-                style: $settings.firstAlertStyle,
-                leadTime: $settings.firstAlertLeadTime,
-                duration: $settings.firstAlertDuration
-            )
-
-            alertSection(
-                title: "Second Alert",
-                enabled: $settings.secondAlertEnabled,
-                style: $settings.secondAlertStyle,
-                leadTime: $settings.secondAlertLeadTime,
-                duration: $settings.secondAlertDuration
-            )
         }
         .formStyle(.grouped)
         .padding()
-    }
-
-    @ViewBuilder
-    private func alertSection(
-        title: String,
-        enabled: Binding<Bool>,
-        style: Binding<AlertStyle>,
-        leadTime: Binding<Double>,
-        duration: Binding<Double>
-    ) -> some View {
-        Section {
-            Toggle("Enable", isOn: enabled)
-
-            if enabled.wrappedValue {
-                Picker("Alert Type", selection: style) {
-                    ForEach(AlertStyle.allCases) { alertStyle in
-                        Text(alertStyle.label).tag(alertStyle)
-                    }
-                }
-
-                HStack {
-                    Text("Lead Time")
-                    Spacer()
-                    TextField("Min", value: Binding(
-                        get: { Int(leadTime.wrappedValue / 60) },
-                        set: { leadTime.wrappedValue = Double(max(0, $0)) * 60 }
-                    ), format: .number)
-                    .frame(width: 60)
-                    .multilineTextAlignment(.trailing)
-                    Text("min")
-                        .foregroundColor(.secondary)
-                }
-
-                if style.wrappedValue == .subtle {
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text("Duration")
-                            Text("Set to 0 to persist until event starts.")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        Spacer()
-                        TextField("Sec", value: Binding(
-                            get: { Int(duration.wrappedValue) },
-                            set: { duration.wrappedValue = Double(max(0, $0)) }
-                        ), format: .number)
-                        .frame(width: 60)
-                        .multilineTextAlignment(.trailing)
-                        Text("sec")
-                            .foregroundColor(.secondary)
-                    }
-
-                    Button("Show Preview: Subtle Alert") {
-                        PreAlertManager.shared.showTestPreAlert()
-                    }
-                }
-
-                if style.wrappedValue == .fullScreen {
-                    Button("Show Preview: Full Screen Alert") {
-                        AlertCoordinator.shared.showPreviewAlert(theme: ThemeService.shared.getTheme(for: nil))
-                    }
-                }
-            }
-        } header: {
-            Text(title)
-                .font(.headline)
-        }
     }
 }
 

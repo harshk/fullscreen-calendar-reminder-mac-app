@@ -186,12 +186,9 @@ class PreAlertManager: ObservableObject {
         }
     }
 
-    /// Returns the duration of whichever alert slot is configured as subtle, preferring the first.
+    /// Returns the duration from the first enabled subtle alert config, or 15 as fallback.
     private func firstSubtleDuration() -> Double {
-        let s = AppSettings.shared
-        if s.firstAlertEnabled && s.firstAlertStyle == .subtle { return s.firstAlertDuration }
-        if s.secondAlertEnabled && s.secondAlertStyle == .subtle { return s.secondAlertDuration }
-        return 15
+        AppSettings.shared.alertConfigs.first(where: { $0.enabled && $0.style == .subtle })?.subtleDuration ?? 15
     }
 
     private func dismissBanner() {

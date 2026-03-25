@@ -22,8 +22,8 @@ class CalendarService: ObservableObject {
     @Published var upcomingEvents: [CalendarEvent] = []
     
     private var firedEventIDs = Set<String>()
-    private var firstAlertFiredIDs = Set<String>()
-    private var secondAlertFiredIDs = Set<String>()
+    /// Tracks which events have fired for each alert config, keyed by AlertConfig.id.
+    private var alertFiredIDs = [UUID: Set<String>]()
     private var pollingTimer: Timer?
     private var fireCheckTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
@@ -257,45 +257,33 @@ class CalendarService: ObservableObject {
         if elapsed > 10 {
             for event in upcomingEvents where event.startDate <= now {
                 firedEventIDs.insert(event.id)
-                firstAlertFiredIDs.insert(event.id)
-                secondAlertFiredIDs.insert(event.id)
+                for config in AppSettings.shared.alertConfigs {
+                    alertFiredIDs[config.id, default: []].insert(event.id)
+                }
             }
             return
         }
 
         let settings = AppSettings.shared
 
-        // First Alert check
-        if settings.firstAlertEnabled {
-            let leadTime = settings.firstAlertLeadTime
+        for config in settings.alertConfigs {
+            guard config.enabled else { continue }
             for event in upcomingEvents {
-                guard !firedEventIDs.contains(event.id) && !firstAlertFiredIDs.contains(event.id) else { continue }
+                guard !firedEventIDs.contains(event.id) else { continue }
+                guard !alertFiredIDs[config.id, default: []].contains(event.id) else { continue }
                 let timeUntilStart = event.startDate.timeIntervalSince(now)
-                if timeUntilStart <= leadTime && timeUntilStart > -120 {
-                    firstAlertFiredIDs.insert(event.id)
-                    fireAlert(style: settings.firstAlertStyle, for: event, duration: settings.firstAlertDuration)
-                }
-            }
-        }
-
-        // Second Alert check
-        if settings.secondAlertEnabled {
-            let leadTime = settings.secondAlertLeadTime
-            for event in upcomingEvents {
-                guard !firedEventIDs.contains(event.id) && !secondAlertFiredIDs.contains(event.id) else { continue }
-                let timeUntilStart = event.startDate.timeIntervalSince(now)
-                if timeUntilStart <= leadTime && timeUntilStart > -120 {
-                    secondAlertFiredIDs.insert(event.id)
-                    fireAlert(style: settings.secondAlertStyle, for: event, duration: settings.secondAlertDuration)
+                if timeUntilStart <= config.leadTime && timeUntilStart > -120 {
+                    alertFiredIDs[config.id, default: []].insert(event.id)
+                    fireAlert(config: config, for: event)
                 }
             }
         }
     }
 
-    private func fireAlert(style: AlertStyle, for event: CalendarEvent, duration: Double) {
-        switch style {
+    private func fireAlert(config: AlertConfig, for event: CalendarEvent) {
+        switch config.style {
         case .subtle:
-            PreAlertManager.shared.showPreAlert(for: event, duration: duration)
+            PreAlertManager.shared.showPreAlert(for: event, duration: config.subtleDuration)
         case .fullScreen:
             firedEventIDs.insert(event.id)
             PreAlertManager.shared.dismiss()
@@ -314,8 +302,7 @@ class CalendarService: ObservableObject {
 
     func reEnableEvent(_ eventID: String) {
         firedEventIDs.remove(eventID)
-        firstAlertFiredIDs.remove(eventID)
-        secondAlertFiredIDs.remove(eventID)
+        for key in alertFiredIDs.keys { alertFiredIDs[key]?.remove(eventID) }
         PreAlertManager.shared.reEnablePreAlert(eventID)
         objectWillChange.send()
     }
@@ -326,8 +313,7 @@ class CalendarService: ObservableObject {
         // Recalculate all upcoming events
         await fetchUpcomingEvents()
         firedEventIDs.removeAll()
-        firstAlertFiredIDs.removeAll()
-        secondAlertFiredIDs.removeAll()
+        alertFiredIDs.removeAll()
         PreAlertManager.shared.resetTracking()
     }
     

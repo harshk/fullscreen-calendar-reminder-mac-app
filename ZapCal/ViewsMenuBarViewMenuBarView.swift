@@ -347,6 +347,7 @@ struct MenuBarEventContent: View {
     let title: String
     var location: String? = nil
     var hasVideoCall: Bool = false
+    var calendarColor: Color? = nil
     var joinAction: (() -> Void)? = nil
     let theme: PreAlertTheme
 
@@ -358,18 +359,26 @@ struct MenuBarEventContent: View {
                 .frame(width: 70, alignment: .trailing)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(theme.titleColor.color)
-                    .lineLimit(2)
+                HStack(alignment: .top, spacing: 6) {
+                    if let calendarColor {
+                        Circle()
+                            .fill(calendarColor)
+                            .frame(width: 10, height: 10)
+                            .offset(y: 4)
+                    }
+                    Text(title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(theme.titleColor.color)
+                        .lineLimit(2)
+                }
 
                 if let location, !location.lowercased().hasPrefix("http") {
                     HStack(alignment: .top, spacing: 4) {
                         Image(systemName: "location.fill")
-                            .font(.system(size: 11))
+                            .font(.system(size: 11, weight: .semibold))
                             .offset(y: 2)
                         Text(location)
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.system(size: 12, weight: .semibold))
                     }
                     .foregroundColor(theme.titleColor.color.opacity(0.7))
                 }
@@ -377,9 +386,9 @@ struct MenuBarEventContent: View {
                 if hasVideoCall {
                     HStack(spacing: 4) {
                         Image(systemName: "video.fill")
-                            .font(.system(size: 11))
+                            .font(.system(size: 11, weight: .semibold))
                         Text("Video Call")
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.system(size: 12, weight: .semibold))
                     }
                     .foregroundColor(theme.joinButtonBackgroundColor.color)
                 }
@@ -429,16 +438,22 @@ struct MenuBarSubtitleRow: View {
                 .frame(width: 70, alignment: .trailing)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(theme.titleColor.color)
-                    .lineLimit(2)
+                HStack(alignment: .top, spacing: 6) {
+                    Circle()
+                        .stroke(theme.titleColor.color, lineWidth: 1.5)
+                        .frame(width: 10, height: 10)
+                        .offset(y: 4)
+                    Text(title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(theme.titleColor.color)
+                        .lineLimit(2)
+                }
 
                 HStack(spacing: 4) {
                     Image(systemName: icon)
-                        .font(.system(size: 11))
+                        .font(.system(size: 11, weight: .semibold))
                     Text(subtitle)
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: 12, weight: .semibold))
                 }
                 .foregroundColor(theme.titleColor.color.opacity(0.7))
             }
@@ -494,6 +509,7 @@ struct EventRow: View {
                 title: event.title,
                 location: event.location,
                 hasVideoCall: event.videoConferenceURL != nil,
+                calendarColor: event.calendar.color,
                 joinAction: event.videoConferenceURL.map { url in { NSWorkspace.shared.open(url) } },
                 theme: preAlertTheme
             )

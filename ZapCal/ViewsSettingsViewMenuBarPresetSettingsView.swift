@@ -100,6 +100,7 @@ struct MenuBarPresetSettingsView: View {
                 time: "10:00 AM",
                 title: "Team Standup",
                 location: "Conference Room B",
+                calendarColor: .blue,
                 theme: theme
             )
 
@@ -107,6 +108,7 @@ struct MenuBarPresetSettingsView: View {
                 time: "1:30 PM",
                 title: "Design Review",
                 hasVideoCall: true,
+                calendarColor: .purple,
                 theme: theme
             )
 

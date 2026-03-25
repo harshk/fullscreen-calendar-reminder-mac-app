@@ -32,19 +32,11 @@ struct PresetsSettingsView: View {
     @ObservedObject private var calendarService = CalendarService.shared
     @ObservedObject private var appleRemindersService = AppleRemindersService.shared
     @ObservedObject private var appSettings = AppSettings.shared
-    @ObservedObject private var themeService = ThemeService.shared
 
     @State private var selectedPresetName: String = "Pinka Blua FS"
     @State private var selectedElement: AlertElementIdentifier? = .title
     @State private var workingTheme: AlertTheme
     @State private var showingSavedConfirmation = false
-    @State private var showingDeleteConfirmation = false
-    @State private var showingDuplicateDialog = false
-    @State private var duplicateName = ""
-    @State private var showingRenameDialog = false
-    @State private var renameTarget = ""
-    @State private var assignCalendarPresetName: String? = nil
-    @State private var assignReminderPresetName: String? = nil
     @State private var cachedBackgroundImage: NSImage? = nil
     @State private var cachedThumbnail: NSImage? = nil
 
@@ -73,17 +65,33 @@ struct PresetsSettingsView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            // Preset list
-            presetList
+            PresetListSidebar(
+                presets: presetManager.presets.map { .init(name: $0.name, isBuiltIn: presetManager.isBuiltIn($0.name)) },
+                selectedPresetName: $selectedPresetName,
+                defaultPresetName: "Pinka Blua FS",
+                assignKind: .fullScreen,
+                calendars: selectedCalendars,
+                reminderLists: selectedReminderLists,
+                uniqueName: { presetManager.uniqueName(base: $0) },
+                validateName: { presetManager.preset(named: $0) == nil },
+                onDuplicate: { from, newName in presetManager.duplicatePreset(from: from, newName: newName) },
+                onRename: { from, to in
+                    ThemeService.shared.updateAssignments(from: from, to: to)
+                    presetManager.renamePreset(from: from, to: to)
+                },
+                onDelete: { name in
+                    ThemeService.shared.clearAssignments(for: name)
+                    presetManager.deletePreset(named: name)
+                },
+                onSelectionChange: { loadPreset(named: $0) }
+            )
 
             Divider()
 
-            // Preview pane
             previewPane
 
             Divider()
 
-            // Editor pane
             editorPane
         }
         .onAppear { recomputeBackgroundImage(); recomputeThumbnail() }
@@ -95,166 +103,6 @@ struct PresetsSettingsView: View {
                 recomputeBackgroundImage(); recomputeThumbnail()
             } else {
                 cachedBackgroundImage = nil; cachedThumbnail = nil
-            }
-        }
-    }
-
-    // MARK: - Preset List
-
-    private var presetList: some View {
-        VStack(spacing: 0) {
-            List(selection: $selectedPresetName) {
-                Section("Built-in Presets") {
-                    ForEach(presetManager.presets.filter { presetManager.isBuiltIn($0.name) }) { preset in
-                        HStack {
-                            Image(systemName: "lock.fill")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                            Text(preset.name)
-                                .lineLimit(1)
-                            Spacer()
-                        }
-                        .contentShape(Rectangle())
-                        .tag(preset.name)
-                        .contextMenu {
-                            Button("Copy") {
-                                duplicateName = presetManager.uniqueName(base: preset.name)
-                                selectedPresetName = preset.name
-                                showingDuplicateDialog = true
-                            }
-                            if !selectedCalendars.isEmpty {
-                                Button("Assign to Calendar...") {
-                                    assignCalendarPresetName = preset.name
-                                }
-                            }
-                            if !selectedReminderLists.isEmpty {
-                                Button("Assign to Reminder List...") {
-                                    assignReminderPresetName = preset.name
-                                }
-                            }
-                        }
-                    }
-                }
-                Section("Custom Presets") {
-                    ForEach(presetManager.presets.filter { !presetManager.isBuiltIn($0.name) }) { preset in
-                        Text(preset.name)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .lineLimit(1)
-                            .contentShape(Rectangle())
-                            .tag(preset.name)
-                            .contextMenu {
-                                Button("Copy") {
-                                    duplicateName = presetManager.uniqueName(base: preset.name)
-                                    selectedPresetName = preset.name
-                                    showingDuplicateDialog = true
-                                }
-                                Button("Rename") {
-                                    renameTarget = preset.name
-                                    showingRenameDialog = true
-                                }
-                                if !selectedCalendars.isEmpty {
-                                    Button("Assign to Calendar...") {
-                                        assignCalendarPresetName = preset.name
-                                    }
-                                }
-                                if !selectedReminderLists.isEmpty {
-                                    Button("Assign to Reminder List...") {
-                                        assignReminderPresetName = preset.name
-                                    }
-                                }
-                                Divider()
-                                Button("Delete", role: .destructive) {
-                                    selectedPresetName = preset.name
-                                    showingDeleteConfirmation = true
-                                }
-                            }
-                    }
-                }
-            }
-            .onChange(of: selectedPresetName) { newValue in
-                loadPreset(named: newValue)
-            }
-
-            Divider()
-
-            HStack(spacing: 8) {
-                Button("Copy") {
-                    duplicateName = presetManager.uniqueName(base: selectedPresetName)
-                    showingDuplicateDialog = true
-                }
-                .frame(maxWidth: .infinity)
-
-                Button("Delete", role: .destructive) {
-                    showingDeleteConfirmation = true
-                }
-                .frame(maxWidth: .infinity)
-                .disabled(presetManager.isBuiltIn(selectedPresetName))
-            }
-            .padding(8)
-        }
-        .frame(width: 180)
-        .sheet(isPresented: $showingDuplicateDialog) {
-            PresetNameSheet(
-                title: "Copy Preset",
-                message: "Enter a name for the new preset.",
-                actionLabel: "Copy",
-                initialName: duplicateName,
-                validate: { presetManager.preset(named: $0) == nil },
-                onSubmit: { name in
-                    presetManager.duplicatePreset(from: selectedPresetName, newName: name)
-                    selectedPresetName = name
-                }
-            )
-        }
-        .alert("Delete Preset?", isPresented: $showingDeleteConfirmation) {
-            Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) {
-                ThemeService.shared.clearAssignments(for: selectedPresetName)
-                presetManager.deletePreset(named: selectedPresetName)
-                selectedPresetName = "Coral Paper FS"
-            }
-        } message: {
-            Text("This will permanently delete \"\(selectedPresetName)\" and reset any calendars using it.")
-        }
-        .sheet(isPresented: $showingRenameDialog) {
-            PresetNameSheet(
-                title: "Rename Preset",
-                message: "Enter a new name for \"\(renameTarget)\".",
-                actionLabel: "Rename",
-                initialName: renameTarget,
-                validate: { $0 == renameTarget || presetManager.preset(named: $0) == nil },
-                onSubmit: { name in
-                    ThemeService.shared.updateAssignments(from: renameTarget, to: name)
-                    presetManager.renamePreset(from: renameTarget, to: name)
-                    selectedPresetName = name
-                }
-            )
-        }
-        .sheet(isPresented: Binding(
-            get: { assignCalendarPresetName != nil },
-            set: { if !$0 { assignCalendarPresetName = nil } }
-        )) {
-            if let presetName = assignCalendarPresetName {
-                AssignCalendarsSheet(
-                    presetName: presetName,
-                    calendars: selectedCalendars,
-                    themeService: themeService,
-                    kind: .fullScreen
-                )
-            }
-        }
-        .sheet(isPresented: Binding(
-            get: { assignReminderPresetName != nil },
-            set: { if !$0 { assignReminderPresetName = nil } }
-        )) {
-            if let presetName = assignReminderPresetName {
-                AssignCalendarsSheet(
-                    presetName: presetName,
-                    calendars: selectedReminderLists,
-                    themeService: themeService,
-                    kind: .fullScreen,
-                    itemLabel: "Reminder Lists"
-                )
             }
         }
     }
@@ -334,30 +182,12 @@ struct PresetsSettingsView: View {
 
             Divider()
 
-            // Save/Revert buttons pinned to bottom
-            HStack(spacing: 12) {
-                Button("Revert Changes") {
-                    loadPreset(named: selectedPresetName)
-                }
-
-                Spacer()
-
-                if isEditable {
-                    Button(showingSavedConfirmation ? "Saved!" : "Save Preset") {
-                        savePreset()
-                        showingSavedConfirmation = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                            showingSavedConfirmation = false
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                } else {
-                    Text("Built-in preset (read-only)")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-            .padding()
+            PresetSaveRevertFooter(
+                isEditable: isEditable,
+                showingSavedConfirmation: $showingSavedConfirmation,
+                onRevert: { loadPreset(named: selectedPresetName) },
+                onSave: { savePreset() }
+            )
         }
         .frame(width: 350)
     }
@@ -460,7 +290,10 @@ struct PresetsSettingsView: View {
                 }
 
                 Button("Choose Image") {
-                    showImagePicker()
+                    showPresetImagePicker { filename in
+                        workingTheme.imageFileName = filename
+                        workingTheme.backgroundType = .image
+                    }
                 }
 
                 ColorPicker("Overlay Color", selection: Binding(
@@ -712,20 +545,6 @@ struct PresetsSettingsView: View {
         presetManager.savePreset(name: selectedPresetName, theme: workingTheme)
     }
 
-    private func showImagePicker() {
-        let panel = NSOpenPanel()
-        panel.allowsMultipleSelection = false
-        panel.canChooseDirectories = false
-        panel.canChooseFiles = true
-        panel.allowedContentTypes = [.png, .jpeg, .webP]
-
-        if panel.runModal() == .OK, let url = panel.url {
-            if let data = try? Data(contentsOf: url) {
-                workingTheme.imageFileName = ImageStore.save(data)
-                workingTheme.backgroundType = .image
-            }
-        }
-    }
 }
 
 // MARK: - Preset Name Sheet

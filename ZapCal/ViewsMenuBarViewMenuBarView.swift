@@ -212,7 +212,7 @@ struct MenuBarView: View {
                 NotificationCenter.default.post(name: .openAddReminder, object: nil)
             }) {
                 HStack {
-                    Text("Add Full Screen Reminder")
+                    Text("Add ZapCal Reminder")
                     Button(action: { showingAddReminderInfo.toggle() }) {
                         Image(systemName: "info.circle")
                             .font(.system(size: 12))
@@ -220,7 +220,7 @@ struct MenuBarView: View {
                     }
                     .buttonStyle(.plain)
                     .popover(isPresented: $showingAddReminderInfo) {
-                        Text("Adds a Full Screen reminder without having to add an event to your calendar.")
+                        Text("Adds a custom reminder without having to add an event to your calendar.")
                             .font(.caption)
                             .padding(8)
                             .frame(width: 200)
@@ -229,7 +229,7 @@ struct MenuBarView: View {
             }
             .buttonStyle(MenuRowButtonStyle())
 
-            Button("Manage Reminders") {
+            Button("Manage ZapCal Reminders") {
                 NotificationCenter.default.post(name: .openManageReminders, object: nil)
             }
             .buttonStyle(MenuRowButtonStyle())
@@ -237,7 +237,7 @@ struct MenuBarView: View {
             Divider()
                 .padding(.horizontal, 10)
 
-            Button(settings.isPaused ? "Unpause Full Screen Reminders" : "Pause Full Screen Reminders") {
+            Button(settings.isPaused ? "Unpause ZapCal" : "Pause ZapCal") {
                 settings.isPaused.toggle()
             }
             .buttonStyle(MenuRowButtonStyle())

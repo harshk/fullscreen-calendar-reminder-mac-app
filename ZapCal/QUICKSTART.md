@@ -73,7 +73,7 @@ Use this checklist to get the app running:
 - [ ] Press Escape or click X to dismiss
 
 ### Test Custom Reminder
-- [ ] Click bell icon → Add Full Screen Reminder
+- [ ] Click bell icon → Add ZapCal Reminder
 - [ ] Enter title: "Test Reminder"
 - [ ] Set date/time **2 minutes from now**
 - [ ] Save
@@ -94,7 +94,7 @@ Use this checklist to get the app running:
 
 ### Test Pause
 - [ ] Click bell icon
-- [ ] Click "Pause Full Screen Reminders"
+- [ ] Click "Pause ZapCal"
 - [ ] Bell icon changes to `bell.slash`
 - [ ] Create an event starting now
 - [ ] **No alert should appear** (working as expected!)

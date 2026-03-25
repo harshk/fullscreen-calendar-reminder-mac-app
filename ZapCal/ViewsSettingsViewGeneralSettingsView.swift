@@ -14,17 +14,6 @@ struct GeneralSettingsView: View {
         Form {
             Section {
                 Toggle("Launch at Login", isOn: $settings.launchAtLogin)
-                
-                HStack {
-                    Text("Number of Events in Menu Bar")
-                    Spacer()
-                    TextField("", value: Binding(
-                        get: { settings.numberOfEventsInMenuBar },
-                        set: { settings.numberOfEventsInMenuBar = max(1, $0) }
-                    ), format: .number)
-                    .frame(width: 60)
-                    .multilineTextAlignment(.trailing)
-                }
             } header: {
                 Text("General")
                     .font(.headline)

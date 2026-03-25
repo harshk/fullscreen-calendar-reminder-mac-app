@@ -18,7 +18,7 @@ struct ManageRemindersView: View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Text("Manage Reminders")
+                Text("Manage ZaspCal Reminders")
                     .font(.title2)
                     .fontWeight(.semibold)
 

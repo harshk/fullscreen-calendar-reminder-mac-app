@@ -198,7 +198,7 @@ AppDelegate.swift     # Menu bar setup
    - Preview full screen to see changes
 
 2. **Add custom reminders**
-   - Click bell icon → Add Full Screen Reminder
+   - Click bell icon → Add ZapCal Reminder
    - Set title and time
    - Test by setting time 1 minute in future
 

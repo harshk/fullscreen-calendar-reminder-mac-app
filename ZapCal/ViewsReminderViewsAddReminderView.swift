@@ -18,7 +18,7 @@ struct AddReminderView: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            Text("Add Full Screen Reminder")
+            Text("Add ZapCal Reminder")
                 .font(.title2)
                 .fontWeight(.semibold)
             

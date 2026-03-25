@@ -145,7 +145,7 @@ print("Available calendars: \(eventStore.calendars(for: .event).count)")
 **A. Are alerts paused?**
 - Check menu bar icon
 - If it's `bell.slash.fill`, alerts are paused
-- Click → "Unpause Full Screen Reminders"
+- Click → "Unpause ZapCal"
 
 **B. Is the event all-day?**
 - All-day events don't trigger alerts (by design)

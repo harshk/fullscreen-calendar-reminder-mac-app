@@ -287,7 +287,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = "Manage Reminders"
+        window.title = "Manage ZapCal Reminders"
         window.contentView = NSHostingView(rootView: ManageRemindersView())
         window.center()
         window.isReleasedWhenClosed = false
@@ -345,7 +345,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = "Add Full Screen Reminder"
+        window.title = "Add ZapCal Reminder"
         window.contentView = NSHostingView(rootView: AddReminderView())
         window.center()
         window.isReleasedWhenClosed = false

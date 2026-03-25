@@ -286,7 +286,7 @@ func duplicateTheme(from: String, to: String)
 7. Next alert for that calendar uses new theme
 
 ### Custom Reminder Flow
-1. User clicks "Add Full Screen Reminder" in menu
+1. User clicks "Add ZapCal Reminder" in menu
 2. Fill form with title, date, time
 3. Validate (future date, non-empty title)
 4. Save to SwiftData

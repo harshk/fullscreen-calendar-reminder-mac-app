@@ -264,7 +264,7 @@ The errors you mentioned (`Static property 'blue' is not available`, `Enum case 
 
 4. **Test Custom Reminder**:
    ```
-   - Menu → Add Full Screen Reminder
+   - Menu → Add ZapCal Reminder
    - Enter title, set time 2 minutes from now
    - Save
    - Wait...

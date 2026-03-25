@@ -17,11 +17,18 @@ struct MenuBarPresetSettingsView: View {
         HStack(spacing: 0) {
             // Preset list
             VStack(alignment: .leading, spacing: 0) {
-                Text("Choose a preset to style the menu bar.")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
+                HStack {
+                    Text("Number of Events to display in Menu Bar")
+                    Spacer()
+                    TextField("", value: Binding(
+                        get: { settings.numberOfEventsInMenuBar },
+                        set: { settings.numberOfEventsInMenuBar = max(1, $0) }
+                    ), format: .number)
+                    .frame(width: 60)
+                    .multilineTextAlignment(.trailing)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
 
                 List(selection: $settings.menuBarPresetName) {
                     Section("Built-in Presets") {

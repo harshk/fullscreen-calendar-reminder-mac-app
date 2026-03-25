@@ -27,4 +27,4 @@ Pods/
 
 ## Other
 .DS_Store
-
+*.p8

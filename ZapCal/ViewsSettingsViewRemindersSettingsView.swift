@@ -240,7 +240,7 @@ struct RemindersSettingsView: View {
                 .padding(.trailing, 12)
 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Picker("Pre-Alert Preset", selection: Binding(
+                    Picker("Subtle Alert Preset", selection: Binding(
                         get: { themeService.assignedPreAlertPresetName(for: list.calendarIdentifier) },
                         set: { themeService.setPreAlertPreset($0, for: list.calendarIdentifier) }
                     )) {
@@ -249,7 +249,7 @@ struct RemindersSettingsView: View {
                         }
                     }
                     .labelsHidden()
-                    Text("Pre-Alert Preset")
+                    Text("Subtle Alert Preset")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }

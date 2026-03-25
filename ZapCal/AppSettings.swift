@@ -14,6 +14,21 @@ enum AppStrings {
     static let reEnableAlertsForEvent = "Re-enable alerts for this event"
 }
 
+/// The kind of alert to show: a subtle banner or a full-screen overlay.
+enum AlertStyle: String, Codable, CaseIterable, Identifiable {
+    case subtle = "subtle"
+    case fullScreen = "fullScreen"
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .subtle: return "Subtle Alert"
+        case .fullScreen: return "Full Screen Alert"
+        }
+    }
+}
+
 class AppSettings: ObservableObject {
     static let shared = AppSettings()
     
@@ -50,19 +65,44 @@ class AppSettings: ObservableObject {
         didSet { UserDefaults.standard.set(calendarAlertsEnabled, forKey: "calendarAlertsEnabled") }
     }
 
-    /// Whether the pre-alert system (glow + banner) is enabled.
-    @Published var preAlertEnabled: Bool {
-        didSet { UserDefaults.standard.set(preAlertEnabled, forKey: "preAlertEnabled") }
+    // MARK: - First Alert
+
+    @Published var firstAlertEnabled: Bool {
+        didSet { UserDefaults.standard.set(firstAlertEnabled, forKey: "firstAlertEnabled") }
     }
 
-    /// How many seconds before the event the pre-alert fires (default 60).
-    @Published var preAlertLeadTime: Double {
-        didSet { UserDefaults.standard.set(preAlertLeadTime, forKey: "preAlertLeadTime") }
+    @Published var firstAlertStyle: AlertStyle {
+        didSet { UserDefaults.standard.set(firstAlertStyle.rawValue, forKey: "firstAlertStyle") }
     }
 
-    /// How many seconds the pre-alert (glow + banner) stays visible. 0 = persist until event starts.
-    @Published var preAlertDuration: Double {
-        didSet { UserDefaults.standard.set(preAlertDuration, forKey: "preAlertDuration") }
+    /// Lead time in seconds before the event the first alert fires (default 60).
+    @Published var firstAlertLeadTime: Double {
+        didSet { UserDefaults.standard.set(firstAlertLeadTime, forKey: "firstAlertLeadTime") }
+    }
+
+    /// Duration in seconds for the first alert banner. 0 = persist until event starts. Only used for subtle alerts.
+    @Published var firstAlertDuration: Double {
+        didSet { UserDefaults.standard.set(firstAlertDuration, forKey: "firstAlertDuration") }
+    }
+
+    // MARK: - Second Alert
+
+    @Published var secondAlertEnabled: Bool {
+        didSet { UserDefaults.standard.set(secondAlertEnabled, forKey: "secondAlertEnabled") }
+    }
+
+    @Published var secondAlertStyle: AlertStyle {
+        didSet { UserDefaults.standard.set(secondAlertStyle.rawValue, forKey: "secondAlertStyle") }
+    }
+
+    /// Lead time in seconds before the event the second alert fires (default 0 = at event start).
+    @Published var secondAlertLeadTime: Double {
+        didSet { UserDefaults.standard.set(secondAlertLeadTime, forKey: "secondAlertLeadTime") }
+    }
+
+    /// Duration in seconds for the second alert banner. 0 = persist until event starts. Only used for subtle alerts.
+    @Published var secondAlertDuration: Double {
+        didSet { UserDefaults.standard.set(secondAlertDuration, forKey: "secondAlertDuration") }
     }
 
     /// Snooze durations in seconds offered on the full-screen alert (default: 1m, 5m, 15m).
@@ -70,7 +110,7 @@ class AppSettings: ObservableObject {
         didSet { UserDefaults.standard.set(snoozeDurations, forKey: "snoozeDurations") }
     }
 
-    /// The Pre-Alert preset name used for menu bar event/reminder rows.
+    /// The Subtle Alert preset name used for menu bar event/reminder rows.
     @Published var menuBarPresetName: String {
         didSet { UserDefaults.standard.set(menuBarPresetName, forKey: "menuBarPresetName") }
     }
@@ -102,18 +142,46 @@ class AppSettings: ObservableObject {
             self.calendarAlertsEnabled = true
         }
 
-        // Pre-alert defaults
-        if UserDefaults.standard.object(forKey: "preAlertEnabled") != nil {
-            self.preAlertEnabled = UserDefaults.standard.bool(forKey: "preAlertEnabled")
+        // First Alert defaults (migrate from old preAlert settings if present)
+        let migrated = UserDefaults.standard.object(forKey: "firstAlertEnabled") != nil
+        if migrated {
+            self.firstAlertEnabled = UserDefaults.standard.bool(forKey: "firstAlertEnabled")
+        } else if UserDefaults.standard.object(forKey: "preAlertEnabled") != nil {
+            // Migrate: old preAlert → first alert
+            self.firstAlertEnabled = UserDefaults.standard.bool(forKey: "preAlertEnabled")
         } else {
-            self.preAlertEnabled = true
+            self.firstAlertEnabled = true
         }
-        let storedLeadTime = UserDefaults.standard.double(forKey: "preAlertLeadTime")
-        self.preAlertLeadTime = storedLeadTime > 0 ? storedLeadTime : 60
-        if let storedDuration = UserDefaults.standard.object(forKey: "preAlertDuration") as? Double {
-            self.preAlertDuration = storedDuration
+        self.firstAlertStyle = AlertStyle(rawValue: UserDefaults.standard.string(forKey: "firstAlertStyle") ?? "") ?? .subtle
+        let storedFirstLeadTime = UserDefaults.standard.double(forKey: "firstAlertLeadTime")
+        if storedFirstLeadTime > 0 {
+            self.firstAlertLeadTime = storedFirstLeadTime
+        } else if !migrated {
+            let oldLeadTime = UserDefaults.standard.double(forKey: "preAlertLeadTime")
+            self.firstAlertLeadTime = oldLeadTime > 0 ? oldLeadTime : 60
         } else {
-            self.preAlertDuration = 15
+            self.firstAlertLeadTime = 60
+        }
+        if let storedFirstDuration = UserDefaults.standard.object(forKey: "firstAlertDuration") as? Double {
+            self.firstAlertDuration = storedFirstDuration
+        } else if !migrated, let oldDuration = UserDefaults.standard.object(forKey: "preAlertDuration") as? Double {
+            self.firstAlertDuration = oldDuration
+        } else {
+            self.firstAlertDuration = 15
+        }
+
+        // Second Alert defaults
+        if UserDefaults.standard.object(forKey: "secondAlertEnabled") != nil {
+            self.secondAlertEnabled = UserDefaults.standard.bool(forKey: "secondAlertEnabled")
+        } else {
+            self.secondAlertEnabled = true
+        }
+        self.secondAlertStyle = AlertStyle(rawValue: UserDefaults.standard.string(forKey: "secondAlertStyle") ?? "") ?? .fullScreen
+        self.secondAlertLeadTime = UserDefaults.standard.double(forKey: "secondAlertLeadTime") // 0 = at event start
+        if let storedSecondDuration = UserDefaults.standard.object(forKey: "secondAlertDuration") as? Double {
+            self.secondAlertDuration = storedSecondDuration
+        } else {
+            self.secondAlertDuration = 15
         }
         let defaultSnooze: [Double] = [60, 300, 900] // 1m, 5m, 15m
         if let storedSnooze = UserDefaults.standard.array(forKey: "snoozeDurations") as? [Double], !storedSnooze.isEmpty {

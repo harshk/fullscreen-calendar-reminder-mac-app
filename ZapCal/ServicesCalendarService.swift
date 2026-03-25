@@ -22,6 +22,8 @@ class CalendarService: ObservableObject {
     @Published var upcomingEvents: [CalendarEvent] = []
     
     private var firedEventIDs = Set<String>()
+    private var firstAlertFiredIDs = Set<String>()
+    private var secondAlertFiredIDs = Set<String>()
     private var pollingTimer: Timer?
     private var fireCheckTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
@@ -255,32 +257,47 @@ class CalendarService: ObservableObject {
         if elapsed > 10 {
             for event in upcomingEvents where event.startDate <= now {
                 firedEventIDs.insert(event.id)
+                firstAlertFiredIDs.insert(event.id)
+                secondAlertFiredIDs.insert(event.id)
             }
             return
         }
 
-        // Pre-alert check: fire pre-alert for events approaching within lead time
-        if AppSettings.shared.preAlertEnabled {
-            let leadTime = AppSettings.shared.preAlertLeadTime
+        let settings = AppSettings.shared
+
+        // First Alert check
+        if settings.firstAlertEnabled {
+            let leadTime = settings.firstAlertLeadTime
             for event in upcomingEvents {
+                guard !firedEventIDs.contains(event.id) && !firstAlertFiredIDs.contains(event.id) else { continue }
                 let timeUntilStart = event.startDate.timeIntervalSince(now)
-                // Fire pre-alert when event is within lead time but hasn't started yet
-                if timeUntilStart > 0 && timeUntilStart <= leadTime &&
-                   !firedEventIDs.contains(event.id) {
-                    PreAlertManager.shared.showPreAlert(for: event)
+                if timeUntilStart <= leadTime && timeUntilStart > -120 {
+                    firstAlertFiredIDs.insert(event.id)
+                    fireAlert(style: settings.firstAlertStyle, for: event, duration: settings.firstAlertDuration)
                 }
             }
         }
 
-        let eventsToFire = upcomingEvents.filter { event in
-            !firedEventIDs.contains(event.id) &&
-            event.startDate <= now &&
-            event.startDate.timeIntervalSince(now) > -120 // Within 2 minutes
+        // Second Alert check
+        if settings.secondAlertEnabled {
+            let leadTime = settings.secondAlertLeadTime
+            for event in upcomingEvents {
+                guard !firedEventIDs.contains(event.id) && !secondAlertFiredIDs.contains(event.id) else { continue }
+                let timeUntilStart = event.startDate.timeIntervalSince(now)
+                if timeUntilStart <= leadTime && timeUntilStart > -120 {
+                    secondAlertFiredIDs.insert(event.id)
+                    fireAlert(style: settings.secondAlertStyle, for: event, duration: settings.secondAlertDuration)
+                }
+            }
         }
+    }
 
-        for event in eventsToFire {
+    private func fireAlert(style: AlertStyle, for event: CalendarEvent, duration: Double) {
+        switch style {
+        case .subtle:
+            PreAlertManager.shared.showPreAlert(for: event, duration: duration)
+        case .fullScreen:
             firedEventIDs.insert(event.id)
-            // Dismiss any active pre-alert when the full-screen alert fires
             PreAlertManager.shared.dismiss()
             AlertCoordinator.shared.queueAlert(for: event)
         }
@@ -297,6 +314,8 @@ class CalendarService: ObservableObject {
 
     func reEnableEvent(_ eventID: String) {
         firedEventIDs.remove(eventID)
+        firstAlertFiredIDs.remove(eventID)
+        secondAlertFiredIDs.remove(eventID)
         PreAlertManager.shared.reEnablePreAlert(eventID)
         objectWillChange.send()
     }
@@ -307,6 +326,8 @@ class CalendarService: ObservableObject {
         // Recalculate all upcoming events
         await fetchUpcomingEvents()
         firedEventIDs.removeAll()
+        firstAlertFiredIDs.removeAll()
+        secondAlertFiredIDs.removeAll()
         PreAlertManager.shared.resetTracking()
     }
     

@@ -22,6 +22,8 @@ class AppleRemindersService: ObservableObject {
     @Published var upcomingReminders: [AppleReminder] = []
 
     private var firedReminderIDs = Set<String>()
+    private var firstAlertFiredIDs = Set<String>()
+    private var secondAlertFiredIDs = Set<String>()
     private var pollingTimer: Timer?
     private var fireCheckTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
@@ -168,30 +170,46 @@ class AppleRemindersService: ObservableObject {
         if elapsed > 10 {
             for reminder in upcomingReminders where reminder.dueDate <= now {
                 firedReminderIDs.insert(reminder.id)
+                firstAlertFiredIDs.insert(reminder.id)
+                secondAlertFiredIDs.insert(reminder.id)
             }
             return
         }
 
-        // Pre-alert check
-        if AppSettings.shared.preAlertEnabled {
-            let leadTime = AppSettings.shared.preAlertLeadTime
+        let settings = AppSettings.shared
+
+        // First Alert check
+        if settings.firstAlertEnabled {
+            let leadTime = settings.firstAlertLeadTime
             for reminder in upcomingReminders {
+                guard !firedReminderIDs.contains(reminder.id) && !firstAlertFiredIDs.contains(reminder.id) else { continue }
                 let timeUntilDue = reminder.dueDate.timeIntervalSince(now)
-                if timeUntilDue > 0 && timeUntilDue <= leadTime &&
-                   !firedReminderIDs.contains(reminder.id) {
-                    PreAlertManager.shared.showPreAlert(for: reminder)
+                if timeUntilDue <= leadTime && timeUntilDue > -120 {
+                    firstAlertFiredIDs.insert(reminder.id)
+                    fireAlert(style: settings.firstAlertStyle, for: reminder, duration: settings.firstAlertDuration)
                 }
             }
         }
 
-        // Full-screen alert check
-        let remindersToFire = upcomingReminders.filter { reminder in
-            !firedReminderIDs.contains(reminder.id) &&
-            reminder.dueDate <= now &&
-            reminder.dueDate.timeIntervalSince(now) > -120
+        // Second Alert check
+        if settings.secondAlertEnabled {
+            let leadTime = settings.secondAlertLeadTime
+            for reminder in upcomingReminders {
+                guard !firedReminderIDs.contains(reminder.id) && !secondAlertFiredIDs.contains(reminder.id) else { continue }
+                let timeUntilDue = reminder.dueDate.timeIntervalSince(now)
+                if timeUntilDue <= leadTime && timeUntilDue > -120 {
+                    secondAlertFiredIDs.insert(reminder.id)
+                    fireAlert(style: settings.secondAlertStyle, for: reminder, duration: settings.secondAlertDuration)
+                }
+            }
         }
+    }
 
-        for reminder in remindersToFire {
+    private func fireAlert(style: AlertStyle, for reminder: AppleReminder, duration: Double) {
+        switch style {
+        case .subtle:
+            PreAlertManager.shared.showPreAlert(for: reminder, duration: duration)
+        case .fullScreen:
             firedReminderIDs.insert(reminder.id)
             PreAlertManager.shared.dismiss()
             AlertCoordinator.shared.queueAlert(for: reminder)
@@ -209,6 +227,8 @@ class AppleRemindersService: ObservableObject {
 
     func reEnableReminder(_ reminderID: String) {
         firedReminderIDs.remove(reminderID)
+        firstAlertFiredIDs.remove(reminderID)
+        secondAlertFiredIDs.remove(reminderID)
         PreAlertManager.shared.reEnablePreAlert(reminderID)
         objectWillChange.send()
     }
@@ -230,6 +250,8 @@ class AppleRemindersService: ObservableObject {
                 Task { @MainActor [weak self] in
                     await self?.fetchUpcomingReminders()
                     self?.firedReminderIDs.removeAll()
+                    self?.firstAlertFiredIDs.removeAll()
+                    self?.secondAlertFiredIDs.removeAll()
                     PreAlertManager.shared.resetTracking()
                 }
             }

@@ -10,7 +10,7 @@ import AppKit
 import SwiftUI
 import Combine
 
-// MARK: - Pre-Alert Manager
+// MARK: - Subtle Alert Manager
 
 @MainActor
 class PreAlertManager: ObservableObject {
@@ -26,32 +26,32 @@ class PreAlertManager: ObservableObject {
 
     // MARK: - Public API
 
-    /// Show pre-alert for an upcoming calendar event.
-    func showPreAlert(for event: CalendarEvent) {
+    /// Show subtle alert for an upcoming calendar event.
+    func showPreAlert(for event: CalendarEvent, duration: Double? = nil) {
         guard !preAlertEventIDs.contains(event.id) else { return }
         preAlertEventIDs.insert(event.id)
         isShowingPreAlert = true
         let theme = ThemeService.shared.getPreAlertTheme(for: event.calendar.identifier)
-        showBanner(eventID: event.id, title: event.title, startDate: event.startDate, color: event.calendar.color, videoURL: event.videoConferenceURL, preAlertTheme: theme)
+        showBanner(eventID: event.id, title: event.title, startDate: event.startDate, color: event.calendar.color, videoURL: event.videoConferenceURL, preAlertTheme: theme, duration: duration)
     }
 
-    /// Show pre-alert for an upcoming Apple Reminder.
-    func showPreAlert(for appleReminder: AppleReminder) {
+    /// Show subtle alert for an upcoming Apple Reminder.
+    func showPreAlert(for appleReminder: AppleReminder, duration: Double? = nil) {
         guard !preAlertEventIDs.contains(appleReminder.id) else { return }
         preAlertEventIDs.insert(appleReminder.id)
         isShowingPreAlert = true
         let theme = ThemeService.shared.getPreAlertTheme(for: appleReminder.reminderList.identifier)
-        showBanner(eventID: appleReminder.id, title: appleReminder.title, startDate: appleReminder.dueDate, color: appleReminder.reminderList.color, videoURL: nil, preAlertTheme: theme)
+        showBanner(eventID: appleReminder.id, title: appleReminder.title, startDate: appleReminder.dueDate, color: appleReminder.reminderList.color, videoURL: nil, preAlertTheme: theme, duration: duration)
     }
 
-    /// Show pre-alert for an upcoming custom reminder.
-    func showPreAlert(for reminder: CustomReminder) {
+    /// Show subtle alert for an upcoming custom reminder.
+    func showPreAlert(for reminder: CustomReminder, duration: Double? = nil) {
         let id = reminder.id.uuidString
         guard !preAlertEventIDs.contains(id) else { return }
         preAlertEventIDs.insert(id)
         isShowingPreAlert = true
         let theme = ThemeService.shared.getPreAlertTheme(for: nil)
-        showBanner(eventID: id, title: reminder.title, startDate: reminder.scheduledDate, color: .orange, videoURL: nil, preAlertTheme: theme)
+        showBanner(eventID: id, title: reminder.title, startDate: reminder.scheduledDate, color: .orange, videoURL: nil, preAlertTheme: theme, duration: duration)
     }
 
     /// Dismiss everything and clean up.
@@ -104,7 +104,7 @@ class PreAlertManager: ObservableObject {
     /// Observable state for the reusable banner view.
     private let bannerState = PreAlertBannerState()
 
-    private func showBanner(eventID: String, title: String, startDate: Date, color: Color, videoURL: URL?, preAlertTheme: PreAlertTheme) {
+    private func showBanner(eventID: String, title: String, startDate: Date, color: Color, videoURL: URL?, preAlertTheme: PreAlertTheme, duration: Double? = nil) {
         dismissBanner()
 
         guard let screen = NSScreen.main else { return }
@@ -119,7 +119,8 @@ class PreAlertManager: ObservableObject {
         }
 
         // Update all state in a single batch — one SwiftUI re-render
-        bannerState.show(eventID: eventID, title: title, startDate: startDate, color: color, videoURL: videoURL, theme: preAlertTheme, backgroundImage: bgImage)
+        let effectiveDuration = duration ?? firstSubtleDuration()
+        bannerState.show(eventID: eventID, title: title, startDate: startDate, color: color, videoURL: videoURL, theme: preAlertTheme, backgroundImage: bgImage, duration: effectiveDuration)
 
         let x = screen.frame.midX - bannerWidth / 2
         let menuBarHeight: CGFloat = NSApplication.shared.mainMenu?.menuBarHeight ?? 24
@@ -177,13 +178,20 @@ class PreAlertManager: ObservableObject {
         }
 
         // Auto-dismiss banner if configured
-        let bannerDuration = AppSettings.shared.preAlertDuration
-        if bannerDuration > 0 {
+        if effectiveDuration > 0 {
             countdownTimer?.invalidate()
-            countdownTimer = Timer.scheduledTimer(withTimeInterval: bannerDuration, repeats: false) { [weak self] _ in
+            countdownTimer = Timer.scheduledTimer(withTimeInterval: effectiveDuration, repeats: false) { [weak self] _ in
                 DispatchQueue.main.async { self?.dismiss() }
             }
         }
+    }
+
+    /// Returns the duration of whichever alert slot is configured as subtle, preferring the first.
+    private func firstSubtleDuration() -> Double {
+        let s = AppSettings.shared
+        if s.firstAlertEnabled && s.firstAlertStyle == .subtle { return s.firstAlertDuration }
+        if s.secondAlertEnabled && s.secondAlertStyle == .subtle { return s.secondAlertDuration }
+        return 15
     }
 
     private func dismissBanner() {
@@ -192,7 +200,7 @@ class PreAlertManager: ObservableObject {
     }
 }
 
-// MARK: - Pre-Alert Banner State
+// MARK: - Subtle Alert Banner State
 
 /// Observable state for the reusable banner window. Uses manual
 /// objectWillChange to batch all updates into a single re-render.
@@ -205,8 +213,9 @@ class PreAlertBannerState: ObservableObject {
     var backgroundImage: NSImage? = nil
     var eventID: String = ""
     var isVisible: Bool = false
+    var bannerDuration: Double = 15
 
-    func show(eventID: String, title: String, startDate: Date, color: Color, videoURL: URL?, theme: PreAlertTheme, backgroundImage: NSImage?) {
+    func show(eventID: String, title: String, startDate: Date, color: Color, videoURL: URL?, theme: PreAlertTheme, backgroundImage: NSImage?, duration: Double = 15) {
         self.eventID = eventID
         self.title = title
         self.startDate = startDate
@@ -214,6 +223,7 @@ class PreAlertBannerState: ObservableObject {
         self.videoURL = videoURL
         self.preAlertTheme = theme
         self.backgroundImage = backgroundImage
+        self.bannerDuration = duration
         self.isVisible = true
         objectWillChange.send()
     }
@@ -240,6 +250,7 @@ struct PreAlertBannerView: View {
     private let directVideoURL: URL??
     private let directTheme: PreAlertTheme?
     private let directBackgroundImage: NSImage??
+    private let directDuration: Double?
 
     private var title: String { directTitle ?? bannerState.title }
     private var startDate: Date { directStartDate ?? bannerState.startDate }
@@ -251,7 +262,7 @@ struct PreAlertBannerView: View {
     @State private var countdown: String = ""
     @State private var progress: CGFloat = 1.0
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    private let bannerDuration = AppSettings.shared.preAlertDuration
+    private var bannerDuration: Double { directDuration ?? bannerState.bannerDuration }
 
     /// State-driven init — used by the reusable banner window.
     init(
@@ -270,6 +281,7 @@ struct PreAlertBannerView: View {
         self.directVideoURL = nil
         self.directTheme = nil
         self.directBackgroundImage = nil
+        self.directDuration = nil
     }
 
     /// Direct init — used by settings preview.
@@ -280,6 +292,7 @@ struct PreAlertBannerView: View {
         videoURL: URL?,
         preAlertTheme: PreAlertTheme,
         backgroundImage: NSImage?,
+        duration: Double = 15,
         onDismiss: @escaping () -> Void,
         onJoin: @escaping (URL) -> Void,
         onDisableAlerts: @escaping () -> Void
@@ -294,6 +307,7 @@ struct PreAlertBannerView: View {
         self.directVideoURL = .some(videoURL)
         self.directTheme = preAlertTheme
         self.directBackgroundImage = .some(backgroundImage)
+        self.directDuration = duration
     }
 
     private var isStateDriven: Bool { directTitle == nil }

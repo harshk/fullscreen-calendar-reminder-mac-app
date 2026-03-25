@@ -18,6 +18,8 @@ class ReminderService: ObservableObject {
     private var modelContext: ModelContext?
     private var pollingTimer: Timer?
     private var firedReminderIDs = Set<UUID>()
+    private var firstAlertFiredIDs = Set<UUID>()
+    private var secondAlertFiredIDs = Set<UUID>()
     private var lastFireCheckDate = Date()
 
     private init() {}
@@ -119,6 +121,8 @@ class ReminderService: ObservableObject {
             }
             for reminder in missedReminders {
                 firedReminderIDs.insert(reminder.id)
+                firstAlertFiredIDs.insert(reminder.id)
+                secondAlertFiredIDs.insert(reminder.id)
                 modelContext?.delete(reminder)
             }
             if !missedReminders.isEmpty {
@@ -128,36 +132,51 @@ class ReminderService: ObservableObject {
             return
         }
 
-        // Pre-alert check: fire pre-alert for reminders approaching within lead time
-        if AppSettings.shared.preAlertEnabled {
-            let leadTime = AppSettings.shared.preAlertLeadTime
+        let settings = AppSettings.shared
+        var deletedAny = false
+
+        // First Alert check
+        if settings.firstAlertEnabled {
+            let leadTime = settings.firstAlertLeadTime
             for reminder in upcomingReminders {
+                guard !firedReminderIDs.contains(reminder.id) && !firstAlertFiredIDs.contains(reminder.id) else { continue }
                 let timeUntilStart = reminder.scheduledDate.timeIntervalSince(now)
-                if timeUntilStart > 0 && timeUntilStart <= leadTime &&
-                   !firedReminderIDs.contains(reminder.id) {
-                    PreAlertManager.shared.showPreAlert(for: reminder)
+                if timeUntilStart <= leadTime && timeUntilStart > -120 {
+                    firstAlertFiredIDs.insert(reminder.id)
+                    fireAlert(style: settings.firstAlertStyle, for: reminder, duration: settings.firstAlertDuration, deleteAfterFullScreen: &deletedAny)
                 }
             }
         }
 
-        let remindersToFire = upcomingReminders.filter { reminder in
-            !firedReminderIDs.contains(reminder.id) &&
-            reminder.scheduledDate <= now &&
-            !reminder.hasFired
+        // Second Alert check
+        if settings.secondAlertEnabled {
+            let leadTime = settings.secondAlertLeadTime
+            for reminder in upcomingReminders {
+                guard !firedReminderIDs.contains(reminder.id) && !secondAlertFiredIDs.contains(reminder.id) else { continue }
+                let timeUntilStart = reminder.scheduledDate.timeIntervalSince(now)
+                if timeUntilStart <= leadTime && timeUntilStart > -120 {
+                    secondAlertFiredIDs.insert(reminder.id)
+                    fireAlert(style: settings.secondAlertStyle, for: reminder, duration: settings.secondAlertDuration, deleteAfterFullScreen: &deletedAny)
+                }
+            }
         }
 
-        for reminder in remindersToFire {
-            firedReminderIDs.insert(reminder.id)
-
-            PreAlertManager.shared.dismiss()
-            AlertCoordinator.shared.queueAlert(for: reminder)
-
-            modelContext?.delete(reminder)
-        }
-
-        if !remindersToFire.isEmpty {
+        if deletedAny {
             try? modelContext?.save()
             loadReminders()
+        }
+    }
+
+    private func fireAlert(style: AlertStyle, for reminder: CustomReminder, duration: Double, deleteAfterFullScreen: inout Bool) {
+        switch style {
+        case .subtle:
+            PreAlertManager.shared.showPreAlert(for: reminder, duration: duration)
+        case .fullScreen:
+            firedReminderIDs.insert(reminder.id)
+            PreAlertManager.shared.dismiss()
+            AlertCoordinator.shared.queueAlert(for: reminder)
+            modelContext?.delete(reminder)
+            deleteAfterFullScreen = true
         }
     }
 }

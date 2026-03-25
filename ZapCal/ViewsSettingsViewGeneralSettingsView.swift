@@ -63,23 +63,58 @@ struct GeneralSettingsView: View {
                     .font(.headline)
             }
 
-            Section {
-                Toggle("Enable Pre-Alert", isOn: $settings.preAlertEnabled)
+            alertSection(
+                title: "First Alert",
+                enabled: $settings.firstAlertEnabled,
+                style: $settings.firstAlertStyle,
+                leadTime: $settings.firstAlertLeadTime,
+                duration: $settings.firstAlertDuration
+            )
 
-                if settings.preAlertEnabled {
-                    HStack {
-                        Text("Lead Time")
-                        Spacer()
-                        TextField("Sec", value: Binding(
-                            get: { Int(settings.preAlertLeadTime) },
-                            set: { settings.preAlertLeadTime = Double(max(1, $0)) }
-                        ), format: .number)
-                        .frame(width: 60)
-                        .multilineTextAlignment(.trailing)
-                        Text("sec")
-                            .foregroundColor(.secondary)
+            alertSection(
+                title: "Second Alert",
+                enabled: $settings.secondAlertEnabled,
+                style: $settings.secondAlertStyle,
+                leadTime: $settings.secondAlertLeadTime,
+                duration: $settings.secondAlertDuration
+            )
+        }
+        .formStyle(.grouped)
+        .padding()
+    }
+
+    @ViewBuilder
+    private func alertSection(
+        title: String,
+        enabled: Binding<Bool>,
+        style: Binding<AlertStyle>,
+        leadTime: Binding<Double>,
+        duration: Binding<Double>
+    ) -> some View {
+        Section {
+            Toggle("Enable", isOn: enabled)
+
+            if enabled.wrappedValue {
+                Picker("Alert Type", selection: style) {
+                    ForEach(AlertStyle.allCases) { alertStyle in
+                        Text(alertStyle.label).tag(alertStyle)
                     }
+                }
 
+                HStack {
+                    Text("Lead Time")
+                    Spacer()
+                    TextField("Min", value: Binding(
+                        get: { Int(leadTime.wrappedValue / 60) },
+                        set: { leadTime.wrappedValue = Double(max(0, $0)) * 60 }
+                    ), format: .number)
+                    .frame(width: 60)
+                    .multilineTextAlignment(.trailing)
+                    Text("min")
+                        .foregroundColor(.secondary)
+                }
+
+                if style.wrappedValue == .subtle {
                     HStack {
                         VStack(alignment: .leading) {
                             Text("Duration")
@@ -89,8 +124,8 @@ struct GeneralSettingsView: View {
                         }
                         Spacer()
                         TextField("Sec", value: Binding(
-                            get: { Int(settings.preAlertDuration) },
-                            set: { settings.preAlertDuration = Double(max(0, $0)) }
+                            get: { Int(duration.wrappedValue) },
+                            set: { duration.wrappedValue = Double(max(0, $0)) }
                         ), format: .number)
                         .frame(width: 60)
                         .multilineTextAlignment(.trailing)
@@ -98,17 +133,21 @@ struct GeneralSettingsView: View {
                             .foregroundColor(.secondary)
                     }
 
-                    Button("Show Preview: Pre-Alert") {
+                    Button("Show Preview: Subtle Alert") {
                         PreAlertManager.shared.showTestPreAlert()
                     }
                 }
-            } header: {
-                Text("Pre-Alert")
-                    .font(.headline)
+
+                if style.wrappedValue == .fullScreen {
+                    Button("Show Preview: Full Screen Alert") {
+                        AlertCoordinator.shared.showPreviewAlert(theme: ThemeService.shared.getTheme(for: nil))
+                    }
+                }
             }
+        } header: {
+            Text(title)
+                .font(.headline)
         }
-        .formStyle(.grouped)
-        .padding()
     }
 }
 

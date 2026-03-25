@@ -524,7 +524,7 @@ struct EventRow: View {
                 NotificationCenter.default.post(name: .dismissPopover, object: nil)
                 AlertCoordinator.shared.showPreviewAlert(for: event)
             })
-            menu.addItem(ClosureMenuItem("Show Preview: Pre-Alert") {
+            menu.addItem(ClosureMenuItem("Show Preview: Subtle Alert") {
                 NotificationCenter.default.post(name: .dismissPopover, object: nil)
                 PreAlertManager.shared.showTestPreAlert(for: event)
             })
@@ -619,7 +619,7 @@ struct AppleReminderRow: View {
                 NotificationCenter.default.post(name: .dismissPopover, object: nil)
                 AlertCoordinator.shared.showPreviewAlert(for: reminder)
             })
-            menu.addItem(ClosureMenuItem("Show Preview: Pre-Alert") {
+            menu.addItem(ClosureMenuItem("Show Preview: Subtle Alert") {
                 NotificationCenter.default.post(name: .dismissPopover, object: nil)
                 PreAlertManager.shared.showPreAlert(for: reminder)
             })

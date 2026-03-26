@@ -105,6 +105,7 @@ class KeyablePanel: NSPanel {
 ///    SwiftUI gesture handlers fire reliably even if macOS didn't
 ///    activate the app when the overlay first appeared.
 class FirstClickHostingView<Content: View>: NSHostingView<Content> {
+    deinit {}
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
     override func mouseDown(with event: NSEvent) {

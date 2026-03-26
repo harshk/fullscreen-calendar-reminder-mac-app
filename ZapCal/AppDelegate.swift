@@ -23,6 +23,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var addReminderWindow: NSWindow?
     private var eventMonitor: Any?
     private var localEventMonitor: Any?
+    private var welcomeSetupCompleted = false
     var modelContainer: ModelContainer!
     
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -231,7 +232,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } else if closedWindow == manageRemindersWindow {
             // No extra state to reset
         } else if closedWindow == welcomeWindow {
-            // No extra state to reset
+            if !welcomeSetupCompleted {
+                welcomeSetupCompleted = true
+                pulseMenuBarIcon()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                    self?.togglePanel()
+                }
+            }
         } else if closedWindow == addReminderWindow {
             // No extra state to reset
         } else {
@@ -318,7 +325,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 500, height: 460),
-            styleMask: [.titled, .closable],
+            styleMask: [.titled],
             backing: .buffered,
             defer: false
         )
@@ -338,6 +345,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func handleWelcomeSetupComplete() {
+        welcomeSetupCompleted = true
         // Pulse the menu bar icon
         pulseMenuBarIcon()
 

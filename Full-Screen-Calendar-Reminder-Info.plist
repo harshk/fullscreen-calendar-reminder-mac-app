@@ -13,6 +13,6 @@
 	<key>NSRemindersFullAccessUsageDescription</key>
 	<string>ZapCal needs access to your reminders to display full-screen alerts when reminders are due.</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>13.0</string>
+	<string>14.0</string>
 </dict>
 </plist>

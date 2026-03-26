@@ -17,15 +17,19 @@ struct WelcomeView: View {
         case calendar
         case reminders
         case allSet
+        case menuBarInfo
     }
 
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
 
-            if step == .allSet {
+            switch step {
+            case .allSet:
                 allSetContent
-            } else {
+            case .menuBarInfo:
+                menuBarInfoContent
+            default:
                 permissionsContent
             }
 
@@ -98,7 +102,7 @@ struct WelcomeView: View {
                 calendarStepButtons
             case .reminders:
                 remindersStepButtons
-            case .allSet:
+            case .allSet, .menuBarInfo:
                 EmptyView()
             }
         }
@@ -120,6 +124,38 @@ struct WelcomeView: View {
             Text("ZapCal runs in your menu bar.")
                 .font(.system(size: 15))
                 .foregroundColor(.secondary)
+                .padding(.bottom, 24)
+
+            // Menu bar illustration
+            menuBarIllustration
+                .padding(.horizontal, 40)
+                .padding(.bottom, 32)
+
+            Button(action: {
+                NotificationCenter.default.post(name: .welcomeSetupComplete, object: nil)
+                NSApp.keyWindow?.close()
+            }) {
+                Text("Got It!")
+                    .font(.system(size: 14, weight: .medium))
+                    .frame(width: 200)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+        }
+    }
+
+    // MARK: - Menu Bar Info Content (no permissions granted yet)
+
+    private var menuBarInfoContent: some View {
+        VStack(spacing: 0) {
+            Text("ZapCal runs in your menu bar")
+                .font(.system(size: 24, weight: .bold))
+                .padding(.bottom, 8)
+
+            Text("You can grant permissions later from the menu bar.")
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
                 .padding(.bottom, 24)
 
             // Menu bar illustration
@@ -301,22 +337,41 @@ struct WelcomeView: View {
                     .foregroundColor(.orange)
                     .multilineTextAlignment(.center)
 
-                Button(action: { openPrivacySettings(for: "Calendars") }) {
-                    Text("Open System Settings")
+                HStack(spacing: 12) {
+                    Button(action: { openPrivacySettings(for: "Calendars") }) {
+                        Text("Open System Settings")
+                            .font(.system(size: 14, weight: .medium))
+                            .frame(width: 160)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+
+                    Button(action: { step = .menuBarInfo }) {
+                        Text("Skip")
+                            .font(.system(size: 14, weight: .medium))
+                            .frame(width: 80)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                }
+            }
+        } else {
+            VStack(spacing: 12) {
+                Button(action: { Task { try? await calendarService.requestAccess() } }) {
+                    Text("Grant Calendar Access")
                         .font(.system(size: 14, weight: .medium))
                         .frame(width: 200)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
+
+                Button(action: { step = .menuBarInfo }) {
+                    Text("Skip for now")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
             }
-        } else {
-            Button(action: { Task { try? await calendarService.requestAccess() } }) {
-                Text("Grant Calendar Access")
-                    .font(.system(size: 14, weight: .medium))
-                    .frame(width: 200)
-            }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
         }
     }
 
@@ -340,7 +395,7 @@ struct WelcomeView: View {
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
 
-                    Button(action: { step = .allSet }) {
+                    Button(action: { step = .menuBarInfo }) {
                         Text("Skip")
                             .font(.system(size: 14, weight: .medium))
                             .frame(width: 80)

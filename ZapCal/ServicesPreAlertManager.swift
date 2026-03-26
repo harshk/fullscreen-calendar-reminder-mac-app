@@ -469,6 +469,10 @@ struct PreAlertBannerView: View {
 // MARK: - Transparent Hosting View
 
 class TransparentHostingView<Content: View>: NSHostingView<Content> {
+    // Explicit deinit works around a Swift 6.2 compiler crash in the
+    // EarlyPerfInliner SIL pass when archiving with optimizations.
+    deinit {}
+
     override var isOpaque: Bool { false }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }

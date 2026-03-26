@@ -42,7 +42,7 @@ struct GeneralSettingsView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Alert Settings")
                                 Text(alertSettingsSummary(for: config))
-                                    .font(.caption)
+                                    .font(.subheadline)
                                     .foregroundColor(.secondary)
                             }
                             Spacer()
@@ -139,7 +139,7 @@ struct GeneralSettingsView: View {
             let durText = config.subtleDuration == 0
                 ? "persists until event"
                 : "\(Int(config.subtleDuration)) sec"
-            return "\(leadText) · Duration: \(durText)"
+            return "\(leadText)\nDuration: \(durText)"
         }
         return leadText
     }

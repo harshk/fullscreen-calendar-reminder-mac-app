@@ -67,20 +67,29 @@ struct CalendarsSettingsView: View {
             Image(systemName: "calendar.badge.exclamationmark")
                 .font(.system(size: 60))
                 .foregroundColor(.secondary)
-            
+
             Text("Calendar Access Required")
                 .font(.title3)
                 .fontWeight(.semibold)
-            
+
             Text("Grant calendar access to select calendars for full-screen alerts.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-            
-            Button("Open System Settings") {
-                openSystemSettingsCalendarPrivacy()
+
+            if calendarService.permissionDenied {
+                Button("Open System Settings") {
+                    openSystemSettingsCalendarPrivacy()
+                }
+                .buttonStyle(.borderedProminent)
+            } else {
+                Button("Grant Calendar Access") {
+                    Task {
+                        try? await calendarService.requestAccess()
+                    }
+                }
+                .buttonStyle(.borderedProminent)
             }
-            .buttonStyle(.borderedProminent)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

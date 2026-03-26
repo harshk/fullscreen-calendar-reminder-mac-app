@@ -244,7 +244,7 @@ struct MenuBarView: View {
             Divider()
                 .padding(.horizontal, 10)
 
-            Button(settings.isPaused ? "Unpause ZapCal" : "Pause ZapCal") {
+            Button(settings.isPaused ? "Resume ZapCal Alerts" : "Pause all ZapCal Alerts") {
                 settings.isPaused.toggle()
             }
             .buttonStyle(MenuRowButtonStyle())

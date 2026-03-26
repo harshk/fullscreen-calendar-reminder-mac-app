@@ -371,7 +371,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showRightClickMenu() {
         let menu = NSMenu()
-        let pauseTitle = AppSettings.shared.isPaused ? "Unpause ZapCal" : "Pause ZapCal"
+        let pauseTitle = AppSettings.shared.isPaused ? "Resume ZapCal Alerts" : "Pause all ZapCal Alerts"
         menu.addItem(NSMenuItem(title: pauseTitle, action: #selector(togglePause), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())

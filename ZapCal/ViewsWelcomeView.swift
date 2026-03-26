@@ -220,13 +220,12 @@ struct WelcomeView: View {
                             }
                             .foregroundColor(.accentColor)
                             .overlay(alignment: .top) {
-                                VStack(spacing: 2) {
-                                    Image(systemName: "arrow.up")
-                                        .font(.system(size: 16, weight: .bold))
-                                        .foregroundColor(.accentColor)
+                                VStack(spacing: 1) {
+                                    handDrawnArrow
+                                        .frame(width: 20, height: 24)
                                     Text("ZapCal lives here")
-                                        .font(.system(size: 11, weight: .semibold))
-                                        .foregroundColor(.accentColor)
+                                        .font(.custom("Marker Felt", size: 12))
+                                        .foregroundColor(.red)
                                         .fixedSize()
                                 }
                                 .offset(y: 22)
@@ -250,6 +249,41 @@ struct WelcomeView: View {
 
             // Space for the overlay arrow + text
             Spacer().frame(height: 36)
+        }
+    }
+
+    // MARK: - Hand-drawn Arrow
+
+    private var handDrawnArrow: some View {
+        Canvas { context, size in
+            var path = Path()
+            let midX = size.width / 2
+
+            // Slightly wobbly line going up
+            path.move(to: CGPoint(x: midX + 1, y: size.height))
+            path.addCurve(
+                to: CGPoint(x: midX - 1, y: 6),
+                control1: CGPoint(x: midX + 3, y: size.height * 0.6),
+                control2: CGPoint(x: midX - 3, y: size.height * 0.3)
+            )
+
+            // Left arrowhead stroke
+            path.move(to: CGPoint(x: midX - 1, y: 6))
+            path.addCurve(
+                to: CGPoint(x: midX - 7, y: 14),
+                control1: CGPoint(x: midX - 2, y: 8),
+                control2: CGPoint(x: midX - 5, y: 11)
+            )
+
+            // Right arrowhead stroke
+            path.move(to: CGPoint(x: midX - 1, y: 6))
+            path.addCurve(
+                to: CGPoint(x: midX + 7, y: 12),
+                control1: CGPoint(x: midX + 1, y: 8),
+                control2: CGPoint(x: midX + 5, y: 10)
+            )
+
+            context.stroke(path, with: .color(.red), lineWidth: 2.5)
         }
     }
 

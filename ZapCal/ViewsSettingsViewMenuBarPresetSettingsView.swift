@@ -20,11 +20,16 @@ struct MenuBarPresetSettingsView: View {
                 HStack {
                     Text("Number of Events to display in Menu Bar")
                     Spacer()
-                    TextField("", value: Binding(
-                        get: { settings.numberOfEventsInMenuBar },
-                        set: { settings.numberOfEventsInMenuBar = max(1, $0) }
-                    ), format: .number)
-                    .frame(width: 60)
+                    TextField("", text: Binding(
+                        get: { String(settings.numberOfEventsInMenuBar) },
+                        set: { newValue in
+                            let filtered = String(newValue.filter(\.isNumber).prefix(2))
+                            if let num = Int(filtered), num >= 1 {
+                                settings.numberOfEventsInMenuBar = min(99, num)
+                            }
+                        }
+                    ))
+                    .frame(width: 40)
                     .multilineTextAlignment(.trailing)
                 }
                 .padding(.horizontal, 12)

@@ -22,24 +22,10 @@ struct GeneralSettingsView: View {
 
             ForEach(Array(settings.alertConfigs.enumerated()), id: \.element.id) { index, config in
                 Section {
-                    HStack {
-                        Toggle("Enable", isOn: Binding(
-                            get: { config.enabled },
-                            set: { settings.alertConfigs[index].enabled = $0 }
-                        ))
-
-                        Spacer()
-
-                        if settings.alertConfigs.count > 1 {
-                            Button(role: .destructive) {
-                                deleteAlertIndex = index
-                            } label: {
-                                Image(systemName: "trash")
-                                    .foregroundColor(.red)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
+                    Toggle("Enable", isOn: Binding(
+                        get: { config.enabled },
+                        set: { settings.alertConfigs[index].enabled = $0 }
+                    ))
 
                     if config.enabled {
                         Picker("Alert Type", selection: Binding(
@@ -95,8 +81,20 @@ struct GeneralSettingsView: View {
                         }
                     }
                 } header: {
-                    Text("Alert \(index + 1)")
-                        .font(.headline)
+                    HStack {
+                        Text("Alert \(index + 1)")
+                            .font(.headline)
+                        if settings.alertConfigs.count > 1 {
+                            Button {
+                                deleteAlertIndex = index
+                            } label: {
+                                Image(systemName: "trash")
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
                 }
             }
 

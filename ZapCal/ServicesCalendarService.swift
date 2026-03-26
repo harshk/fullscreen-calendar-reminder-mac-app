@@ -142,7 +142,7 @@ class CalendarService: ObservableObject {
         }
 
         let startDate = Date()
-        let endDate = Calendar.current.date(byAdding: .weekOfYear, value: 2, to: startDate) ?? startDate
+        let endDate = Calendar.current.date(byAdding: .year, value: 1, to: startDate) ?? startDate
         let limit = AppSettings.shared.numberOfEventsInMenuBar
         let store = self.eventStore
 

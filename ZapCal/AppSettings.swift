@@ -134,7 +134,7 @@ class AppSettings: ObservableObject {
     private init() {
         self.launchAtLogin = UserDefaults.standard.bool(forKey: "launchAtLogin")
         let storedEventCount = UserDefaults.standard.integer(forKey: "numberOfEventsInMenuBar")
-        self.numberOfEventsInMenuBar = storedEventCount == 0 ? 10 : storedEventCount
+        self.numberOfEventsInMenuBar = storedEventCount == 0 ? 50 : min(storedEventCount, 99)
         self.isPaused = UserDefaults.standard.bool(forKey: "isPaused")
 
         // Calendar alerts (default true)

@@ -488,7 +488,7 @@ class AlertCoordinator: ObservableObject {
         isPreviewMode = false
 
         // Restore activation policy
-        if let settingsWindow = NSApp.windows.first(where: { $0.isVisible && $0.title == "Settings" }) {
+        if let settingsWindow = NSApp.windows.first(where: { $0.isVisible && $0.title == "ZapCal Settings" }) {
             DispatchQueue.main.async {
                 NSApp.setActivationPolicy(.regular)
                 settingsWindow.makeKeyAndOrderFront(nil)

@@ -85,10 +85,7 @@ struct MenuBarView: View {
                 upcomingEventsSection
             }
 
-            Divider()
-                .padding(.horizontal, 10)
-
-            menuActions
+            menuActions.padding(.vertical, 4)
         }
         .frame(width: 350)
     }

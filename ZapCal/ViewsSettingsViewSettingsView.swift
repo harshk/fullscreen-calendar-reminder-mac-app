@@ -18,10 +18,11 @@ class SettingsWindowVisible: ObservableObject {
 struct SettingsView: View {
     enum SettingsTab: String, CaseIterable, Identifiable {
         case general = "General"
+        case alerts = "Alerts"
         case calendars = "Calendars"
         case reminders = "Reminders"
-        case menuBarPreset = "Menu Bar"
-        case presets = "Alert Presets"
+        case menuBarPreset = "Menu Bar Presets"
+        case presets = "Full Screen Alert Presets"
         case preAlertPresets = "Subtle Alert Presets"
 
         var id: String { rawValue }
@@ -29,11 +30,12 @@ struct SettingsView: View {
         var icon: String {
             switch self {
             case .general: return "gear"
+            case .alerts: return "bell.badge"
             case .calendars: return "calendar"
             case .reminders: return "checklist"
             case .menuBarPreset: return "menubar.rectangle"
             case .presets: return "paintbrush"
-            case .preAlertPresets: return "bell.badge"
+            case .preAlertPresets: return "bell.and.waves.left.and.right"
             }
         }
     }
@@ -61,6 +63,8 @@ struct SettingsView: View {
                 switch selectedTab {
                 case .general:
                     GeneralSettingsView()
+                case .alerts:
+                    AlertsSettingsView()
                 case .calendars:
                     CalendarsSettingsView()
                 case .reminders:

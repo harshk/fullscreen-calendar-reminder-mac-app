@@ -17,24 +17,6 @@ struct MenuBarPresetSettingsView: View {
         HStack(spacing: 0) {
             // Preset list
             VStack(alignment: .leading, spacing: 0) {
-                HStack {
-                    Text("Number of Events to display in Menu Bar")
-                    Spacer()
-                    TextField("", text: Binding(
-                        get: { String(settings.numberOfEventsInMenuBar) },
-                        set: { newValue in
-                            let filtered = String(newValue.filter(\.isNumber).prefix(2))
-                            if let num = Int(filtered), num >= 1 {
-                                settings.numberOfEventsInMenuBar = min(99, num)
-                            }
-                        }
-                    ))
-                    .frame(width: 40)
-                    .multilineTextAlignment(.trailing)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-
                 List(selection: $settings.menuBarPresetName) {
                     Section("Built-in Presets") {
                         ForEach(presetManager.presets.filter { presetManager.isBuiltIn($0.name) }) { preset in

@@ -24,6 +24,8 @@ class CalendarService: ObservableObject {
     private var firedEventIDs = Set<String>()
     /// Tracks which events have fired for each alert config, keyed by AlertConfig.id.
     private var alertFiredIDs = [UUID: Set<String>]()
+    /// Tracks which event alarm dates have already triggered, keyed by "eventID_alarmTimestamp".
+    private var alarmFiredIDs = Set<String>()
     private var pollingTimer: Timer?
     private var fireCheckTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
@@ -260,6 +262,9 @@ class CalendarService: ObservableObject {
                 for config in AppSettings.shared.alertConfigs {
                     alertFiredIDs[config.id, default: []].insert(event.id)
                 }
+                for alarmDate in event.alarmDates {
+                    alarmFiredIDs.insert("\(event.id)_\(alarmDate.timeIntervalSinceReferenceDate)")
+                }
             }
             return
         }
@@ -277,6 +282,34 @@ class CalendarService: ObservableObject {
                     fireAlert(config: config, for: event)
                 }
             }
+        }
+
+        // Event alarm alerts — fire at the exact time a calendar alarm is set
+        if settings.eventAlarmAlertsEnabled {
+            for event in upcomingEvents {
+                guard !firedEventIDs.contains(event.id) else { continue }
+                for alarmDate in event.alarmDates {
+                    let alarmKey = "\(event.id)_\(alarmDate.timeIntervalSinceReferenceDate)"
+                    guard !alarmFiredIDs.contains(alarmKey) else { continue }
+                    let timeUntilAlarm = alarmDate.timeIntervalSince(now)
+                    if timeUntilAlarm <= 0 && timeUntilAlarm > -120 {
+                        alarmFiredIDs.insert(alarmKey)
+                        fireAlarmAlert(for: event)
+                    }
+                }
+            }
+        }
+    }
+
+    private func fireAlarmAlert(for event: CalendarEvent) {
+        let settings = AppSettings.shared
+        switch settings.eventAlarmAlertStyle {
+        case .subtle:
+            PreAlertManager.shared.showPreAlert(for: event, duration: settings.eventAlarmAlertDuration)
+        case .fullScreen:
+            firedEventIDs.insert(event.id)
+            PreAlertManager.shared.dismiss()
+            AlertCoordinator.shared.queueAlert(for: event)
         }
     }
 
@@ -303,6 +336,7 @@ class CalendarService: ObservableObject {
     func reEnableEvent(_ eventID: String) {
         firedEventIDs.remove(eventID)
         for key in alertFiredIDs.keys { alertFiredIDs[key]?.remove(eventID) }
+        alarmFiredIDs = alarmFiredIDs.filter { !$0.hasPrefix(eventID) }
         PreAlertManager.shared.reEnablePreAlert(eventID)
         objectWillChange.send()
     }
@@ -314,6 +348,7 @@ class CalendarService: ObservableObject {
         await fetchUpcomingEvents()
         firedEventIDs.removeAll()
         alertFiredIDs.removeAll()
+        alarmFiredIDs.removeAll()
         PreAlertManager.shared.resetTracking()
     }
     

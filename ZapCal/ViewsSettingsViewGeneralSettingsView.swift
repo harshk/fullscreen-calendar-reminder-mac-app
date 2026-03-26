@@ -36,6 +36,46 @@ struct GeneralSettingsView: View {
             }
 
             Section {
+                Toggle("Enable", isOn: $settings.eventAlarmAlertsEnabled)
+
+                if settings.eventAlarmAlertsEnabled {
+                    Picker("Alert Type", selection: $settings.eventAlarmAlertStyle) {
+                        ForEach(AlertStyle.allCases) { style in
+                            Text(style.label).tag(style)
+                        }
+                    }
+
+                    if settings.eventAlarmAlertStyle == .subtle {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text("Duration")
+                                Text("Set to 0 to persist until event starts.")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            TextField("Sec", value: Binding(
+                                get: { Int(settings.eventAlarmAlertDuration) },
+                                set: { settings.eventAlarmAlertDuration = Double(max(0, $0)) }
+                            ), format: .number)
+                            .frame(width: 60)
+                            .multilineTextAlignment(.trailing)
+                            Text("sec")
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+            } header: {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Event Reminder Alerts")
+                        .font(.headline)
+                    Text("When enabled, ZapCal will show an alert at the exact time a calendar event's reminder is set to trigger.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            Section {
                 ForEach(0..<3, id: \.self) { index in
                     HStack {
                         Text("Snooze Button \(index + 1)")

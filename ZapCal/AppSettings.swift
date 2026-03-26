@@ -106,6 +106,23 @@ class AppSettings: ObservableObject {
         }
     }
 
+    // MARK: - Event Alarm Alerts
+
+    /// Whether to show alerts when a calendar event's reminder/alarm triggers.
+    @Published var eventAlarmAlertsEnabled: Bool {
+        didSet { UserDefaults.standard.set(eventAlarmAlertsEnabled, forKey: "eventAlarmAlertsEnabled") }
+    }
+
+    /// The alert style to use for event alarm alerts.
+    @Published var eventAlarmAlertStyle: AlertStyle {
+        didSet { UserDefaults.standard.set(eventAlarmAlertStyle.rawValue, forKey: "eventAlarmAlertStyle") }
+    }
+
+    /// Duration in seconds for subtle event alarm alerts. 0 = persist until event starts.
+    @Published var eventAlarmAlertDuration: Double {
+        didSet { UserDefaults.standard.set(eventAlarmAlertDuration, forKey: "eventAlarmAlertDuration") }
+    }
+
     /// Snooze durations in seconds offered on the full-screen alert (default: 1m, 5m, 15m).
     /// Used as a fallback; per-alert snoozeDurations take precedence when available.
     @Published var snoozeDurations: [Double] {
@@ -193,6 +210,19 @@ class AppSettings: ObservableObject {
             self.snoozeDurations = defaultSnooze
         }
         
+        // Event alarm alerts (default: enabled, subtle)
+        if UserDefaults.standard.object(forKey: "eventAlarmAlertsEnabled") != nil {
+            self.eventAlarmAlertsEnabled = UserDefaults.standard.bool(forKey: "eventAlarmAlertsEnabled")
+        } else {
+            self.eventAlarmAlertsEnabled = true
+        }
+        self.eventAlarmAlertStyle = AlertStyle(rawValue: UserDefaults.standard.string(forKey: "eventAlarmAlertStyle") ?? "") ?? .subtle
+        if let stored = UserDefaults.standard.object(forKey: "eventAlarmAlertDuration") as? Double {
+            self.eventAlarmAlertDuration = stored
+        } else {
+            self.eventAlarmAlertDuration = 15
+        }
+
         // Load selected calendar identifiers
         if let data = UserDefaults.standard.data(forKey: "selectedCalendarIdentifiers"),
            let identifiers = try? JSONDecoder().decode([String].self, from: data) {

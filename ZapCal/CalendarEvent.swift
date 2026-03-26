@@ -20,6 +20,8 @@ struct CalendarEvent: Identifiable, Equatable {
     let participationStatus: EKParticipantStatus
     let calendar: EventCalendarInfo
     let videoConferenceURL: URL?
+    /// Absolute trigger dates for alarms/reminders set on the event.
+    let alarmDates: [Date]
     
     struct EventCalendarInfo: Equatable {
         let identifier: String
@@ -48,6 +50,15 @@ struct CalendarEvent: Identifiable, Equatable {
         )
         
         self.videoConferenceURL = Self.extractVideoConferenceURL(from: ekEvent)
+
+        // Extract alarm trigger dates
+        self.alarmDates = (ekEvent.alarms ?? []).compactMap { alarm in
+            if let absoluteDate = alarm.absoluteDate {
+                return absoluteDate
+            }
+            // relativeOffset is negative seconds before the event
+            return ekEvent.startDate.addingTimeInterval(alarm.relativeOffset)
+        }
     }
     
     // Mock initializer for previews and testing
@@ -62,7 +73,8 @@ struct CalendarEvent: Identifiable, Equatable {
         participationStatus: EKParticipantStatus = .accepted,
         calendarTitle: String = "Calendar",
         calendarColor: Color = .blue,
-        videoConferenceURL: URL? = nil
+        videoConferenceURL: URL? = nil,
+        alarmDates: [Date] = []
     ) {
         self.id = id
         self.title = title
@@ -78,6 +90,7 @@ struct CalendarEvent: Identifiable, Equatable {
             color: calendarColor
         )
         self.videoConferenceURL = videoConferenceURL
+        self.alarmDates = alarmDates
     }
     
     // MARK: - Computed Properties

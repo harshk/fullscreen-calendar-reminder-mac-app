@@ -161,8 +161,8 @@ struct MenuBarView: View {
                     itemsList
                 }
             }
-            .background(Color(nsColor: .windowBackgroundColor))
         }
+        .scrollContentBackground(.hidden)
         .frame(maxHeight: 400)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(
@@ -487,7 +487,7 @@ struct EventRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
             if isDisabled {
-                Image(systemName: "xmark.circle.fill")
+                Image(systemName: "xmark.circle")
                     .font(.system(size: 14))
                     .foregroundColor(.red.opacity(0.7))
                     .padding(.leading, 12)
@@ -520,6 +520,7 @@ struct EventRow: View {
                 theme: preAlertTheme
             )
         }
+        .background(preAlertTheme.backgroundColor.color.opacity(preAlertTheme.backgroundOpacity))
         .contentShape(Rectangle())
         .onTapGesture {
             CalendarService.shared.openEventInCalendarApp(event)

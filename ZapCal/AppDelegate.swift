@@ -500,6 +500,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self = self, self.panelMonitorsActive, let panel = self.panel, panel.isVisible else { return event }
             if event.window === panel { return event }
             if event.window === self.statusItem?.button?.window { return event }
+            // Allow clicks on child windows (e.g. SwiftUI popovers)
+            if let eventWindow = event.window, panel.childWindows?.contains(eventWindow) == true { return event }
+            // Allow clicks on any popover window (NSPopover creates detached windows)
+            if let eventWindow = event.window, eventWindow.className.contains("Popover") { return event }
             self.closePanel()
             return event
         }

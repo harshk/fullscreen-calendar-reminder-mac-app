@@ -55,12 +55,12 @@ struct WelcomeView: View {
 
             // Title
             Text("Welcome to ZapCal")
-                .font(.system(size: 32, weight: .bold))
+                .font(.custom("SF Pro Rounded", size: 32).weight(.bold))
                 .padding(.bottom, 8)
 
             // Subtitle
             Text("Full-screen reminders for your calendar events,\nso you never miss a meeting.")
-                .font(.system(size: 15))
+                .font(.custom("SF Pro Rounded", size: 15))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(3)
@@ -97,7 +97,7 @@ struct WelcomeView: View {
 
             Button(action: { step = .menuBarInfo }) {
                 Text("Skip for now")
-                    .font(.system(size: 12))
+                    .font(.custom("SF Pro Rounded", size: 14))
                     .foregroundColor(.secondary)
             }
             .buttonStyle(.plain)
@@ -120,11 +120,11 @@ struct WelcomeView: View {
                 .padding(.bottom, 24)
 
             Text("You're All Set!")
-                .font(.system(size: 32, weight: .bold))
+                .font(.custom("SF Pro Rounded", size: 32).weight(.bold))
                 .padding(.bottom, 8)
 
             Text("ZapCal runs in your menu bar.")
-                .font(.system(size: 15))
+                .font(.custom("SF Pro Rounded", size: 15))
                 .foregroundColor(.secondary)
                 .padding(.bottom, 24)
 
@@ -138,7 +138,7 @@ struct WelcomeView: View {
                 NSApp.keyWindow?.close()
             }) {
                 Text("Got It!")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.custom("SF Pro Rounded", size: 14).weight(.medium))
                     .frame(width: 200)
             }
             .buttonStyle(.borderedProminent)
@@ -151,11 +151,11 @@ struct WelcomeView: View {
     private var menuBarInfoContent: some View {
         VStack(spacing: 0) {
             Text("ZapCal runs in your menu bar")
-                .font(.system(size: 24, weight: .bold))
+                .font(.custom("SF Pro Rounded", size: 24).weight(.bold))
                 .padding(.bottom, 8)
 
             Text("You can grant permissions later from the menu bar.")
-                .font(.system(size: 14))
+                .font(.custom("SF Pro Rounded", size: 16))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.bottom, 24)
@@ -170,7 +170,7 @@ struct WelcomeView: View {
                 NSApp.keyWindow?.close()
             }) {
                 Text("Got It!")
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.custom("SF Pro Rounded", size: 14).weight(.medium))
                     .frame(width: 200)
             }
             .buttonStyle(.borderedProminent)
@@ -328,9 +328,9 @@ struct WelcomeView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.custom("SF Pro Rounded", size: 16).weight(.semibold))
                 Text(description)
-                    .font(.system(size: 12))
+                    .font(.custom("SF Pro Rounded", size: 13))
                     .foregroundColor(.secondary)
             }
 
@@ -338,20 +338,20 @@ struct WelcomeView: View {
 
             if granted {
                 Text("Granted")
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.custom("SF Pro Rounded", size: 13).weight(.medium))
                     .foregroundColor(.green)
             } else if denied {
                 Button("Open Settings") {
                     onOpenSettings()
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.small)
+                .controlSize(.regular)
             } else {
                 Button("Grant") {
                     onGrant()
                 }
                 .buttonStyle(.borderedProminent)
-                .controlSize(.small)
+                .controlSize(.regular)
             }
         }
         .frame(maxWidth: 420, alignment: .leading)

@@ -58,10 +58,10 @@ struct MenuBarView: View {
             HStack {
                 HStack(alignment: .bottom, spacing: 4) {
                     Text("ZapCal")
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.custom("SF Pro Rounded", size: 18).weight(.bold))
                     if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
                         Text("v\(version)")
-                            .font(.system(size: 12))
+                            .font(.custom("SF Pro Rounded", size: 12))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -113,7 +113,8 @@ struct MenuBarView: View {
                 .buttonStyle(.borderedProminent)
             } else {
                 Button("Grant Calendar Access") {
-                    NotificationCenter.default.post(name: .showWelcomeScreen, object: nil)
+                    NotificationCenter.default.post(name: .dismissPopover, object: nil)
+                    Task { try? await calendarService.requestAccess() }
                 }
                 .buttonStyle(.borderedProminent)
             }

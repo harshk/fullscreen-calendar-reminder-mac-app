@@ -11,11 +11,10 @@ import EventKit
 struct WelcomeView: View {
     @ObservedObject private var calendarService = CalendarService.shared
     @ObservedObject private var appleRemindersService = AppleRemindersService.shared
-    @State private var step: WelcomeStep = .calendar
+    @State private var step: WelcomeStep = .permissions
 
     private enum WelcomeStep {
-        case calendar
-        case reminders
+        case permissions
         case allSet
         case menuBarInfo
     }
@@ -36,20 +35,11 @@ struct WelcomeView: View {
             Spacer()
         }
         .frame(width: 500, height: 520)
-        .onChange(of: calendarService.hasAccess) { _, hasAccess in
-            if hasAccess {
-                step = .reminders
-            }
+        .onChange(of: calendarService.hasAccess) { _, _ in
+            checkIfAllSet()
         }
-        .onChange(of: appleRemindersService.hasAccess) { _, hasAccess in
-            if hasAccess {
-                step = .allSet
-            }
-        }
-        .onAppear {
-            if calendarService.hasAccess {
-                step = .reminders
-            }
+        .onChange(of: appleRemindersService.hasAccess) { _, _ in
+            checkIfAllSet()
         }
     }
 
@@ -76,35 +66,47 @@ struct WelcomeView: View {
                 .lineSpacing(3)
                 .padding(.bottom, 32)
 
-            // Permission explanations
-            VStack(spacing: 12) {
-                permissionRow(
+            // Permission rows with inline buttons
+            VStack(spacing: 16) {
+                permissionActionRow(
                     icon: "calendar",
                     iconColor: .accentColor,
-                    title: "Calendar Access Required",
-                    description: "ZapCal needs access to your calendars to show upcoming events and trigger full-screen alerts.",
-                    granted: calendarService.hasAccess
+                    title: "Calendar Access",
+                    description: "Required to show upcoming events and trigger alerts.",
+                    granted: calendarService.hasAccess,
+                    denied: calendarService.permissionDenied,
+                    onGrant: { Task { try? await calendarService.requestAccess() } },
+                    onOpenSettings: { openPrivacySettings(for: "Calendars") }
                 )
 
-                permissionRow(
+                permissionActionRow(
                     icon: "checklist",
                     iconColor: .green,
-                    title: "Reminders Access (Optional)",
-                    description: "Enable full-screen alerts for your Apple Reminders when they're due.",
-                    granted: appleRemindersService.hasAccess
+                    title: "Reminders Access",
+                    description: "Optional — alerts for Apple Reminders when they're due.",
+                    granted: appleRemindersService.hasAccess,
+                    denied: appleRemindersService.permissionDenied,
+                    onGrant: {
+                        AppSettings.shared.appleRemindersEnabled = true
+                        Task { try? await appleRemindersService.requestAccess() }
+                    },
+                    onOpenSettings: { openPrivacySettings(for: "Reminders") }
                 )
             }
             .padding(.bottom, 32)
 
-            // Action buttons based on current step
-            switch step {
-            case .calendar:
-                calendarStepButtons
-            case .reminders:
-                remindersStepButtons
-            case .allSet, .menuBarInfo:
-                EmptyView()
+            Button(action: { step = .menuBarInfo }) {
+                Text("Skip for now")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
             }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func checkIfAllSet() {
+        if calendarService.hasAccess && appleRemindersService.hasAccess {
+            step = .allSet
         }
     }
 
@@ -306,9 +308,18 @@ struct WelcomeView: View {
         }
     }
 
-    // MARK: - Permission Row
+    // MARK: - Permission Action Row
 
-    private func permissionRow(icon: String, iconColor: Color, title: String, description: String, granted: Bool) -> some View {
+    private func permissionActionRow(
+        icon: String,
+        iconColor: Color,
+        title: String,
+        description: String,
+        granted: Bool,
+        denied: Bool,
+        onGrant: @escaping () -> Void,
+        onOpenSettings: @escaping () -> Void
+    ) -> some View {
         HStack(spacing: 12) {
             Image(systemName: granted ? "checkmark.circle.fill" : icon)
                 .font(.system(size: 24))
@@ -322,110 +333,28 @@ struct WelcomeView: View {
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
             }
-        }
-        .frame(maxWidth: 380, alignment: .leading)
-    }
 
-    // MARK: - Calendar Step
+            Spacer()
 
-    @ViewBuilder
-    private var calendarStepButtons: some View {
-        if calendarService.permissionDenied {
-            VStack(spacing: 12) {
-                Text("Calendar access was denied. Please grant access in System Settings.")
-                    .font(.system(size: 12))
-                    .foregroundColor(.orange)
-                    .multilineTextAlignment(.center)
-
-                HStack(spacing: 12) {
-                    Button(action: { openPrivacySettings(for: "Calendars") }) {
-                        Text("Open System Settings")
-                            .font(.system(size: 14, weight: .medium))
-                            .frame(width: 160)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-
-                    Button(action: { step = .menuBarInfo }) {
-                        Text("Skip")
-                            .font(.system(size: 14, weight: .medium))
-                            .frame(width: 80)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                }
-            }
-        } else {
-            VStack(spacing: 12) {
-                Button(action: { Task { try? await calendarService.requestAccess() } }) {
-                    Text("Grant Calendar Access")
-                        .font(.system(size: 14, weight: .medium))
-                        .frame(width: 200)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-
-                Button(action: { step = .menuBarInfo }) {
-                    Text("Skip for now")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-
-    // MARK: - Reminders Step
-
-    @ViewBuilder
-    private var remindersStepButtons: some View {
-        if appleRemindersService.permissionDenied {
-            VStack(spacing: 12) {
-                Text("Reminders access was denied. You can enable it later in Settings.")
-                    .font(.system(size: 12))
-                    .foregroundColor(.orange)
-                    .multilineTextAlignment(.center)
-
-                HStack(spacing: 12) {
-                    Button(action: { openPrivacySettings(for: "Reminders") }) {
-                        Text("Open System Settings")
-                            .font(.system(size: 14, weight: .medium))
-                            .frame(width: 160)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-
-                    Button(action: { step = .menuBarInfo }) {
-                        Text("Skip")
-                            .font(.system(size: 14, weight: .medium))
-                            .frame(width: 80)
-                    }
-                    .buttonStyle(.bordered)
-                    .controlSize(.large)
-                }
-            }
-        } else {
-            HStack(spacing: 12) {
-                Button(action: {
-                    AppSettings.shared.appleRemindersEnabled = true
-                    Task { try? await appleRemindersService.requestAccess() }
-                }) {
-                    Text("Grant Reminders Access")
-                        .font(.system(size: 14, weight: .medium))
-                        .frame(width: 200)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-
-                Button(action: { step = .allSet }) {
-                    Text("Skip")
-                        .font(.system(size: 14, weight: .medium))
-                        .frame(width: 80)
+            if granted {
+                Text("Granted")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.green)
+            } else if denied {
+                Button("Open Settings") {
+                    onOpenSettings()
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.large)
+                .controlSize(.small)
+            } else {
+                Button("Grant") {
+                    onGrant()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
             }
         }
+        .frame(maxWidth: 420, alignment: .leading)
     }
 
     // MARK: - Helpers

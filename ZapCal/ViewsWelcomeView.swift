@@ -123,26 +123,9 @@ struct WelcomeView: View {
                 .padding(.bottom, 24)
 
             // Menu bar illustration
-            VStack(spacing: 12) {
-                menuBarIllustration
-                    .padding(.horizontal, 20)
-
-                Text("Click it to view upcoming events, manage reminders, and access settings.")
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .padding(16)
-            .frame(maxWidth: 420)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(nsColor: .windowBackgroundColor))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-            )
-            .padding(.bottom, 32)
+            menuBarIllustration
+                .padding(.horizontal, 40)
+                .padding(.bottom, 32)
 
             Button(action: {
                 NotificationCenter.default.post(name: .welcomeSetupComplete, object: nil)

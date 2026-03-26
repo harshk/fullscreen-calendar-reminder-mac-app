@@ -349,22 +349,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func pulseMenuBarIcon() {
         guard let button = statusItem?.button else { return }
-        let originalImage = button.image
 
-        // Flash the icon 3 times
-        var count = 0
-        Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { timer in
-            count += 1
-            if count % 2 == 1 {
-                button.image = NSImage(systemSymbolName: "bell.fill", accessibilityDescription: "ZapCal")
-            } else {
-                button.image = originalImage
-            }
-            if count >= 6 {
-                timer.invalidate()
-                button.image = originalImage
-            }
+        // Spin the icon back and forth
+        let layer = button.layer ?? {
+            button.wantsLayer = true
+            return button.layer!
+        }()
+
+        let spin = CAKeyframeAnimation(keyPath: "transform.rotation.z")
+        let angle = CGFloat.pi / 6 // 30 degrees
+        // ~0.14s per segment (same speed as original 1.4s / 10 segments)
+        // 5.0s / 0.14s ≈ 36 segments = 18 full swings
+        var values: [CGFloat] = [0]
+        for i in 1...35 {
+            values.append(i % 2 == 1 ? angle : -angle)
         }
+        values.append(0)
+        let count = values.count
+        spin.values = values
+        spin.keyTimes = (0..<count).map { NSNumber(value: Double($0) / Double(count - 1)) }
+        spin.duration = 5.0
+        spin.isRemovedOnCompletion = true
+
+        // Set anchor point to center
+        let bounds = button.bounds
+        layer.anchorPoint = CGPoint(x: 0.5, y: 0.5)
+        layer.position = CGPoint(x: bounds.midX, y: bounds.midY)
+
+        layer.add(spin, forKey: "wiggle")
     }
 
     @objc private func handleOpenAddReminder() {

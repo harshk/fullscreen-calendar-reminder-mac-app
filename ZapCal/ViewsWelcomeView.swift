@@ -122,29 +122,25 @@ struct WelcomeView: View {
                 .foregroundColor(.secondary)
                 .padding(.bottom, 24)
 
-            // Menu bar pointer illustration
-            HStack(spacing: 12) {
-                Image(systemName: "arrow.up")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.accentColor)
+            // Menu bar illustration
+            VStack(spacing: 12) {
+                menuBarIllustration
+                    .padding(.horizontal, 20)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Look for the ZapCal icon in your menu bar")
-                        .font(.system(size: 14, weight: .semibold))
-                    Text("Click it to view upcoming events, manage reminders, and access settings.")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                }
+                Text("Click it to view upcoming events, manage reminders, and access settings.")
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
             }
             .padding(16)
-            .frame(maxWidth: 380, alignment: .leading)
+            .frame(maxWidth: 420)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.accentColor.opacity(0.08))
+                    .fill(Color(nsColor: .windowBackgroundColor))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.accentColor.opacity(0.2), lineWidth: 1)
+                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
             )
             .padding(.bottom, 32)
 
@@ -158,6 +154,102 @@ struct WelcomeView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
+        }
+    }
+
+    // MARK: - Menu Bar Illustration
+
+    private var menuBarIllustration: some View {
+        VStack(spacing: 0) {
+            // Simulated desktop with menu bar
+            ZStack(alignment: .top) {
+                // Desktop background
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.blue.opacity(0.15), Color.purple.opacity(0.1)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(height: 100)
+
+                // Menu bar
+                VStack(spacing: 0) {
+                    HStack(spacing: 0) {
+                        // Left side — Apple menu + app menus
+                        HStack(spacing: 8) {
+                            Image(systemName: "apple.logo")
+                                .font(.system(size: 10))
+                            Text("Finder")
+                                .font(.system(size: 9, weight: .semibold))
+                            Text("File")
+                                .font(.system(size: 9))
+                            Text("Edit")
+                                .font(.system(size: 9))
+                        }
+                        .foregroundColor(.primary.opacity(0.7))
+                        .padding(.leading, 10)
+
+                        Spacer()
+
+                        // Right side — system icons + ZapCal icon
+                        HStack(spacing: 6) {
+                            Image(systemName: "wifi")
+                                .font(.system(size: 8))
+                                .foregroundColor(.primary.opacity(0.4))
+                            Image(systemName: "battery.75percent")
+                                .font(.system(size: 8))
+                                .foregroundColor(.primary.opacity(0.4))
+
+                            // ZapCal icon (highlighted)
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.accentColor.opacity(0.2))
+                                    .frame(width: 22, height: 16)
+
+                                if let icon = NSImage(named: "StatusBarIcon") {
+                                    Image(nsImage: icon)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 12, height: 12)
+                                } else {
+                                    Image(systemName: "bell.fill")
+                                        .font(.system(size: 8))
+                                }
+                            }
+                            .foregroundColor(.accentColor)
+                            .overlay(alignment: .top) {
+                                VStack(spacing: 2) {
+                                    Image(systemName: "arrow.up")
+                                        .font(.system(size: 16, weight: .bold))
+                                        .foregroundColor(.accentColor)
+                                    Text("ZapCal lives here")
+                                        .font(.system(size: 11, weight: .semibold))
+                                        .foregroundColor(.accentColor)
+                                        .fixedSize()
+                                }
+                                .offset(y: 22)
+                            }
+
+                            Text("9:41")
+                                .font(.system(size: 9))
+                                .foregroundColor(.primary.opacity(0.4))
+                        }
+                        .padding(.trailing, 10)
+                    }
+                    .frame(height: 20)
+                    .background(Color(nsColor: .windowBackgroundColor).opacity(0.95))
+                }
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.secondary.opacity(0.15), lineWidth: 1)
+            )
+
+            // Space for the overlay arrow + text
+            Spacer().frame(height: 36)
         }
     }
 

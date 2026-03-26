@@ -70,7 +70,7 @@ struct GeneralSettingsView: View {
                     Text("Event Reminder Alerts")
                         .font(.headline)
                     Text("When enabled, ZapCal will show an alert at the exact time a calendar event's reminder is set to trigger.")
-                        .font(.caption)
+                        .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
             }

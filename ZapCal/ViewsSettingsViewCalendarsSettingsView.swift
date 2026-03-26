@@ -183,7 +183,7 @@ struct CalendarsSettingsView: View {
                 .labelsHidden()
 
                 if let cgColor = calendar.cgColor {
-                    RoundedRectangle(cornerRadius: 4)
+                    Circle()
                         .fill(Color(cgColor: cgColor))
                         .frame(width: 20, height: 20)
                 }

@@ -207,7 +207,7 @@ struct RemindersSettingsView: View {
                 .labelsHidden()
 
                 if let cgColor = list.cgColor {
-                    RoundedRectangle(cornerRadius: 4)
+                    Circle()
                         .fill(Color(cgColor: cgColor))
                         .frame(width: 20, height: 20)
                 }

@@ -58,11 +58,10 @@ struct MenuBarView: View {
             HStack {
                 HStack(alignment: .bottom, spacing: 4) {
                     Text("ZapCal")
-                        .font(.headline)
-                        .fontWeight(.bold)
+                        .font(.system(size: 18, weight: .bold))
                     if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
                         Text("v\(version)")
-                            .font(.caption)
+                            .font(.system(size: 12))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -70,13 +69,13 @@ struct MenuBarView: View {
                 Spacer()
                 Button(action: { openSettings() }) {
                     Image(systemName: "gearshape.fill")
-                        .font(.system(size: 14))
+                        .font(.system(size: 16))
                         .foregroundColor(.secondary)
                 }
                 .buttonStyle(.plain)
                 .padding(.trailing, 12)
             }
-            .frame(height: 32)
+            .frame(height: 38)
 
             if !calendarService.hasAccess {
                 noAccessView

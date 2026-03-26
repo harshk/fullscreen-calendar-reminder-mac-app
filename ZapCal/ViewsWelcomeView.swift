@@ -16,12 +16,43 @@ struct WelcomeView: View {
     private enum WelcomeStep {
         case calendar
         case reminders
+        case allSet
     }
 
     var body: some View {
         VStack(spacing: 0) {
             Spacer()
 
+            if step == .allSet {
+                allSetContent
+            } else {
+                permissionsContent
+            }
+
+            Spacer()
+        }
+        .frame(width: 500, height: 520)
+        .onChange(of: calendarService.hasAccess) { _, hasAccess in
+            if hasAccess {
+                step = .reminders
+            }
+        }
+        .onChange(of: appleRemindersService.hasAccess) { _, hasAccess in
+            if hasAccess {
+                step = .allSet
+            }
+        }
+        .onAppear {
+            if calendarService.hasAccess {
+                step = .reminders
+            }
+        }
+    }
+
+    // MARK: - Permissions Content
+
+    private var permissionsContent: some View {
+        VStack(spacing: 0) {
             // App icon
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
@@ -67,25 +98,66 @@ struct WelcomeView: View {
                 calendarStepButtons
             case .reminders:
                 remindersStepButtons
+            case .allSet:
+                EmptyView()
             }
+        }
+    }
 
-            Spacer()
-        }
-        .frame(width: 500, height: 520)
-        .onChange(of: calendarService.hasAccess) { _, hasAccess in
-            if hasAccess {
-                step = .reminders
+    // MARK: - All Set Content
+
+    private var allSetContent: some View {
+        VStack(spacing: 0) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 64))
+                .foregroundColor(.green)
+                .padding(.bottom, 24)
+
+            Text("You're All Set!")
+                .font(.system(size: 32, weight: .bold))
+                .padding(.bottom, 8)
+
+            Text("ZapCal runs in your menu bar.")
+                .font(.system(size: 15))
+                .foregroundColor(.secondary)
+                .padding(.bottom, 24)
+
+            // Menu bar pointer illustration
+            HStack(spacing: 12) {
+                Image(systemName: "arrow.up")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.accentColor)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Look for the ZapCal icon in your menu bar")
+                        .font(.system(size: 14, weight: .semibold))
+                    Text("Click it to view upcoming events, manage reminders, and access settings.")
+                        .font(.system(size: 12))
+                        .foregroundColor(.secondary)
+                }
             }
-        }
-        .onChange(of: appleRemindersService.hasAccess) { _, hasAccess in
-            if hasAccess {
+            .padding(16)
+            .frame(maxWidth: 380, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.accentColor.opacity(0.08))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.accentColor.opacity(0.2), lineWidth: 1)
+            )
+            .padding(.bottom, 32)
+
+            Button(action: {
+                NotificationCenter.default.post(name: .welcomeSetupComplete, object: nil)
                 NSApp.keyWindow?.close()
+            }) {
+                Text("Got It!")
+                    .font(.system(size: 14, weight: .medium))
+                    .frame(width: 200)
             }
-        }
-        .onAppear {
-            if calendarService.hasAccess {
-                step = .reminders
-            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
         }
     }
 
@@ -159,7 +231,7 @@ struct WelcomeView: View {
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
 
-                    Button(action: { NSApp.keyWindow?.close() }) {
+                    Button(action: { step = .allSet }) {
                         Text("Skip")
                             .font(.system(size: 14, weight: .medium))
                             .frame(width: 80)
@@ -181,7 +253,7 @@ struct WelcomeView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
 
-                Button(action: { NSApp.keyWindow?.close() }) {
+                Button(action: { step = .allSet }) {
                     Text("Skip")
                         .font(.system(size: 14, weight: .medium))
                         .frame(width: 80)

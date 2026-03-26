@@ -676,6 +676,7 @@ extension Notification.Name {
     static let openManageReminders = Notification.Name("OpenManageReminders")
     static let showWelcomeScreen = Notification.Name("ShowWelcomeScreen")
     static let openAddReminder = Notification.Name("OpenAddReminder")
+    static let welcomeSetupComplete = Notification.Name("WelcomeSetupComplete")
 }
 
 // MARK: - Preview

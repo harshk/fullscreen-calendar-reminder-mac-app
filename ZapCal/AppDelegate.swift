@@ -179,6 +179,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             object: nil
         )
 
+        // Observe welcome setup complete — pulse icon and open popover
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleWelcomeSetupComplete),
+            name: .welcomeSetupComplete,
+            object: nil
+        )
+
         // Observe pause state changes to update icon
         NotificationCenter.default.addObserver(
             self,
@@ -327,6 +335,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func handleShowWelcomeScreen() {
         showWelcomeWindow()
+    }
+
+    @objc private func handleWelcomeSetupComplete() {
+        // Pulse the menu bar icon
+        pulseMenuBarIcon()
+
+        // Auto-open the popover after a short delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.togglePanel()
+        }
+    }
+
+    private func pulseMenuBarIcon() {
+        guard let button = statusItem?.button else { return }
+        let originalImage = button.image
+
+        // Flash the icon 3 times
+        var count = 0
+        Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { timer in
+            count += 1
+            if count % 2 == 1 {
+                button.image = NSImage(systemSymbolName: "bell.fill", accessibilityDescription: "ZapCal")
+            } else {
+                button.image = originalImage
+            }
+            if count >= 6 {
+                timer.invalidate()
+                button.image = originalImage
+            }
+        }
     }
 
     @objc private func handleOpenAddReminder() {

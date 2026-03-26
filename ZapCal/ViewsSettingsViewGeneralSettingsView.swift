@@ -10,6 +10,7 @@ import SwiftUI
 struct GeneralSettingsView: View {
     @ObservedObject var settings = AppSettings.shared
     @State private var deleteAlertIndex: Int? = nil
+    @State private var editAlertIndex: Int? = nil
 
     var body: some View {
         Form {
@@ -38,45 +39,15 @@ struct GeneralSettingsView: View {
                         }
 
                         HStack {
-                            Text("Lead Time")
-                            Spacer()
-                            TextField("Min", value: Binding(
-                                get: { Int(config.leadTime / 60) },
-                                set: { settings.alertConfigs[index].leadTime = Double(max(0, $0)) * 60 }
-                            ), format: .number)
-                            .frame(width: 60)
-                            .multilineTextAlignment(.trailing)
-                            Text("min")
-                                .foregroundColor(.secondary)
-                        }
-
-                        if config.style == .subtle {
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text("Duration")
-                                    Text("Set to 0 to persist until event starts.")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                Spacer()
-                                TextField("Sec", value: Binding(
-                                    get: { Int(config.subtleDuration) },
-                                    set: { settings.alertConfigs[index].subtleDuration = Double(max(0, $0)) }
-                                ), format: .number)
-                                .frame(width: 60)
-                                .multilineTextAlignment(.trailing)
-                                Text("sec")
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Alert Settings")
+                                Text(alertSettingsSummary(for: config))
+                                    .font(.caption)
                                     .foregroundColor(.secondary)
                             }
-
-                            Button("Show Preview: Subtle Alert") {
-                                PreAlertManager.shared.showTestPreAlert()
-                            }
-                        }
-
-                        if config.style == .fullScreen {
-                            Button("Show Preview: Full Screen Alert") {
-                                AlertCoordinator.shared.showPreviewAlert(theme: ThemeService.shared.getTheme(for: nil))
+                            Spacer()
+                            Button("Edit") {
+                                editAlertIndex = index
                             }
                         }
                     }
@@ -146,6 +117,98 @@ struct GeneralSettingsView: View {
                 Text("Are you sure you want to delete Alert \(index + 1)?")
             }
         }
+        .sheet(isPresented: Binding(
+            get: { editAlertIndex != nil },
+            set: { if !$0 { editAlertIndex = nil } }
+        )) {
+            if let index = editAlertIndex {
+                AlertSettingsSheet(
+                    config: Binding(
+                        get: { settings.alertConfigs[index] },
+                        set: { settings.alertConfigs[index] = $0 }
+                    )
+                )
+            }
+        }
+    }
+
+    private func alertSettingsSummary(for config: AlertConfig) -> String {
+        let leadMinutes = Int(config.leadTime / 60)
+        let leadText = "Lead time: \(leadMinutes) min"
+        if config.style == .subtle {
+            let durText = config.subtleDuration == 0
+                ? "persists until event"
+                : "\(Int(config.subtleDuration)) sec"
+            return "\(leadText) · Duration: \(durText)"
+        }
+        return leadText
+    }
+}
+
+// MARK: - Alert Settings Sheet
+
+struct AlertSettingsSheet: View {
+    @Binding var config: AlertConfig
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("\(config.style.label) Settings")
+                .font(.headline)
+
+            HStack {
+                Text("Lead Time")
+                Spacer()
+                TextField("Min", value: Binding(
+                    get: { Int(config.leadTime / 60) },
+                    set: { config.leadTime = Double(max(0, $0)) * 60 }
+                ), format: .number)
+                .frame(width: 60)
+                .multilineTextAlignment(.trailing)
+                Text("min")
+                    .foregroundColor(.secondary)
+            }
+
+            if config.style == .subtle {
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text("Duration")
+                        Text("Set to 0 to persist until event starts.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    TextField("Sec", value: Binding(
+                        get: { Int(config.subtleDuration) },
+                        set: { config.subtleDuration = Double(max(0, $0)) }
+                    ), format: .number)
+                    .frame(width: 60)
+                    .multilineTextAlignment(.trailing)
+                    Text("sec")
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            Divider()
+
+            if config.style == .subtle {
+                Button("Show Preview: Subtle Alert") {
+                    PreAlertManager.shared.showTestPreAlert()
+                }
+            } else {
+                Button("Show Preview: Full Screen Alert") {
+                    AlertCoordinator.shared.showPreviewAlert(theme: ThemeService.shared.getTheme(for: nil))
+                }
+            }
+
+            HStack {
+                Spacer()
+                Button("Done") { dismiss() }
+                    .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding()
+        .frame(width: 350)
     }
 }
 

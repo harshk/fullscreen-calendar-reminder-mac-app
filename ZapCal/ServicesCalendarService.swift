@@ -177,6 +177,15 @@ class CalendarService: ObservableObject {
         }.value
 
         upcomingEvents = Array(events.prefix(limit))
+
+        // Prune stale entries from firedEventIDs so they don't accumulate
+        // indefinitely. An ID is stale when its event is no longer returned
+        // by EventKit (i.e. it has passed and left the fetch window).
+        let currentIDs = Set(events.map(\.id))
+        let stale = firedEventIDs.subtracting(currentIDs)
+        if !stale.isEmpty {
+            firedEventIDs.subtract(stale)
+        }
     }
     
     // MARK: - Event Notifications

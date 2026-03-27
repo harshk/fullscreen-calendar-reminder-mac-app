@@ -542,7 +542,7 @@ Collect this info when asking for help:
 
 **Why:** Scaled to 40% to fit in settings window
 
-**Workaround:** Use "Preview Full Screen" button for actual size
+**Workaround:** Use "Show Preview" button for actual size
 
 ---
 

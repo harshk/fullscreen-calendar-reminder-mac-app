@@ -85,7 +85,7 @@ Use this checklist to get the app running:
 - [ ] Select a calendar from dropdown
 - [ ] Click on "Event Title" element
 - [ ] Change the color (try green)
-- [ ] Click "Preview Full Screen"
+- [ ] Click "Show Preview"
 - [ ] Full-screen preview appears
 - [ ] Title should be green
 - [ ] Dismiss with Escape

@@ -55,7 +55,7 @@
 
 3. **Test an Alert**
    - Go to Settings → Appearance
-   - Click "Preview Full Screen" at the bottom
+   - Click "Show Preview" at the bottom
    - You should see a full-screen alert
    - Press Escape or click the X to dismiss
 
@@ -172,7 +172,7 @@ defaults delete com.yourcompany.Full-Screen-Calendar-Reminder
 
 The theme editor has live preview, but for full-screen preview:
 1. Make changes in Settings → Appearance
-2. Click "Preview Full Screen"
+2. Click "Show Preview"
 3. No need to wait for real events!
 
 ## Project Structure at a Glance
@@ -195,7 +195,7 @@ AppDelegate.swift     # Menu bar setup
    - Settings → Appearance
    - Select a calendar
    - Change colors, fonts, positions
-   - Preview full screen to see changes
+   - Show Preview to see changes
 
 2. **Add custom reminders**
    - Click bell icon → Add ZapCal Reminder

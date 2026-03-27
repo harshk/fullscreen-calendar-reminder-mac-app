@@ -200,7 +200,7 @@ struct CalendarsSettingsView: View {
             // Column 2: presets
             if isSelected {
                 VStack(alignment: .leading, spacing: 2) {
-                    Picker("Full Screen Preset", selection: Binding(
+                    Picker("Full Screen Theme", selection: Binding(
                         get: { themeService.assignedPresetName(for: calendar.calendarIdentifier) },
                         set: { themeService.setPreset($0, for: calendar.calendarIdentifier) }
                     )) {
@@ -209,14 +209,14 @@ struct CalendarsSettingsView: View {
                         }
                     }
                     .labelsHidden()
-                    Text("Full Screen Preset")
+                    Text("Full Screen Theme")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
                 .padding(.trailing, 12)
 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Picker("Subtle Alert Preset", selection: Binding(
+                    Picker("Subtle Alert Theme", selection: Binding(
                         get: { themeService.assignedPreAlertPresetName(for: calendar.calendarIdentifier) },
                         set: { themeService.setPreAlertPreset($0, for: calendar.calendarIdentifier) }
                     )) {
@@ -225,7 +225,7 @@ struct CalendarsSettingsView: View {
                         }
                     }
                     .labelsHidden()
-                    Text("Subtle Alert Preset")
+                    Text("Subtle Alert Theme")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }

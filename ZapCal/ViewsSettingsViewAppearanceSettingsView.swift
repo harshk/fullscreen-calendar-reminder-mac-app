@@ -143,7 +143,7 @@ struct PresetsSettingsView: View {
 
             // Actions
             HStack(spacing: 12) {
-                Button("Preview Full Screen") {
+                Button("Show Preview") {
                     AlertCoordinator.shared.showPreviewAlert(theme: workingTheme)
                 }
 
@@ -598,7 +598,7 @@ struct PresetNameSheet: View {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return }
         if !validate(trimmed) {
-            error = "A preset named \"\(trimmed)\" already exists."
+            error = "A theme named \"\(trimmed)\" already exists."
             return
         }
         onSubmit(trimmed)

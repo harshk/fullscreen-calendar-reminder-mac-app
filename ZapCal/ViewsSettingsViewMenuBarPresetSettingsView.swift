@@ -18,7 +18,7 @@ struct MenuBarPresetSettingsView: View {
             // Preset list
             VStack(alignment: .leading, spacing: 0) {
                 List(selection: $settings.menuBarPresetName) {
-                    Section("Built-in Presets") {
+                    Section("Built-in Themes") {
                         ForEach(presetManager.presets.filter { presetManager.isBuiltIn($0.name) }) { preset in
                             presetRow(preset)
                         }
@@ -26,7 +26,7 @@ struct MenuBarPresetSettingsView: View {
 
                     let customPresets = presetManager.presets.filter { !presetManager.isBuiltIn($0.name) }
                     if !customPresets.isEmpty {
-                        Section("Custom Presets") {
+                        Section("Custom Themes") {
                             ForEach(customPresets) { preset in
                                 presetRow(preset)
                             }

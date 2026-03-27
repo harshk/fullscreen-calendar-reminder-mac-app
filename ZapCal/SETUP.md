@@ -173,7 +173,7 @@ On first launch:
 ### Theme Testing:
 1. Click bell icon → Settings → Appearance
 2. Modify any element (change title color, etc.)
-3. Click "Preview Full Screen" to see it at actual size
+3. Click "Show Preview" to see it at actual size
 4. Save changes
 5. Next alert will use the new theme
 

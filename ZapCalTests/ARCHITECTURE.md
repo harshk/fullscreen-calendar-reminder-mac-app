@@ -246,7 +246,7 @@ func duplicateTheme(from: String, to: String)
   - Image picker (PNG, JPEG, WebP)
   - Overlay color and opacity
 - Actions:
-  - Preview full screen
+  - Show Preview
   - Duplicate from another calendar
   - Reset to defaults
   - Save/revert
@@ -281,7 +281,7 @@ func duplicateTheme(from: String, to: String)
 2. Select calendar from dropdown
 3. Load existing theme or create from default
 4. Edit in inspector with live preview
-5. Click "Preview Full Screen" for actual-size test
+5. Click "Show Preview" for actual-size test
 6. Save → persist to UserDefaults via ThemeService
 7. Next alert for that calendar uses new theme
 

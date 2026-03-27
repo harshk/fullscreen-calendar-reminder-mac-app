@@ -108,7 +108,7 @@ struct AlertsSettingsView: View {
 
     private func alertSettingsSummary(for config: AlertConfig) -> String {
         let leadMinutes = Int(config.leadTime / 60)
-        let leadText = "Lead time: \(leadMinutes) min"
+        let leadText = "Trigger alert \(leadMinutes) minute\(leadMinutes == 1 ? "" : "s") before"
         if config.style == .subtle {
             let durText = config.subtleDuration == 0
                 ? "persists until event"
@@ -124,26 +124,32 @@ struct AlertsSettingsView: View {
 struct AlertSettingsSheet: View {
     @Binding var config: AlertConfig
     @Environment(\.dismiss) private var dismiss
+    @State private var draft: AlertConfig
+
+    init(config: Binding<AlertConfig>) {
+        _config = config
+        _draft = State(initialValue: config.wrappedValue)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("\(config.style.label) Settings")
+            Text("\(draft.style.label) Settings")
                 .font(.headline)
 
             HStack {
-                Text("Lead Time")
+                Text("Trigger alert")
                 Spacer()
-                TextField("Min", value: Binding(
-                    get: { Int(config.leadTime / 60) },
-                    set: { config.leadTime = Double(max(0, $0)) * 60 }
+                TextField("", value: Binding(
+                    get: { Int(draft.leadTime / 60) },
+                    set: { draft.leadTime = Double(max(0, $0)) * 60 }
                 ), format: .number)
                 .frame(width: 60)
                 .multilineTextAlignment(.trailing)
-                Text("min")
+                Text("min before")
                     .foregroundColor(.secondary)
             }
 
-            if config.style == .subtle {
+            if draft.style == .subtle {
                 HStack {
                     VStack(alignment: .leading) {
                         Text("Duration")
@@ -152,9 +158,9 @@ struct AlertSettingsSheet: View {
                             .foregroundColor(.secondary)
                     }
                     Spacer()
-                    TextField("Sec", value: Binding(
-                        get: { Int(config.subtleDuration) },
-                        set: { config.subtleDuration = Double(max(0, $0)) }
+                    TextField("", value: Binding(
+                        get: { Int(draft.subtleDuration) },
+                        set: { draft.subtleDuration = Double(max(0, $0)) }
                     ), format: .number)
                     .frame(width: 60)
                     .multilineTextAlignment(.trailing)
@@ -165,7 +171,7 @@ struct AlertSettingsSheet: View {
 
             Divider()
 
-            if config.style == .subtle {
+            if draft.style == .subtle {
                 Button("Show Preview: Subtle Alert") {
                     PreAlertManager.shared.showTestPreAlert()
                 }
@@ -177,8 +183,11 @@ struct AlertSettingsSheet: View {
 
             HStack {
                 Spacer()
-                Button("Done") { dismiss() }
-                    .keyboardShortcut(.defaultAction)
+                Button("Done") {
+                    config = draft
+                    dismiss()
+                }
+                .keyboardShortcut(.defaultAction)
             }
         }
         .padding()

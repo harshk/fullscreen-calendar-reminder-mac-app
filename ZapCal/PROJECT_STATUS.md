@@ -132,7 +132,7 @@
     - Image thumbnail preview
     - Overlay color and opacity sliders
   - Actions:
-    - **Preview Full Screen button** (test at actual size)
+    - **Show Preview button** (test at actual size)
     - Duplicate From dropdown
     - Reset to Defaults button
     - Save/Revert buttons
@@ -257,7 +257,7 @@ The errors you mentioned (`Static property 'blue' is not available`, `Enum case 
    ```
    - Settings → Appearance
    - Change title color to green
-   - Click "Preview Full Screen"
+   - Click "Show Preview"
    - Should see alert with green title
    - Save and create real event to verify
    ```

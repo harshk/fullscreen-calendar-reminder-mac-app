@@ -16,22 +16,6 @@ struct ManageRemindersView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            HStack {
-                Text("Manage ZapCal Reminders")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-
-                Spacer()
-
-                Button("Done") {
-                    NSApp.keyWindow?.close()
-                }
-            }
-            .padding()
-            
-            Divider()
-            
             // Content
             if reminderService.upcomingReminders.isEmpty {
                 emptyStateView

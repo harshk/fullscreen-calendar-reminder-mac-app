@@ -47,7 +47,7 @@ struct PresetListSidebar: View {
     var body: some View {
         VStack(spacing: 0) {
             List(selection: $selectedPresetName) {
-                Section("Built-in Presets") {
+                Section("Built-in Themes") {
                     ForEach(builtInPresets) { preset in
                         HStack {
                             Image(systemName: "lock.fill")
@@ -78,7 +78,7 @@ struct PresetListSidebar: View {
                         }
                     }
                 }
-                Section("Custom Presets") {
+                Section("Custom Themes") {
                     ForEach(customPresets) { preset in
                         HStack {
                             Text(preset.name)
@@ -140,8 +140,8 @@ struct PresetListSidebar: View {
         .frame(width: 180)
         .sheet(isPresented: $showingDuplicateDialog) {
             PresetNameSheet(
-                title: "Copy Preset",
-                message: "Enter a name for the new preset.",
+                title: "Copy Theme",
+                message: "Enter a name for the new theme.",
                 actionLabel: "Copy",
                 initialName: duplicateName,
                 validate: validateName,
@@ -151,7 +151,7 @@ struct PresetListSidebar: View {
                 }
             )
         }
-        .alert("Delete Preset?", isPresented: $showingDeleteConfirmation) {
+        .alert("Delete Theme?", isPresented: $showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
                 onDelete(selectedPresetName)
@@ -162,7 +162,7 @@ struct PresetListSidebar: View {
         }
         .sheet(isPresented: $showingRenameDialog) {
             PresetNameSheet(
-                title: "Rename Preset",
+                title: "Rename Theme",
                 message: "Enter a new name for \"\(renameTarget)\".",
                 actionLabel: "Rename",
                 initialName: renameTarget,
@@ -218,7 +218,7 @@ struct PresetSaveRevertFooter: View {
             Spacer()
 
             if isEditable {
-                Button(showingSavedConfirmation ? "Saved!" : "Save Preset") {
+                Button(showingSavedConfirmation ? "Saved!" : "Update Theme") {
                     onSave()
                     showingSavedConfirmation = true
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
@@ -227,7 +227,7 @@ struct PresetSaveRevertFooter: View {
                 }
                 .buttonStyle(.borderedProminent)
             } else {
-                Text("Built-in preset (read-only)")
+                Text("Built-in theme (read-only)")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

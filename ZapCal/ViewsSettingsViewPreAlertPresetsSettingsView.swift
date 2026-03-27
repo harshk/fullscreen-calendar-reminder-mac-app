@@ -109,7 +109,7 @@ struct PreAlertPresetsSettingsView: View {
             Spacer()
 
             HStack(spacing: 12) {
-                Button("Preview Banner") {
+                Button("Show Preview") {
                     PreAlertManager.shared.showTestPreAlert(theme: workingTheme)
                 }
                 Spacer()

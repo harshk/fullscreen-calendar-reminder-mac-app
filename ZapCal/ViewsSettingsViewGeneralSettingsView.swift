@@ -54,7 +54,7 @@ struct GeneralSettingsView: View {
                                     .foregroundColor(.secondary)
                             }
                             Spacer()
-                            TextField("Sec", value: Binding(
+                            TextField("", value: Binding(
                                 get: { Int(settings.eventAlarmAlertDuration) },
                                 set: { settings.eventAlarmAlertDuration = Double(max(0, $0)) }
                             ), format: .number)
@@ -67,9 +67,9 @@ struct GeneralSettingsView: View {
                 }
             } header: {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Event Reminder Alerts")
+                    Text("Event/Reminder Alarm Alerts")
                         .font(.headline)
-                    Text("When enabled, ZapCal will show an alert at the exact time a calendar event's reminder is set to trigger.")
+                    Text("Show alerts for alarms that are set on your reminders and calendar events")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -80,7 +80,7 @@ struct GeneralSettingsView: View {
                     HStack {
                         Text("Snooze Button \(index + 1)")
                         Spacer()
-                        TextField("Min", value: Binding(
+                        TextField("", value: Binding(
                             get: { Int(settings.snoozeDurations[index] / 60) },
                             set: { newValue in
                                 settings.snoozeDurations[index] = Double(max(1, newValue)) * 60

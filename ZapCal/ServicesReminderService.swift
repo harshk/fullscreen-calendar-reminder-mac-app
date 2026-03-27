@@ -135,13 +135,14 @@ class ReminderService: ObservableObject {
         let settings = AppSettings.shared
         var deletedAny = false
 
-        for config in settings.alertConfigs {
-            guard config.enabled else { continue }
+        // Custom reminders fire at their exact scheduled time, not with lead time.
+        // Use the first enabled config to determine the alert style.
+        if let config = settings.alertConfigs.first(where: { $0.enabled }) {
             for reminder in upcomingReminders {
                 guard !firedReminderIDs.contains(reminder.id) else { continue }
                 guard !alertFiredIDs[config.id, default: []].contains(reminder.id) else { continue }
                 let timeUntilStart = reminder.scheduledDate.timeIntervalSince(now)
-                if timeUntilStart <= config.leadTime && timeUntilStart > -120 {
+                if timeUntilStart <= 0 && timeUntilStart > -120 {
                     alertFiredIDs[config.id, default: []].insert(reminder.id)
                     fireAlert(config: config, for: reminder, deleteAfterFullScreen: &deletedAny)
                 }

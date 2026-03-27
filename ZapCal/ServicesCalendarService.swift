@@ -21,7 +21,10 @@ class CalendarService: ObservableObject {
     @Published var availableCalendars: [EKCalendar] = []
     @Published var upcomingEvents: [CalendarEvent] = []
     
-    private var firedEventIDs = Set<String>()
+    private static let firedEventIDsKey = "firedEventIDs"
+    private var firedEventIDs: Set<String> {
+        didSet { persistFiredEventIDs() }
+    }
     /// Tracks which events have fired for each alert config, keyed by AlertConfig.id.
     private var alertFiredIDs = [UUID: Set<String>]()
     /// Tracks which event alarm dates have already triggered, keyed by "eventID_alarmTimestamp".
@@ -32,8 +35,14 @@ class CalendarService: ObservableObject {
     private var lastFireCheckDate = Date()
     
     private init() {
+        let stored = UserDefaults.standard.stringArray(forKey: Self.firedEventIDsKey) ?? []
+        self.firedEventIDs = Set(stored)
         setupNotifications()
         checkAuthorizationStatus()
+    }
+
+    private func persistFiredEventIDs() {
+        UserDefaults.standard.set(Array(firedEventIDs), forKey: Self.firedEventIDsKey)
     }
     
     // MARK: - Authorization
@@ -255,14 +264,23 @@ class CalendarService: ObservableObject {
 
         // If more than 10 seconds elapsed since the last check, the system was
         // likely asleep (timer fires every 1s). Silently mark all past events
-        // as fired so they don't trigger alerts.
+        // and all past alarms as fired so they don't trigger alerts.
         if elapsed > 10 {
-            for event in upcomingEvents where event.startDate <= now {
-                firedEventIDs.insert(event.id)
-                for config in AppSettings.shared.alertConfigs {
-                    alertFiredIDs[config.id, default: []].insert(event.id)
+            for event in upcomingEvents {
+                // Mark events whose start time has passed
+                if event.startDate <= now {
+                    firedEventIDs.insert(event.id)
                 }
-                for alarmDate in event.alarmDates {
+                // Mark all alert configs as fired for past events
+                for config in AppSettings.shared.alertConfigs {
+                    let leadTime = config.leadTime
+                    let timeUntilStart = event.startDate.timeIntervalSince(now)
+                    if timeUntilStart <= leadTime {
+                        alertFiredIDs[config.id, default: []].insert(event.id)
+                    }
+                }
+                // Mark all past alarms as fired
+                for alarmDate in event.alarmDates where alarmDate <= now {
                     alarmFiredIDs.insert("\(event.id)_\(alarmDate.timeIntervalSinceReferenceDate)")
                 }
             }
@@ -284,9 +302,16 @@ class CalendarService: ObservableObject {
             }
         }
 
-        // Event alarm alerts — fire at the exact time a calendar alarm is set
+        // Event alarm alerts — fire at the exact time a calendar alarm is set.
+        // NOTE: Do NOT gate on firedEventIDs here — each alarm is tracked
+        // independently via alarmFiredIDs, and adding the event to firedEventIDs
+        // after the first alarm would suppress all remaining alarms.
         if settings.eventAlarmAlertsEnabled {
             for event in upcomingEvents {
+                // If the user clicked "Disable alerts for this event", skip all
+                // remaining alarms. This is checked inside the event loop (not as
+                // a guard on the outer loop) so that normal alarm firing doesn't
+                // add to firedEventIDs and suppress subsequent alarms.
                 guard !firedEventIDs.contains(event.id) else { continue }
                 for alarmDate in event.alarmDates {
                     let alarmKey = "\(event.id)_\(alarmDate.timeIntervalSinceReferenceDate)"
@@ -294,20 +319,22 @@ class CalendarService: ObservableObject {
                     let timeUntilAlarm = alarmDate.timeIntervalSince(now)
                     if timeUntilAlarm <= 0 && timeUntilAlarm > -120 {
                         alarmFiredIDs.insert(alarmKey)
-                        fireAlarmAlert(for: event)
+                        fireAlarmAlert(for: event, alarmKey: alarmKey)
                     }
                 }
             }
         }
     }
 
-    private func fireAlarmAlert(for event: CalendarEvent) {
+    private func fireAlarmAlert(for event: CalendarEvent, alarmKey: String) {
         let settings = AppSettings.shared
         switch settings.eventAlarmAlertStyle {
         case .subtle:
-            PreAlertManager.shared.showPreAlert(for: event, duration: settings.eventAlarmAlertDuration)
+            PreAlertManager.shared.showPreAlert(for: event, dedupKey: alarmKey, duration: settings.eventAlarmAlertDuration)
         case .fullScreen:
-            firedEventIDs.insert(event.id)
+            // Do NOT add to firedEventIDs here — that would suppress all
+            // remaining alarms for this event. Each alarm is independently
+            // tracked via alarmFiredIDs.
             PreAlertManager.shared.dismiss()
             AlertCoordinator.shared.queueAlert(for: event)
         }

@@ -27,9 +27,13 @@ class PreAlertManager: ObservableObject {
     // MARK: - Public API
 
     /// Show subtle alert for an upcoming calendar event.
-    func showPreAlert(for event: CalendarEvent, duration: Double? = nil) {
-        guard !preAlertEventIDs.contains(event.id) else { return }
-        preAlertEventIDs.insert(event.id)
+    /// - Parameter dedupKey: Optional key for deduplication. When provided (e.g.
+    ///   an alarm-specific key), this key is checked instead of the event ID so
+    ///   that multiple alarms on the same event can each show a banner.
+    func showPreAlert(for event: CalendarEvent, dedupKey: String? = nil, duration: Double? = nil) {
+        let key = dedupKey ?? event.id
+        guard !preAlertEventIDs.contains(key) else { return }
+        preAlertEventIDs.insert(key)
         isShowingPreAlert = true
         let theme = ThemeService.shared.getPreAlertTheme(for: event.calendar.identifier)
         showBanner(eventID: event.id, title: event.title, startDate: event.startDate, color: event.calendar.color, videoURL: event.videoConferenceURL, preAlertTheme: theme, duration: duration)

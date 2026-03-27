@@ -52,13 +52,19 @@ struct CalendarEvent: Identifiable, Equatable {
         self.videoConferenceURL = Self.extractVideoConferenceURL(from: ekEvent)
 
         // Extract alarm trigger dates
-        self.alarmDates = (ekEvent.alarms ?? []).compactMap { alarm in
+        let alarms = ekEvent.alarms ?? []
+        print("🔔 Event: \(ekEvent.title ?? "?") | alarms count: \(alarms.count)")
+        for (i, alarm) in alarms.enumerated() {
+            print("  alarm[\(i)]: absoluteDate=\(String(describing: alarm.absoluteDate)), relativeOffset=\(alarm.relativeOffset)s (\(alarm.relativeOffset / -60)min before)")
+        }
+        self.alarmDates = alarms.compactMap { alarm in
             if let absoluteDate = alarm.absoluteDate {
                 return absoluteDate
             }
             // relativeOffset is negative seconds before the event
             return ekEvent.startDate.addingTimeInterval(alarm.relativeOffset)
         }
+        print("  → alarmDates: \(self.alarmDates)")
     }
     
     // Mock initializer for previews and testing

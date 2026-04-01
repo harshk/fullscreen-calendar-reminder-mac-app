@@ -201,8 +201,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func updateMenuBarIcon() {
         if let button = statusItem?.button {
             let isPaused = AppSettings.shared.isPaused
-            if isPaused {
-                button.image = NSImage(systemSymbolName: "bell.slash.fill", accessibilityDescription: "ZapCal (Paused)")
+            if isPaused, let baseIcon = NSImage(named: "StatusBarIcon") {
+                let size = NSSize(width: 22, height: 22)
+                let icon = NSImage(size: size, flipped: false) { rect in
+                    baseIcon.draw(in: rect)
+                    // Diagonal strikethrough with gap around it
+                    let path = NSBezierPath()
+                    let inset: CGFloat = 4
+                    path.move(to: NSPoint(x: rect.maxX - inset, y: rect.maxY - inset))
+                    path.line(to: NSPoint(x: rect.minX + inset, y: rect.minY + inset))
+                    path.lineCapStyle = .round
+                    // Erase icon pixels around the line to create a gap
+                    NSGraphicsContext.current?.compositingOperation = .clear
+                    path.lineWidth = 3
+                    path.stroke()
+                    // Draw the line itself
+                    NSGraphicsContext.current?.compositingOperation = .sourceOver
+                    path.lineWidth = 1
+                    NSColor.black.setStroke()
+                    path.stroke()
+                    return true
+                }
+                icon.isTemplate = true
+                button.image = icon
             } else {
                 let icon = NSImage(named: "StatusBarIcon")
                 icon?.size = NSSize(width: 22, height: 22)

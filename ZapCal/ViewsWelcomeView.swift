@@ -37,7 +37,7 @@ struct WelcomeView: View {
 
             Spacer()
         }
-        .frame(width: 500, height: step == .alertPresetPicker ? 580 : 520)
+        .frame(width: 500, height: step == .alertPresetPicker ? 620 : 520)
         .animation(.easeInOut(duration: 0.2), value: step)
         .onChange(of: calendarService.hasAccess) { _, _ in
             checkIfAllSet()
@@ -59,12 +59,12 @@ struct WelcomeView: View {
 
             // Title
             Text("Welcome to ZapCal")
-                .font(.custom("SF Pro Rounded", size: 32).weight(.bold))
+                .font(.custom("SF Pro Rounded", size: 36).weight(.bold))
                 .padding(.bottom, 8)
 
             // Subtitle
             Text("Full-screen reminders for your calendar events,\nso you never miss a meeting.")
-                .font(.custom("SF Pro Rounded", size: 15))
+                .font(.custom("SF Pro Rounded", size: 17))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(3)
@@ -101,7 +101,7 @@ struct WelcomeView: View {
 
             Button(action: { step = .menuBarInfo }) {
                 Text("Skip for now")
-                    .font(.custom("SF Pro Rounded", size: 14))
+                    .font(.custom("SF Pro Rounded", size: 16))
                     .foregroundColor(.secondary)
             }
             .buttonStyle(.plain)
@@ -124,11 +124,11 @@ struct WelcomeView: View {
                 .padding(.bottom, 24)
 
             Text("You're All Set!")
-                .font(.custom("SF Pro Rounded", size: 32).weight(.bold))
+                .font(.custom("SF Pro Rounded", size: 36).weight(.bold))
                 .padding(.bottom, 8)
 
             Text("ZapCal runs in your menu bar.")
-                .font(.custom("SF Pro Rounded", size: 15))
+                .font(.custom("SF Pro Rounded", size: 17))
                 .foregroundColor(.secondary)
                 .padding(.bottom, 24)
 
@@ -141,7 +141,7 @@ struct WelcomeView: View {
                 step = .alertPresetPicker
             }) {
                 Text("Next")
-                    .font(.custom("SF Pro Rounded", size: 14).weight(.medium))
+                    .font(.custom("SF Pro Rounded", size: 16).weight(.medium))
                     .frame(width: 200)
             }
             .buttonStyle(.borderedProminent)
@@ -154,11 +154,11 @@ struct WelcomeView: View {
     private var menuBarInfoContent: some View {
         VStack(spacing: 0) {
             Text("ZapCal runs in your menu bar")
-                .font(.custom("SF Pro Rounded", size: 24).weight(.bold))
+                .font(.custom("SF Pro Rounded", size: 28).weight(.bold))
                 .padding(.bottom, 8)
 
             Text("You can grant permissions later from the menu bar.")
-                .font(.custom("SF Pro Rounded", size: 16))
+                .font(.custom("SF Pro Rounded", size: 18))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.bottom, 24)
@@ -172,7 +172,7 @@ struct WelcomeView: View {
                 step = .alertPresetPicker
             }) {
                 Text("Next")
-                    .font(.custom("SF Pro Rounded", size: 14).weight(.medium))
+                    .font(.custom("SF Pro Rounded", size: 16).weight(.medium))
                     .frame(width: 200)
             }
             .buttonStyle(.borderedProminent)
@@ -192,43 +192,61 @@ struct WelcomeView: View {
 
     private var alertPresetPickerContent: some View {
         VStack(spacing: 0) {
-            Image(systemName: "bell.badge")
-                .font(.system(size: 48))
-                .foregroundColor(.accentColor)
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .frame(width: 80, height: 80)
                 .padding(.bottom, 20)
 
             Text("How would you like to be alerted?")
-                .font(.custom("SF Pro Rounded", size: 26).weight(.bold))
+                .font(.custom("SF Pro Rounded", size: 30).weight(.bold))
                 .padding(.bottom, 6)
 
             Text("Choose how ZapCal notifies you about upcoming events.\nYou can change this later in Settings.")
-                .font(.custom("SF Pro Rounded", size: 14))
+                .font(.custom("SF Pro Rounded", size: 16))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(2)
                 .padding(.bottom, 28)
 
-            VStack(spacing: 12) {
-                alertPresetCard(
-                    preset: .singleFullScreen,
-                    title: "Full Screen Alert",
-                    description: "A full-screen overlay appears when your event starts. Hard to miss.",
-                    icons: [.fullScreen]
-                )
+            VStack(spacing: 20) {
+                // Single alert group
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Single Alert")
+                        .font(.custom("SF Pro Rounded", size: 14).weight(.medium))
+                        .foregroundColor(.secondary)
+                        .padding(.leading, 4)
 
-                alertPresetCard(
-                    preset: .singleSubtle,
-                    title: "Subtle Banner",
-                    description: "A small banner appears at the top of your screen for 5 minutes.",
-                    icons: [.subtle]
-                )
+                    VStack(spacing: 10) {
+                        alertPresetCard(
+                            preset: .singleFullScreen,
+                            title: "Full Screen Alert",
+                            description: "A full-screen overlay appears when your event starts. Hard to miss.",
+                            icons: [.fullScreen]
+                        )
 
-                alertPresetCard(
-                    preset: .twoAlerts,
-                    title: "Banner + Full Screen",
-                    description: "A subtle banner 1 minute before, then a full-screen alert at start time.",
-                    icons: [.subtle, .fullScreen]
-                )
+                        alertPresetCard(
+                            preset: .singleSubtle,
+                            title: "Subtle Banner",
+                            description: "A small banner appears at the top of your screen for 5 minutes.",
+                            icons: [.subtle]
+                        )
+                    }
+                }
+
+                // Multiple alerts group
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Multiple Alerts")
+                        .font(.custom("SF Pro Rounded", size: 14).weight(.medium))
+                        .foregroundColor(.secondary)
+                        .padding(.leading, 4)
+
+                    alertPresetCard(
+                        preset: .twoAlerts,
+                        title: "Banner + Full Screen",
+                        description: "A subtle banner 1 minute before, then a full-screen alert at start time.",
+                        icons: [.subtle, .fullScreen]
+                    )
+                }
             }
             .padding(.horizontal, 40)
             .padding(.bottom, 28)
@@ -240,7 +258,7 @@ struct WelcomeView: View {
                     NSApp.keyWindow?.close()
                 }) {
                     Text("Skip")
-                        .font(.custom("SF Pro Rounded", size: 15))
+                        .font(.custom("SF Pro Rounded", size: 16))
                         .foregroundColor(.secondary)
                 }
                 .buttonStyle(.plain)
@@ -251,7 +269,7 @@ struct WelcomeView: View {
                     NSApp.keyWindow?.close()
                 }) {
                     Text("Done")
-                        .font(.custom("SF Pro Rounded", size: 15).weight(.medium))
+                        .font(.custom("SF Pro Rounded", size: 16).weight(.medium))
                         .frame(width: 200)
                 }
                 .buttonStyle(.borderedProminent)
@@ -280,10 +298,10 @@ struct WelcomeView: View {
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title)
-                        .font(.custom("SF Pro Rounded", size: 15).weight(.semibold))
+                        .font(.custom("SF Pro Rounded", size: 17).weight(.semibold))
                         .foregroundColor(.primary)
                     Text(description)
-                        .font(.custom("SF Pro Rounded", size: 13))
+                        .font(.custom("SF Pro Rounded", size: 14))
                         .foregroundColor(.secondary)
                         .lineLimit(2)
                         .fixedSize(horizontal: false, vertical: true)
@@ -526,9 +544,9 @@ struct WelcomeView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.custom("SF Pro Rounded", size: 16).weight(.semibold))
+                    .font(.custom("SF Pro Rounded", size: 18).weight(.semibold))
                 Text(description)
-                    .font(.custom("SF Pro Rounded", size: 13))
+                    .font(.custom("SF Pro Rounded", size: 15))
                     .foregroundColor(.secondary)
             }
 
@@ -536,7 +554,7 @@ struct WelcomeView: View {
 
             if granted {
                 Text("Granted")
-                    .font(.custom("SF Pro Rounded", size: 13).weight(.medium))
+                    .font(.custom("SF Pro Rounded", size: 15).weight(.medium))
                     .foregroundColor(.green)
             } else if denied {
                 Button("Open Settings") {

@@ -16,6 +16,7 @@ struct WelcomeView: View {
     private enum WelcomeStep {
         case permissions
         case allSet
+        case alertPresetPicker
         case menuBarInfo
     }
 
@@ -26,6 +27,8 @@ struct WelcomeView: View {
             switch step {
             case .allSet:
                 allSetContent
+            case .alertPresetPicker:
+                alertPresetPickerContent
             case .menuBarInfo:
                 menuBarInfoContent
             default:
@@ -34,7 +37,8 @@ struct WelcomeView: View {
 
             Spacer()
         }
-        .frame(width: 500, height: 520)
+        .frame(width: 500, height: step == .alertPresetPicker ? 580 : 520)
+        .animation(.easeInOut(duration: 0.2), value: step)
         .onChange(of: calendarService.hasAccess) { _, _ in
             checkIfAllSet()
         }
@@ -134,10 +138,9 @@ struct WelcomeView: View {
                 .padding(.bottom, 32)
 
             Button(action: {
-                NotificationCenter.default.post(name: .welcomeSetupComplete, object: nil)
-                NSApp.keyWindow?.close()
+                step = .alertPresetPicker
             }) {
-                Text("Got It!")
+                Text("Next")
                     .font(.custom("SF Pro Rounded", size: 14).weight(.medium))
                     .frame(width: 200)
             }
@@ -166,15 +169,210 @@ struct WelcomeView: View {
                 .padding(.bottom, 32)
 
             Button(action: {
-                NotificationCenter.default.post(name: .welcomeSetupComplete, object: nil)
-                NSApp.keyWindow?.close()
+                step = .alertPresetPicker
             }) {
-                Text("Got It!")
+                Text("Next")
                     .font(.custom("SF Pro Rounded", size: 14).weight(.medium))
                     .frame(width: 200)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
+        }
+    }
+
+    // MARK: - Alert Preset Picker
+
+    private enum AlertPreset: String, CaseIterable {
+        case singleFullScreen
+        case singleSubtle
+        case twoAlerts
+    }
+
+    @State private var selectedPreset: AlertPreset = .singleFullScreen
+
+    private var alertPresetPickerContent: some View {
+        VStack(spacing: 0) {
+            Image(systemName: "bell.badge")
+                .font(.system(size: 48))
+                .foregroundColor(.accentColor)
+                .padding(.bottom, 20)
+
+            Text("How would you like to be alerted?")
+                .font(.custom("SF Pro Rounded", size: 26).weight(.bold))
+                .padding(.bottom, 6)
+
+            Text("Choose how ZapCal notifies you about upcoming events.\nYou can change this later in Settings.")
+                .font(.custom("SF Pro Rounded", size: 14))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .lineSpacing(2)
+                .padding(.bottom, 28)
+
+            VStack(spacing: 12) {
+                alertPresetCard(
+                    preset: .singleFullScreen,
+                    title: "Full Screen Alert",
+                    description: "A full-screen overlay appears when your event starts. Hard to miss.",
+                    icons: [.fullScreen]
+                )
+
+                alertPresetCard(
+                    preset: .singleSubtle,
+                    title: "Subtle Banner",
+                    description: "A small banner appears at the top of your screen for 5 minutes.",
+                    icons: [.subtle]
+                )
+
+                alertPresetCard(
+                    preset: .twoAlerts,
+                    title: "Banner + Full Screen",
+                    description: "A subtle banner 1 minute before, then a full-screen alert at start time.",
+                    icons: [.subtle, .fullScreen]
+                )
+            }
+            .padding(.horizontal, 40)
+            .padding(.bottom, 28)
+
+            HStack(spacing: 16) {
+                Button(action: {
+                    applyAlertPreset(.singleFullScreen)
+                    NotificationCenter.default.post(name: .welcomeSetupComplete, object: nil)
+                    NSApp.keyWindow?.close()
+                }) {
+                    Text("Skip")
+                        .font(.custom("SF Pro Rounded", size: 15))
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+
+                Button(action: {
+                    applyAlertPreset(selectedPreset)
+                    NotificationCenter.default.post(name: .welcomeSetupComplete, object: nil)
+                    NSApp.keyWindow?.close()
+                }) {
+                    Text("Done")
+                        .font(.custom("SF Pro Rounded", size: 15).weight(.medium))
+                        .frame(width: 200)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+            }
+        }
+    }
+
+    private func alertPresetCard(
+        preset: AlertPreset,
+        title: String,
+        description: String,
+        icons: [AlertStyle]
+    ) -> some View {
+        let isSelected = selectedPreset == preset
+
+        return Button(action: { selectedPreset = preset }) {
+            HStack(spacing: 14) {
+                // Alert type icons
+                VStack(spacing: 4) {
+                    ForEach(icons, id: \.self) { style in
+                        alertMiniIcon(style: style)
+                    }
+                }
+                .frame(width: 48)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.custom("SF Pro Rounded", size: 15).weight(.semibold))
+                        .foregroundColor(.primary)
+                    Text(description)
+                        .font(.custom("SF Pro Rounded", size: 13))
+                        .foregroundColor(.secondary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer()
+
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 20))
+                    .foregroundColor(isSelected ? .accentColor : .secondary.opacity(0.4))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(isSelected ? Color.accentColor.opacity(0.08) : Color(nsColor: .controlBackgroundColor))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(isSelected ? Color.accentColor : Color.secondary.opacity(0.15), lineWidth: isSelected ? 2 : 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func alertMiniIcon(style: AlertStyle) -> some View {
+        Group {
+            if style == .subtle {
+                // Mini subtle banner
+                HStack(spacing: 3) {
+                    Circle()
+                        .fill(Color.secondary.opacity(0.4))
+                        .frame(width: 8, height: 8)
+                    VStack(alignment: .leading, spacing: 1.5) {
+                        RoundedRectangle(cornerRadius: 1)
+                            .fill(Color.primary.opacity(0.4))
+                            .frame(width: 24, height: 3)
+                        RoundedRectangle(cornerRadius: 1)
+                            .fill(Color.secondary.opacity(0.3))
+                            .frame(width: 16, height: 2)
+                    }
+                }
+                .padding(4)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color(nsColor: .windowBackgroundColor))
+                        .shadow(color: .black.opacity(0.1), radius: 1, y: 0.5)
+                )
+            } else {
+                // Mini full screen
+                ZStack {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.indigo.opacity(0.6), Color.purple.opacity(0.4)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                    VStack(spacing: 2) {
+                        RoundedRectangle(cornerRadius: 1)
+                            .fill(Color.white.opacity(0.7))
+                            .frame(width: 18, height: 3)
+                        RoundedRectangle(cornerRadius: 1)
+                            .fill(Color.white.opacity(0.4))
+                            .frame(width: 12, height: 2)
+                    }
+                }
+                .frame(width: 32, height: 24)
+            }
+        }
+    }
+
+    private func applyAlertPreset(_ preset: AlertPreset) {
+        let settings = AppSettings.shared
+        switch preset {
+        case .singleFullScreen:
+            settings.alertConfigs = [
+                AlertConfig(style: .fullScreen, leadTime: 0)
+            ]
+        case .singleSubtle:
+            settings.alertConfigs = [
+                AlertConfig(style: .subtle, leadTime: 0, subtleDuration: 300)
+            ]
+        case .twoAlerts:
+            settings.alertConfigs = [
+                AlertConfig(style: .subtle, leadTime: 60, subtleDuration: 15),
+                AlertConfig(style: .fullScreen, leadTime: 0)
+            ]
         }
     }
 

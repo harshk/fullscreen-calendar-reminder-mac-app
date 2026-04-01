@@ -101,10 +101,9 @@ struct WelcomeView: View {
 
             Button(action: { step = .menuBarInfo }) {
                 Text("Skip for now")
-                    .font(.custom("SF Pro Rounded", size: 16))
-                    .foregroundColor(.secondary)
+                    .font(.custom("SF Pro Rounded", size: 16).weight(.medium))
             }
-            .buttonStyle(.plain)
+            .controlSize(.large)
         }
     }
 
@@ -142,7 +141,6 @@ struct WelcomeView: View {
             }) {
                 Text("Next")
                     .font(.custom("SF Pro Rounded", size: 16).weight(.medium))
-                    .frame(width: 200)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
@@ -173,7 +171,6 @@ struct WelcomeView: View {
             }) {
                 Text("Next")
                     .font(.custom("SF Pro Rounded", size: 16).weight(.medium))
-                    .frame(width: 200)
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
@@ -243,7 +240,7 @@ struct WelcomeView: View {
                     alertPresetCard(
                         preset: .twoAlerts,
                         title: "Banner + Full Screen",
-                        description: "A subtle banner 1 minute before, then a full-screen alert at start time.",
+                        description: "• A subtle banner 1 minute before the event.\n• A full-screen alert when the event starts.",
                         icons: [.subtle, .fullScreen]
                     )
                 }
@@ -258,10 +255,9 @@ struct WelcomeView: View {
                     NSApp.keyWindow?.close()
                 }) {
                     Text("Skip")
-                        .font(.custom("SF Pro Rounded", size: 16))
-                        .foregroundColor(.secondary)
+                        .font(.custom("SF Pro Rounded", size: 16).weight(.medium))
                 }
-                .buttonStyle(.plain)
+                .controlSize(.large)
 
                 Button(action: {
                     applyAlertPreset(selectedPreset)
@@ -270,7 +266,6 @@ struct WelcomeView: View {
                 }) {
                     Text("Done")
                         .font(.custom("SF Pro Rounded", size: 16).weight(.medium))
-                        .frame(width: 200)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
@@ -557,17 +552,21 @@ struct WelcomeView: View {
                     .font(.custom("SF Pro Rounded", size: 15).weight(.medium))
                     .foregroundColor(.green)
             } else if denied {
-                Button("Open Settings") {
-                    onOpenSettings()
+                Button(action: { onOpenSettings() }) {
+                    Text("Open Settings")
+                        .font(.custom("SF Pro Rounded", size: 16).weight(.medium))
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.regular)
+                .buttonBorderShape(.capsule)
+                .controlSize(.large)
             } else {
-                Button("Grant") {
-                    onGrant()
+                Button(action: { onGrant() }) {
+                    Text("Grant")
+                        .font(.custom("SF Pro Rounded", size: 16).weight(.medium))
                 }
                 .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
+                .buttonBorderShape(.capsule)
+                .controlSize(.large)
             }
         }
         .frame(maxWidth: 420, alignment: .leading)

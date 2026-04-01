@@ -303,6 +303,9 @@ class CalendarService: ObservableObject {
             for event in upcomingEvents {
                 guard !firedEventIDs.contains(event.id) else { continue }
                 guard !alertFiredIDs[config.id, default: []].contains(event.id) else { continue }
+                // Events with alarms are handled by the alarm loop below —
+                // don't also fire config-based alerts for them.
+                if settings.eventAlarmAlertsEnabled && !event.alarmDates.isEmpty { continue }
                 let timeUntilStart = event.startDate.timeIntervalSince(now)
                 if timeUntilStart <= config.leadTime && timeUntilStart > -120 {
                     alertFiredIDs[config.id, default: []].insert(event.id)

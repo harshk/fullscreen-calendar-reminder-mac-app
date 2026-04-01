@@ -12,7 +12,7 @@ struct AddReminderView: View {
     
     @State private var title = ""
     @State private var selectedDate = Date()
-    @State private var selectedTime = Date().addingTimeInterval(5 * 60)
+    @State private var selectedTime = Date()
     @State private var showError = false
     @State private var errorMessage = ""
     
@@ -57,6 +57,15 @@ struct AddReminderView: View {
         }
         .padding()
         .frame(width: 400)
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { notification in
+            guard let window = notification.object as? NSWindow,
+                  window.title == "Add ZapCal Reminder" else { return }
+            title = ""
+            selectedDate = Date()
+            selectedTime = Date().addingTimeInterval(5 * 60)
+            showError = false
+            errorMessage = ""
+        }
     }
     
     private var combinedDateTime: Date {

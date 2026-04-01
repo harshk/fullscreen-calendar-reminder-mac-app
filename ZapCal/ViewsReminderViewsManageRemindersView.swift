@@ -28,6 +28,18 @@ struct ManageRemindersView: View {
                     }
                 }
             }
+
+            Divider()
+
+            HStack {
+                Button {
+                    NotificationCenter.default.post(name: .openAddReminder, object: nil)
+                } label: {
+                    Label("Add ZapCal Reminder", systemImage: "plus.circle")
+                }
+                Spacer()
+            }
+            .padding(12)
         }
         .frame(width: 600, height: 500)
         .sheet(isPresented: $showingEditSheet) {
@@ -124,11 +136,11 @@ struct ReminderRow: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(reminder.title)
-                    .font(.body)
+                    .font(.title3)
                     .fontWeight(.medium)
 
                 Text(formatDateTime(reminder.scheduledDate))
-                    .font(.subheadline)
+                    .font(.body)
                     .foregroundColor(.secondary)
             }
 

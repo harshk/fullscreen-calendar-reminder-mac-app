@@ -295,7 +295,7 @@ struct WelcomeView: View {
         let isSelected = selectedPreset == preset
 
         return Button(action: { selectedPreset = preset }) {
-            HStack(spacing: 14) {
+            HStack(alignment: .top, spacing: 14) {
                 // Alert type icons
                 VStack(spacing: 4) {
                     ForEach(icons, id: \.self) { style in
@@ -303,6 +303,7 @@ struct WelcomeView: View {
                     }
                 }
                 .frame(width: 48)
+                .offset(y: 3)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(title)

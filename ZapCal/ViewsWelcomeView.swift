@@ -22,8 +22,6 @@ struct WelcomeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Spacer()
-
             switch step {
             case .allSet:
                 allSetContent
@@ -34,9 +32,8 @@ struct WelcomeView: View {
             default:
                 permissionsContent
             }
-
-            Spacer()
         }
+        .padding(.vertical, 20)
         .frame(width: 500, height: step == .alertPresetPicker ? 620 : 520)
         .animation(.easeInOut(duration: 0.2), value: step)
         .onChange(of: calendarService.hasAccess) { _, _ in
@@ -97,7 +94,8 @@ struct WelcomeView: View {
                     onOpenSettings: { openPrivacySettings(for: "Reminders") }
                 )
             }
-            .padding(.bottom, 32)
+
+            Spacer()
 
             Button(action: { step = .menuBarInfo }) {
                 Text("Skip for now")
@@ -134,7 +132,8 @@ struct WelcomeView: View {
             // Menu bar illustration
             menuBarIllustration
                 .padding(.horizontal, 40)
-                .padding(.bottom, 32)
+
+            Spacer()
 
             Button(action: {
                 step = .alertPresetPicker
@@ -151,6 +150,11 @@ struct WelcomeView: View {
 
     private var menuBarInfoContent: some View {
         VStack(spacing: 0) {
+            Image(nsImage: NSApp.applicationIconImage)
+                .resizable()
+                .frame(width: 80, height: 80)
+                .padding(.bottom, 20)
+
             Text("ZapCal runs in your menu bar")
                 .font(.custom("SF Pro Rounded", size: 28).weight(.bold))
                 .padding(.bottom, 8)
@@ -164,7 +168,8 @@ struct WelcomeView: View {
             // Menu bar illustration
             menuBarIllustration
                 .padding(.horizontal, 40)
-                .padding(.bottom, 32)
+
+            Spacer()
 
             Button(action: {
                 step = .alertPresetPicker
@@ -216,15 +221,15 @@ struct WelcomeView: View {
                     VStack(spacing: 10) {
                         alertPresetCard(
                             preset: .singleFullScreen,
-                            title: "Full Screen Alert",
-                            description: "A full-screen overlay appears when your event starts. Hard to miss.",
+                            title: "Zap! Alert - The Full Screen Alert",
+                            description: "A full-screen Zap! alert hits when your event starts. Impossible to ignore.",
                             icons: [.fullScreen]
                         )
 
                         alertPresetCard(
                             preset: .singleSubtle,
-                            title: "Subtle Banner",
-                            description: "A small banner appears at the top of your screen for 5 minutes.",
+                            title: "Subtle Alert - Just a Gentle Nudge",
+                            description: "A quiet alert at the top of your screen when the event starts - no drama, just a nudge.",
                             icons: [.subtle]
                         )
                     }
@@ -239,14 +244,21 @@ struct WelcomeView: View {
 
                     alertPresetCard(
                         preset: .twoAlerts,
-                        title: "Banner + Full Screen",
-                        description: "• A subtle banner 1 minute before the event.\n• A full-screen alert when the event starts.",
-                        icons: [.subtle, .fullScreen]
+                        title: "Two Alerts — Nudge, Then Zap!",
+                        description: "",
+                        icons: [.subtle, .fullScreen],
+                        customDescription: AnyView(
+                            VStack(alignment: .leading, spacing: 4) {
+                                numberedRow(number: "1", text: "Starts subtle with a quiet nudge 1 minute before the event.")
+                                numberedRow(number: "2", text: "Then we hit you with the full-screen Zap! when the event starts.")
+                            }
+                        )
                     )
                 }
             }
             .padding(.horizontal, 40)
-            .padding(.bottom, 28)
+
+            Spacer()
 
             HStack(spacing: 16) {
                 Button(action: {
@@ -277,7 +289,8 @@ struct WelcomeView: View {
         preset: AlertPreset,
         title: String,
         description: String,
-        icons: [AlertStyle]
+        icons: [AlertStyle],
+        customDescription: AnyView? = nil
     ) -> some View {
         let isSelected = selectedPreset == preset
 
@@ -295,11 +308,14 @@ struct WelcomeView: View {
                     Text(title)
                         .font(.custom("SF Pro Rounded", size: 17).weight(.semibold))
                         .foregroundColor(.primary)
-                    Text(description)
-                        .font(.custom("SF Pro Rounded", size: 14))
-                        .foregroundColor(.secondary)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
+                    if let customDescription {
+                        customDescription
+                    } else if !description.isEmpty {
+                        Text(description)
+                            .font(.custom("SF Pro Rounded", size: 14))
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
 
                 Spacer()
@@ -320,6 +336,21 @@ struct WelcomeView: View {
             )
         }
         .buttonStyle(.plain)
+    }
+
+    private func numberedRow(number: String, text: String) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(number)
+                .font(.custom("SF Pro Rounded", size: 12).weight(.bold))
+                .foregroundColor(.white)
+                .frame(width: 24, height: 24)
+                .background(Circle().fill(Color.secondary.opacity(0.5)))
+                .offset(y: 2)
+            Text(text)
+                .font(.custom("SF Pro Rounded", size: 14))
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     private func alertMiniIcon(style: AlertStyle) -> some View {

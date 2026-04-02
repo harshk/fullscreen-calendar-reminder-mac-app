@@ -51,8 +51,8 @@ struct WelcomeView: View {
             // App icon
             Image(nsImage: NSApp.applicationIconImage)
                 .resizable()
-                .frame(width: 128, height: 128)
-                .padding(.bottom, 24)
+                .frame(width: 80, height: 80)
+                .padding(.bottom, 20)
 
             // Title
             Text("Welcome to ZapCal")
@@ -199,7 +199,7 @@ struct WelcomeView: View {
                 .frame(width: 80, height: 80)
                 .padding(.bottom, 20)
 
-            Text("How would you like to be alerted?")
+            Text("Set Up Your Alerts")
                 .font(.custom("SF Pro Rounded", size: 30).weight(.bold))
                 .padding(.bottom, 6)
 
@@ -208,6 +208,7 @@ struct WelcomeView: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .lineSpacing(2)
+                .fixedSize(horizontal: false, vertical: true)
                 .padding(.bottom, 28)
 
             VStack(spacing: 20) {

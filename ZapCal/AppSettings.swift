@@ -14,16 +14,16 @@ enum AppStrings {
     static let reEnableAlertsForEvent = "Re-enable alerts for this event"
 }
 
-/// The kind of alert to show: a subtle banner or a full-screen overlay.
+/// The kind of alert to show: a mini banner or a full-screen overlay.
 enum AlertStyle: String, Codable, CaseIterable, Identifiable {
-    case subtle = "subtle"
+    case mini = "mini"
     case fullScreen = "fullScreen"
 
     var id: String { rawValue }
 
     var label: String {
         switch self {
-        case .subtle: return "Subtle Alert"
+        case .mini: return "Mini Alert"
         case .fullScreen: return "Full Screen Alert"
         }
     }
@@ -36,24 +36,24 @@ struct AlertConfig: Codable, Identifiable, Equatable {
     var style: AlertStyle
     /// Lead time in seconds before the event this alert fires.
     var leadTime: Double
-    /// Duration in seconds the subtle alert banner stays visible. 0 = persist until event starts.
-    var subtleDuration: Double
+    /// Duration in seconds the mini alert banner stays visible. 0 = persist until event starts.
+    var miniDuration: Double
     /// Snooze durations in seconds for full-screen alerts.
     var snoozeDurations: [Double]
 
     init(
         id: UUID = UUID(),
         enabled: Bool = true,
-        style: AlertStyle = .subtle,
+        style: AlertStyle = .mini,
         leadTime: Double = 60,
-        subtleDuration: Double = 15,
+        miniDuration: Double = 15,
         snoozeDurations: [Double] = [60, 300, 900]
     ) {
         self.id = id
         self.enabled = enabled
         self.style = style
         self.leadTime = leadTime
-        self.subtleDuration = subtleDuration
+        self.miniDuration = miniDuration
         self.snoozeDurations = snoozeDurations
     }
 }
@@ -118,7 +118,7 @@ class AppSettings: ObservableObject {
         didSet { UserDefaults.standard.set(eventAlarmAlertStyle.rawValue, forKey: "eventAlarmAlertStyle") }
     }
 
-    /// Duration in seconds for subtle event alarm alerts. 0 = persist until event starts.
+    /// Duration in seconds for mini event alarm alerts. 0 = persist until event starts.
     @Published var eventAlarmAlertDuration: Double {
         didSet { UserDefaults.standard.set(eventAlarmAlertDuration, forKey: "eventAlarmAlertDuration") }
     }
@@ -129,7 +129,7 @@ class AppSettings: ObservableObject {
         didSet { UserDefaults.standard.set(snoozeDurations, forKey: "snoozeDurations") }
     }
 
-    /// The Subtle Alert preset name used for menu bar event/reminder rows.
+    /// The Mini Alert preset name used for menu bar event/reminder rows.
     @Published var menuBarPresetName: String {
         didSet { UserDefaults.standard.set(menuBarPresetName, forKey: "menuBarPresetName") }
     }
@@ -166,15 +166,15 @@ class AppSettings: ObservableObject {
            let configs = try? JSONDecoder().decode([AlertConfig].self, from: data) {
             self.alertConfigs = configs
         } else {
-            // Migrate from old settings
-            let subtleLeadTime: Double = {
-                if let v = UserDefaults.standard.object(forKey: "subtleAlertLeadTime") as? Double { return v }
+            // Migrate from old settings (pre-alertConfigs era)
+            let miniLeadTime: Double = {
+                if let v = UserDefaults.standard.object(forKey: "miniAlertLeadTime") as? Double { return v }
                 if let v = UserDefaults.standard.object(forKey: "firstAlertLeadTime") as? Double, v > 0 { return v }
                 let legacy = UserDefaults.standard.double(forKey: "preAlertLeadTime")
                 return legacy > 0 ? legacy : 60
             }()
-            let subtleDuration: Double = {
-                if let v = UserDefaults.standard.object(forKey: "subtleAlertDuration") as? Double { return v }
+            let miniDuration: Double = {
+                if let v = UserDefaults.standard.object(forKey: "miniAlertDuration") as? Double { return v }
                 if let v = UserDefaults.standard.object(forKey: "firstAlertDuration") as? Double { return v }
                 if let v = UserDefaults.standard.object(forKey: "preAlertDuration") as? Double { return v }
                 return 15
@@ -189,15 +189,15 @@ class AppSettings: ObservableObject {
                 : (UserDefaults.standard.object(forKey: "preAlertEnabled") != nil
                     ? UserDefaults.standard.bool(forKey: "preAlertEnabled")
                     : true)
-            let firstStyle = AlertStyle(rawValue: UserDefaults.standard.string(forKey: "firstAlertStyle") ?? "") ?? .subtle
+            let firstStyle = AlertStyle(rawValue: UserDefaults.standard.string(forKey: "firstAlertStyle") ?? "") ?? .mini
             let secondEnabled = UserDefaults.standard.object(forKey: "secondAlertEnabled") != nil
                 ? UserDefaults.standard.bool(forKey: "secondAlertEnabled")
                 : true
             let secondStyle = AlertStyle(rawValue: UserDefaults.standard.string(forKey: "secondAlertStyle") ?? "") ?? .fullScreen
 
             self.alertConfigs = [
-                AlertConfig(enabled: firstEnabled, style: firstStyle, leadTime: subtleLeadTime, subtleDuration: subtleDuration),
-                AlertConfig(enabled: secondEnabled, style: secondStyle, leadTime: fsLeadTime, subtleDuration: subtleDuration),
+                AlertConfig(enabled: firstEnabled, style: firstStyle, leadTime: miniLeadTime, miniDuration: miniDuration),
+                AlertConfig(enabled: secondEnabled, style: secondStyle, leadTime: fsLeadTime, miniDuration: miniDuration),
             ]
         }
 
@@ -210,13 +210,13 @@ class AppSettings: ObservableObject {
             self.snoozeDurations = defaultSnooze
         }
         
-        // Event alarm alerts (default: enabled, subtle)
+        // Event alarm alerts (default: enabled, mini)
         if UserDefaults.standard.object(forKey: "eventAlarmAlertsEnabled") != nil {
             self.eventAlarmAlertsEnabled = UserDefaults.standard.bool(forKey: "eventAlarmAlertsEnabled")
         } else {
             self.eventAlarmAlertsEnabled = true
         }
-        self.eventAlarmAlertStyle = AlertStyle(rawValue: UserDefaults.standard.string(forKey: "eventAlarmAlertStyle") ?? "") ?? .subtle
+        self.eventAlarmAlertStyle = AlertStyle(rawValue: UserDefaults.standard.string(forKey: "eventAlarmAlertStyle") ?? "") ?? .mini
         if let stored = UserDefaults.standard.object(forKey: "eventAlarmAlertDuration") as? Double {
             self.eventAlarmAlertDuration = stored
         } else {

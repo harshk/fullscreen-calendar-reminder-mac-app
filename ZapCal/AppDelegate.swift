@@ -32,6 +32,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Migrate Application Support directory from old name to new name
         migrateAppSupportDirectory()
 
+        // Migrate "subtle" → "mini" in settings and files (one-time, v1.0.8+)
+        SubtleToMiniMigration.runIfNeeded()
+
         // Pre-warm font list so the presets tab loads instantly
         _ = FontCache.shared
 

@@ -45,7 +45,7 @@ struct GeneralSettingsView: View {
                         }
                     }
 
-                    if settings.eventAlarmAlertStyle == .subtle {
+                    if settings.eventAlarmAlertStyle == .mini {
                         HStack {
                             VStack(alignment: .leading) {
                                 Text("Duration")

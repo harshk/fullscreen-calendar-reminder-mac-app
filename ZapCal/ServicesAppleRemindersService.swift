@@ -201,7 +201,7 @@ class AppleRemindersService: ObservableObject {
         AlertMergeBuffer.shared.submit(
             item: .appleReminder(reminder),
             style: config.style,
-            duration: config.subtleDuration
+            duration: config.miniDuration
         )
     }
 

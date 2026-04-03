@@ -164,7 +164,7 @@ class ReminderService: ObservableObject {
         AlertMergeBuffer.shared.submit(
             item: .customReminder(reminder),
             style: config.style,
-            duration: config.subtleDuration
+            duration: config.miniDuration
         )
     }
 }

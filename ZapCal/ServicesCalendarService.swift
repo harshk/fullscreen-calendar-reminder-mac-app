@@ -352,7 +352,7 @@ class CalendarService: ObservableObject {
         AlertMergeBuffer.shared.submit(
             item: .calendarEvent(event),
             style: config.style,
-            duration: config.subtleDuration
+            duration: config.miniDuration
         )
     }
     

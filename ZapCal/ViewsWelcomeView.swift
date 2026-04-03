@@ -186,7 +186,7 @@ struct WelcomeView: View {
 
     private enum AlertPreset: String, CaseIterable {
         case singleFullScreen
-        case singleSubtle
+        case singleMini
         case twoAlerts
     }
 
@@ -228,10 +228,10 @@ struct WelcomeView: View {
                         )
 
                         alertPresetCard(
-                            preset: .singleSubtle,
-                            title: "Subtle Alert - Just a Gentle Nudge",
+                            preset: .singleMini,
+                            title: "Mini Alert - Just a Gentle Nudge",
                             description: "A quiet alert at the top of your screen when the event starts - no drama, just a nudge.",
-                            icons: [.subtle]
+                            icons: [.mini]
                         )
                     }
                 }
@@ -247,10 +247,10 @@ struct WelcomeView: View {
                         preset: .twoAlerts,
                         title: "Two Alerts — Nudge, Then Zap!",
                         description: "",
-                        icons: [.subtle, .fullScreen],
+                        icons: [.mini, .fullScreen],
                         customDescription: AnyView(
                             VStack(alignment: .leading, spacing: 4) {
-                                numberedRow(number: "1", text: "Starts subtle with a quiet nudge 1 minute before the event.")
+                                numberedRow(number: "1", text: "Starts with a mini alert nudge 1 minute before the event.")
                                 numberedRow(number: "2", text: "Then we hit you with the full-screen Zap! when the event starts.")
                             }
                         )
@@ -357,8 +357,8 @@ struct WelcomeView: View {
 
     private func alertMiniIcon(style: AlertStyle) -> some View {
         Group {
-            if style == .subtle {
-                // Mini subtle banner
+            if style == .mini {
+                // Mini alert banner
                 HStack(spacing: 3) {
                     Circle()
                         .fill(Color.secondary.opacity(0.4))
@@ -410,13 +410,13 @@ struct WelcomeView: View {
             settings.alertConfigs = [
                 AlertConfig(style: .fullScreen, leadTime: 0)
             ]
-        case .singleSubtle:
+        case .singleMini:
             settings.alertConfigs = [
-                AlertConfig(style: .subtle, leadTime: 0, subtleDuration: 300)
+                AlertConfig(style: .mini, leadTime: 0, miniDuration: 300)
             ]
         case .twoAlerts:
             settings.alertConfigs = [
-                AlertConfig(style: .subtle, leadTime: 60, subtleDuration: 15),
+                AlertConfig(style: .mini, leadTime: 60, miniDuration: 15),
                 AlertConfig(style: .fullScreen, leadTime: 0)
             ]
         }

@@ -10,7 +10,7 @@ import AppKit
 import SwiftUI
 import Combine
 
-// MARK: - Subtle Alert Manager
+// MARK: - Mini Alert Manager
 
 @MainActor
 class PreAlertManager: ObservableObject {
@@ -26,7 +26,7 @@ class PreAlertManager: ObservableObject {
 
     // MARK: - Public API
 
-    /// Show subtle alert for an upcoming calendar event.
+    /// Show mini alert for an upcoming calendar event.
     /// - Parameter dedupKey: Optional key for deduplication. When provided (e.g.
     ///   an alarm-specific key), this key is checked instead of the event ID so
     ///   that multiple alarms on the same event can each show a banner.
@@ -39,7 +39,7 @@ class PreAlertManager: ObservableObject {
         showBanner(eventID: event.id, title: event.title, startDate: event.startDate, color: event.calendar.color, videoURL: event.videoConferenceURL, preAlertTheme: theme, duration: duration)
     }
 
-    /// Show subtle alert for an upcoming Apple Reminder.
+    /// Show mini alert for an upcoming Apple Reminder.
     func showPreAlert(for appleReminder: AppleReminder, duration: Double? = nil) {
         guard !preAlertEventIDs.contains(appleReminder.id) else { return }
         preAlertEventIDs.insert(appleReminder.id)
@@ -48,7 +48,7 @@ class PreAlertManager: ObservableObject {
         showBanner(eventID: appleReminder.id, title: appleReminder.title, startDate: appleReminder.dueDate, color: appleReminder.reminderList.color, videoURL: nil, preAlertTheme: theme, duration: duration)
     }
 
-    /// Show subtle alert for an upcoming custom reminder.
+    /// Show mini alert for an upcoming custom reminder.
     func showPreAlert(for reminder: CustomReminder, duration: Double? = nil) {
         let id = reminder.id.uuidString
         guard !preAlertEventIDs.contains(id) else { return }
@@ -98,7 +98,7 @@ class PreAlertManager: ObservableObject {
         preAlertEventIDs.insert(eventID)
         isShowingPreAlert = true
         let theme = ThemeService.shared.getPreAlertTheme(for: nil)
-        let effectiveDuration = duration ?? firstSubtleDuration()
+        let effectiveDuration = duration ?? firstMiniDuration()
 
         if isMerged {
             showMergedBanner(eventID: eventID, titles: titles, overflowCount: overflowCount, startDate: startDate, color: color, preAlertTheme: theme, duration: effectiveDuration)
@@ -147,7 +147,7 @@ class PreAlertManager: ObservableObject {
         }
 
         // Update all state in a single batch — one SwiftUI re-render
-        let effectiveDuration = duration ?? firstSubtleDuration()
+        let effectiveDuration = duration ?? firstMiniDuration()
         bannerState.show(eventID: eventID, title: title, startDate: startDate, color: color, videoURL: videoURL, theme: preAlertTheme, backgroundImage: bgImage, duration: effectiveDuration)
 
         let x = screen.frame.midX - bannerWidth / 2
@@ -285,9 +285,9 @@ class PreAlertManager: ObservableObject {
         }
     }
 
-    /// Returns the duration from the first enabled subtle alert config, or 15 as fallback.
-    private func firstSubtleDuration() -> Double {
-        AppSettings.shared.alertConfigs.first(where: { $0.enabled && $0.style == .subtle })?.subtleDuration ?? 15
+    /// Returns the duration from the first enabled mini alert config, or 15 as fallback.
+    private func firstMiniDuration() -> Double {
+        AppSettings.shared.alertConfigs.first(where: { $0.enabled && $0.style == .mini })?.miniDuration ?? 15
     }
 
     private func dismissBanner() {
@@ -296,7 +296,7 @@ class PreAlertManager: ObservableObject {
     }
 }
 
-// MARK: - Subtle Alert Banner State
+// MARK: - Mini Alert Banner State
 
 /// Observable state for the reusable banner window. Uses manual
 /// objectWillChange to batch all updates into a single re-render.

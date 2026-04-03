@@ -109,10 +109,10 @@ struct AlertsSettingsView: View {
     private func alertSettingsSummary(for config: AlertConfig) -> String {
         let leadMinutes = Int(config.leadTime / 60)
         let leadText = "Trigger alert \(leadMinutes) minute\(leadMinutes == 1 ? "" : "s") before"
-        if config.style == .subtle {
-            let durText = config.subtleDuration == 0
+        if config.style == .mini {
+            let durText = config.miniDuration == 0
                 ? "persists until event"
-                : "\(Int(config.subtleDuration)) sec"
+                : "\(Int(config.miniDuration)) sec"
             return "\(leadText)\nDuration: \(durText)"
         }
         return leadText
@@ -149,7 +149,7 @@ struct AlertSettingsSheet: View {
                     .foregroundColor(.secondary)
             }
 
-            if draft.style == .subtle {
+            if draft.style == .mini {
                 HStack {
                     VStack(alignment: .leading) {
                         Text("Duration")
@@ -159,8 +159,8 @@ struct AlertSettingsSheet: View {
                     }
                     Spacer()
                     TextField("", value: Binding(
-                        get: { Int(draft.subtleDuration) },
-                        set: { draft.subtleDuration = Double(max(0, $0)) }
+                        get: { Int(draft.miniDuration) },
+                        set: { draft.miniDuration = Double(max(0, $0)) }
                     ), format: .number)
                     .frame(width: 60)
                     .multilineTextAlignment(.trailing)
@@ -171,8 +171,8 @@ struct AlertSettingsSheet: View {
 
             Divider()
 
-            if draft.style == .subtle {
-                Button("Show Preview: Subtle Alert") {
+            if draft.style == .mini {
+                Button("Show Preview: Mini Alert") {
                     PreAlertManager.shared.showTestPreAlert()
                 }
             } else {
@@ -202,7 +202,7 @@ struct AlertStylePicker: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            alertStyleCard(style: .subtle)
+            alertStyleCard(style: .mini)
             alertStyleCard(style: .fullScreen)
         }
         .padding(.vertical, 4)
@@ -216,8 +216,8 @@ struct AlertStylePicker: View {
         } label: {
             VStack(spacing: 8) {
                 // Mini preview
-                if style == .subtle {
-                    subtlePreview
+                if style == .mini {
+                    miniPreview
                 } else {
                     fullScreenPreview
                 }
@@ -241,8 +241,8 @@ struct AlertStylePicker: View {
         .buttonStyle(.plain)
     }
 
-    // Mini subtle alert banner preview
-    private var subtlePreview: some View {
+    // Mini alert banner preview
+    private var miniPreview: some View {
         HStack(spacing: 6) {
             Circle()
                 .fill(Color.secondary.opacity(0.4))

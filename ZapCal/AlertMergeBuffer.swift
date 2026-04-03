@@ -8,7 +8,7 @@ import SwiftUI
 
 /// Buffers alerts that fire within a 10-second window and merges them
 /// into a single presentation. Full-screen alerts take precedence over
-/// subtle alerts when mixed.
+/// mini alerts when mixed.
 @MainActor
 class AlertMergeBuffer {
     static let shared = AlertMergeBuffer()
@@ -44,9 +44,9 @@ class AlertMergeBuffer {
 
         let items = pendingItems.map(\.item)
         let hasFullScreen = pendingItems.contains { $0.style == .fullScreen }
-        let resolvedStyle: AlertStyle = hasFullScreen ? .fullScreen : .subtle
+        let resolvedStyle: AlertStyle = hasFullScreen ? .fullScreen : .mini
         let earliestStart = items.compactMap(\.startDate).min() ?? Date()
-        let duration = pendingItems.first(where: { $0.style == .subtle })?.duration ?? 15
+        let duration = pendingItems.first(where: { $0.style == .mini })?.duration ?? 15
 
         pendingItems.removeAll()
 
@@ -54,7 +54,7 @@ class AlertMergeBuffer {
             // Single alert — use existing code paths
             let item = items[0]
             switch resolvedStyle {
-            case .subtle:
+            case .mini:
                 PreAlertManager.shared.showMergedPreAlert(
                     titles: [item.title],
                     startDate: earliestStart,
@@ -74,7 +74,7 @@ class AlertMergeBuffer {
             let overflowCount = max(0, items.count - 3)
 
             switch resolvedStyle {
-            case .subtle:
+            case .mini:
                 PreAlertManager.shared.showMergedPreAlert(
                     titles: displayTitles,
                     startDate: earliestStart,

@@ -23,7 +23,7 @@ struct SettingsView: View {
         case reminders = "Reminders"
         case menuBarPreset = "Menu Bar Themes"
         case presets = "Full Screen Alert Themes"
-        case preAlertPresets = "Subtle Alert Themes"
+        case preAlertPresets = "Mini Alert Themes"
 
         var id: String { rawValue }
 

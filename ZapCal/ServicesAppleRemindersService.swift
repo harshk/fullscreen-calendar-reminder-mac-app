@@ -195,14 +195,14 @@ class AppleRemindersService: ObservableObject {
     }
 
     private func fireAlert(config: AlertConfig, for reminder: AppleReminder) {
-        switch config.style {
-        case .subtle:
-            PreAlertManager.shared.showPreAlert(for: reminder, duration: config.subtleDuration)
-        case .fullScreen:
+        if config.style == .fullScreen {
             firedReminderIDs.insert(reminder.id)
-            PreAlertManager.shared.dismiss()
-            AlertCoordinator.shared.queueAlert(for: reminder)
         }
+        AlertMergeBuffer.shared.submit(
+            item: .appleReminder(reminder),
+            style: config.style,
+            duration: config.subtleDuration
+        )
     }
 
     func markReminderAsFired(_ reminderID: String) {

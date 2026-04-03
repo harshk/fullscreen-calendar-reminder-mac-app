@@ -83,6 +83,30 @@ class PreAlertManager: ObservableObject {
         preAlertEventIDs.removeAll()
     }
 
+    /// Show a merged pre-alert (called by AlertMergeBuffer).
+    func showMergedPreAlert(
+        titles: [String],
+        startDate: Date,
+        color: Color,
+        videoURL: URL?,
+        eventID: String,
+        isMerged: Bool,
+        overflowCount: Int = 0,
+        duration: Double? = nil
+    ) {
+        guard !preAlertEventIDs.contains(eventID) else { return }
+        preAlertEventIDs.insert(eventID)
+        isShowingPreAlert = true
+        let theme = ThemeService.shared.getPreAlertTheme(for: nil)
+        let effectiveDuration = duration ?? firstSubtleDuration()
+
+        if isMerged {
+            showMergedBanner(eventID: eventID, titles: titles, overflowCount: overflowCount, startDate: startDate, color: color, preAlertTheme: theme, duration: effectiveDuration)
+        } else {
+            showBanner(eventID: eventID, title: titles.first ?? "", startDate: startDate, color: color, videoURL: videoURL, preAlertTheme: theme, duration: effectiveDuration)
+        }
+    }
+
     /// Test/preview the pre-alert with a mock event.
     func showTestPreAlert() {
         showTestPreAlert(for: CalendarEvent.mock())
@@ -190,6 +214,77 @@ class PreAlertManager: ObservableObject {
         }
     }
 
+    private func showMergedBanner(eventID: String, titles: [String], overflowCount: Int, startDate: Date, color: Color, preAlertTheme: PreAlertTheme, duration: Double) {
+        dismissBanner()
+
+        guard let screen = NSScreen.main else { return }
+        let bannerWidth: CGFloat = 460
+        let extraLines = max(0, titles.count - 1) + (overflowCount > 0 ? 1 : 0)
+        let bannerHeight: CGFloat = 108 + CGFloat(extraLines) * 22
+
+        let blurRadius = (preAlertTheme.imageBlurRadius ?? 0.3) * 30
+        let scale = screen.backingScaleFactor
+        let bgImage: NSImage? = preAlertTheme.imageFileName.flatMap {
+            ImageStore.loadBlurred($0, targetSize: CGSize(width: bannerWidth * scale, height: bannerHeight * scale), blurRadius: blurRadius)
+        }
+
+        bannerState.showMerged(eventID: eventID, titles: titles, overflowCount: overflowCount, startDate: startDate, color: color, theme: preAlertTheme, backgroundImage: bgImage, duration: duration)
+
+        let x = screen.frame.midX - bannerWidth / 2
+        let menuBarHeight: CGFloat = NSApplication.shared.mainMenu?.menuBarHeight ?? 24
+        let yVisible = screen.frame.maxY - menuBarHeight - bannerHeight - 12
+
+        if let panel = bannerWindow {
+            panel.setFrame(NSRect(x: x, y: yVisible, width: bannerWidth, height: bannerHeight), display: false)
+            panel.orderFrontRegardless()
+        } else {
+            let panel = NSPanel(
+                contentRect: NSRect(x: x, y: yVisible, width: bannerWidth, height: bannerHeight),
+                styleMask: [.borderless, .nonactivatingPanel],
+                backing: .buffered,
+                defer: false,
+                screen: screen
+            )
+            panel.isFloatingPanel = true
+            panel.level = .floating
+            panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+            panel.isOpaque = false
+            panel.backgroundColor = .clear
+            panel.hasShadow = true
+            panel.ignoresMouseEvents = false
+            panel.hidesOnDeactivate = false
+            panel.acceptsMouseMovedEvents = true
+
+            let bannerContent = PreAlertBannerView(
+                bannerState: bannerState,
+                onDismiss: { [weak self] in
+                    DispatchQueue.main.async { self?.dismiss() }
+                },
+                onJoin: { url in
+                    DispatchQueue.main.async { NSWorkspace.shared.open(url) }
+                },
+                onDisableAlerts: { [weak self] in
+                    DispatchQueue.main.async { self?.dismiss() }
+                }
+            )
+
+            let hostingView = TransparentHostingView(rootView: bannerContent)
+            hostingView.frame = NSRect(origin: .zero, size: NSSize(width: bannerWidth, height: bannerHeight))
+            hostingView.autoresizingMask = [.width, .height]
+            panel.contentView = hostingView
+
+            bannerWindow = panel
+            panel.orderFrontRegardless()
+        }
+
+        if duration > 0 {
+            countdownTimer?.invalidate()
+            countdownTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
+                DispatchQueue.main.async { self?.dismiss() }
+            }
+        }
+    }
+
     /// Returns the duration from the first enabled subtle alert config, or 15 as fallback.
     private func firstSubtleDuration() -> Double {
         AppSettings.shared.alertConfigs.first(where: { $0.enabled && $0.style == .subtle })?.subtleDuration ?? 15
@@ -215,6 +310,9 @@ class PreAlertBannerState: ObservableObject {
     var eventID: String = ""
     var isVisible: Bool = false
     var bannerDuration: Double = 15
+    var isMerged: Bool = false
+    var mergedTitles: [String] = []
+    var overflowCount: Int = 0
 
     func show(eventID: String, title: String, startDate: Date, color: Color, videoURL: URL?, theme: PreAlertTheme, backgroundImage: NSImage?, duration: Double = 15) {
         self.eventID = eventID
@@ -222,6 +320,25 @@ class PreAlertBannerState: ObservableObject {
         self.startDate = startDate
         self.color = color
         self.videoURL = videoURL
+        self.preAlertTheme = theme
+        self.backgroundImage = backgroundImage
+        self.bannerDuration = duration
+        self.isMerged = false
+        self.mergedTitles = []
+        self.overflowCount = 0
+        self.isVisible = true
+        objectWillChange.send()
+    }
+
+    func showMerged(eventID: String, titles: [String], overflowCount: Int, startDate: Date, color: Color, theme: PreAlertTheme, backgroundImage: NSImage?, duration: Double = 15) {
+        self.eventID = eventID
+        self.title = titles.first ?? ""
+        self.mergedTitles = titles
+        self.overflowCount = overflowCount
+        self.isMerged = true
+        self.startDate = startDate
+        self.color = color
+        self.videoURL = nil
         self.preAlertTheme = theme
         self.backgroundImage = backgroundImage
         self.bannerDuration = duration
@@ -347,16 +464,38 @@ struct PreAlertBannerView: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                // Title row
-                HStack(spacing: 8) {
-                    Text(title)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(preAlertTheme.titleColor.color)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                    Circle()
-                        .fill(color)
-                        .frame(width: 10, height: 10)
+                // Title row(s)
+                if bannerState.isMerged && isStateDriven {
+                    VStack(alignment: .leading, spacing: 4) {
+                        ForEach(bannerState.mergedTitles, id: \.self) { t in
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(preAlertTheme.titleColor.color)
+                                    .frame(width: 5, height: 5)
+                                Text(t)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(preAlertTheme.titleColor.color)
+                                    .lineLimit(1)
+                                    .truncationMode(.tail)
+                            }
+                        }
+                        if bannerState.overflowCount > 0 {
+                            Text("and \(bannerState.overflowCount) more")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(preAlertTheme.titleColor.color.opacity(0.6))
+                        }
+                    }
+                } else {
+                    HStack(spacing: 8) {
+                        Text(title)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(preAlertTheme.titleColor.color)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                        Circle()
+                            .fill(color)
+                            .frame(width: 10, height: 10)
+                    }
                 }
 
                 // Countdown timer
@@ -366,6 +505,7 @@ struct PreAlertBannerView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
 
             // Bottom row: Disable and Join buttons
+            if !(bannerState.isMerged && isStateDriven) {
             HStack(spacing: 8) {
                 Text(AppStrings.disableAlertsForEvent)
                     .font(.system(size: 12, weight: .medium))
@@ -394,8 +534,9 @@ struct PreAlertBannerView: View {
 
                 Spacer()
             }
-            }
-        }
+            } // if not merged
+            } // VStack
+        } // HStack
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(

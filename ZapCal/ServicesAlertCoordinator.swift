@@ -14,12 +14,14 @@ enum AlertItem: Identifiable {
     case calendarEvent(CalendarEvent)
     case customReminder(CustomReminder)
     case appleReminder(AppleReminder)
+    case merged(titles: [String], overflowCount: Int, startDate: Date, sourceItems: [AlertItem])
 
     var id: String {
         switch self {
         case .calendarEvent(let event): return event.id
         case .customReminder(let reminder): return reminder.id.uuidString
         case .appleReminder(let reminder): return reminder.id
+        case .merged(_, _, _, let items): return "merged_" + items.map(\.id).joined(separator: "_")
         }
     }
 
@@ -28,7 +30,23 @@ enum AlertItem: Identifiable {
         case .calendarEvent(let event): return event.title
         case .customReminder(let reminder): return reminder.title
         case .appleReminder(let reminder): return reminder.title
+        case .merged(let titles, _, _, _): return titles.first ?? ""
         }
+    }
+
+    var mergedTitles: [String]? {
+        if case .merged(let titles, _, _, _) = self { return titles }
+        return nil
+    }
+
+    var mergedOverflowCount: Int {
+        if case .merged(_, let count, _, _) = self { return count }
+        return 0
+    }
+
+    var isMerged: Bool {
+        if case .merged = self { return true }
+        return false
     }
 
     var startDate: Date {
@@ -36,13 +54,14 @@ enum AlertItem: Identifiable {
         case .calendarEvent(let event): return event.startDate
         case .customReminder(let reminder): return reminder.scheduledDate
         case .appleReminder(let reminder): return reminder.dueDate
+        case .merged(_, _, let date, _): return date
         }
     }
 
     var endDate: Date? {
         switch self {
         case .calendarEvent(let event): return event.endDate
-        case .customReminder, .appleReminder: return nil
+        case .customReminder, .appleReminder, .merged: return nil
         }
     }
 
@@ -51,6 +70,7 @@ enum AlertItem: Identifiable {
         case .calendarEvent(let event): return event.calendar.identifier
         case .customReminder: return nil
         case .appleReminder(let reminder): return reminder.reminderList.identifier
+        case .merged: return nil
         }
     }
 
@@ -62,7 +82,7 @@ enum AlertItem: Identifiable {
             if CalendarEvent.findVideoConferenceURL(in: location) != nil,
                location.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("http") { return nil }
             return location
-        case .customReminder, .appleReminder: return nil
+        case .customReminder, .appleReminder, .merged: return nil
         }
     }
 
@@ -71,6 +91,7 @@ enum AlertItem: Identifiable {
         case .calendarEvent(let event): return "Calendar: \(event.calendar.title)"
         case .customReminder: return "Custom Reminder"
         case .appleReminder(let reminder): return "Reminder: \(reminder.reminderList.title)"
+        case .merged: return "Multiple events"
         }
     }
 
@@ -79,13 +100,14 @@ enum AlertItem: Identifiable {
         case .calendarEvent(let event): return event.calendar.color
         case .customReminder: return nil
         case .appleReminder(let reminder): return reminder.reminderList.color
+        case .merged: return nil
         }
     }
 
     var videoConferenceURL: URL? {
         switch self {
         case .calendarEvent(let event): return event.videoConferenceURL
-        case .customReminder, .appleReminder: return nil
+        case .customReminder, .appleReminder, .merged: return nil
         }
     }
 }
@@ -151,7 +173,7 @@ class AlertCoordinator: ObservableObject {
         queueAlert(item: .appleReminder(appleReminder))
     }
 
-    private func queueAlert(item: AlertItem) {
+    func queueAlert(item: AlertItem) {
         guard !alertQueue.contains(where: { $0.id == item.id }) else { return }
 
         alertQueue.append(item)

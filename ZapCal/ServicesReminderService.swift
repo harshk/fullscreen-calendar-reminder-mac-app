@@ -156,15 +156,15 @@ class ReminderService: ObservableObject {
     }
 
     private func fireAlert(config: AlertConfig, for reminder: CustomReminder, deleteAfterFullScreen: inout Bool) {
-        switch config.style {
-        case .subtle:
-            PreAlertManager.shared.showPreAlert(for: reminder, duration: config.subtleDuration)
-        case .fullScreen:
+        if config.style == .fullScreen {
             firedReminderIDs.insert(reminder.id)
-            PreAlertManager.shared.dismiss()
-            AlertCoordinator.shared.queueAlert(for: reminder)
             modelContext?.delete(reminder)
             deleteAfterFullScreen = true
         }
+        AlertMergeBuffer.shared.submit(
+            item: .customReminder(reminder),
+            style: config.style,
+            duration: config.subtleDuration
+        )
     }
 }

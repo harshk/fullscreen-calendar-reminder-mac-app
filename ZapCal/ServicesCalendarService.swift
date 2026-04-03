@@ -337,27 +337,23 @@ class CalendarService: ObservableObject {
 
     private func fireAlarmAlert(for event: CalendarEvent, alarmKey: String) {
         let settings = AppSettings.shared
-        switch settings.eventAlarmAlertStyle {
-        case .subtle:
-            PreAlertManager.shared.showPreAlert(for: event, dedupKey: alarmKey, duration: settings.eventAlarmAlertDuration)
-        case .fullScreen:
-            // Do NOT add to firedEventIDs here — that would suppress all
-            // remaining alarms for this event. Each alarm is independently
-            // tracked via alarmFiredIDs.
-            PreAlertManager.shared.dismiss()
-            AlertCoordinator.shared.queueAlert(for: event)
-        }
+        let style = settings.eventAlarmAlertStyle
+        AlertMergeBuffer.shared.submit(
+            item: .calendarEvent(event),
+            style: style,
+            duration: settings.eventAlarmAlertDuration
+        )
     }
 
     private func fireAlert(config: AlertConfig, for event: CalendarEvent) {
-        switch config.style {
-        case .subtle:
-            PreAlertManager.shared.showPreAlert(for: event, duration: config.subtleDuration)
-        case .fullScreen:
+        if config.style == .fullScreen {
             firedEventIDs.insert(event.id)
-            PreAlertManager.shared.dismiss()
-            AlertCoordinator.shared.queueAlert(for: event)
         }
+        AlertMergeBuffer.shared.submit(
+            item: .calendarEvent(event),
+            style: config.style,
+            duration: config.subtleDuration
+        )
     }
     
     func markEventAsFired(_ eventID: String) {
@@ -386,6 +382,7 @@ class CalendarService: ObservableObject {
         alertFiredIDs.removeAll()
         alarmFiredIDs.removeAll()
         PreAlertManager.shared.resetTracking()
+        AlertMergeBuffer.shared.reset()
     }
     
     private func handleWakeFromSleep() async {

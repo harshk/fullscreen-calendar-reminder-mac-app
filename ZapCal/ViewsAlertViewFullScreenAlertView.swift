@@ -104,19 +104,44 @@ struct FullScreenAlertView: View {
 
                 // Title
                 if let style = theme.elementStyles[.title] {
-                    Text(alertItem.title)
-                        .font(style.font)
-                        .tracking(style.letterSpacing ?? 0)
-                        .foregroundColor(style.fontColor.color)
-                        .textCase(style.uppercased == true ? .uppercase : nil)
-                        .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.5)
-                        .truncationMode(.tail)
-                        .frame(maxWidth: geometry.size.width * 0.5, alignment: .center)
-                        .contentShape(Rectangle())
-                        .onTapGesture { onElementTap?(.title) }
+                    if let mergedTitles = alertItem.mergedTitles {
+                        VStack(alignment: .center, spacing: 8) {
+                            ForEach(mergedTitles, id: \.self) { t in
+                                HStack(spacing: 10) {
+                                    Circle()
+                                        .fill(style.fontColor.color)
+                                        .frame(width: 8, height: 8)
+                                    Text(t)
+                                        .font(style.font)
+                                        .tracking(style.letterSpacing ?? 0)
+                                        .foregroundColor(style.fontColor.color)
+                                        .textCase(style.uppercased == true ? .uppercase : nil)
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.5)
+                                }
+                            }
+                            if alertItem.mergedOverflowCount > 0 {
+                                Text("and \(alertItem.mergedOverflowCount) more")
+                                    .font(.system(size: (style.fontSize ?? 24) * 0.5, weight: .medium))
+                                    .foregroundColor(style.fontColor.color.opacity(0.6))
+                            }
+                        }
+                        .frame(maxWidth: geometry.size.width * 0.6, alignment: .center)
+                    } else {
+                        Text(alertItem.title)
+                            .font(style.font)
+                            .tracking(style.letterSpacing ?? 0)
+                            .foregroundColor(style.fontColor.color)
+                            .textCase(style.uppercased == true ? .uppercase : nil)
+                            .scaleEffect(x: 1.0, y: style.verticalScale ?? 1.0)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                            .minimumScaleFactor(0.5)
+                            .truncationMode(.tail)
+                            .frame(maxWidth: geometry.size.width * 0.5, alignment: .center)
+                            .contentShape(Rectangle())
+                            .onTapGesture { onElementTap?(.title) }
+                    }
                 }
 
                 // Start Time
@@ -238,11 +263,32 @@ struct FullScreenAlertView: View {
         ZStack {
             // Only show title on secondary screens
             if let style = theme.elementStyles[.title] {
-                styledText(
-                    text: alertItem.title,
-                    style: style,
-                    geometry: geometry
-                )
+                if let mergedTitles = alertItem.mergedTitles {
+                    VStack(alignment: .center, spacing: 8) {
+                        ForEach(mergedTitles, id: \.self) { t in
+                            HStack(spacing: 10) {
+                                Circle()
+                                    .fill(style.fontColor.color)
+                                    .frame(width: 8, height: 8)
+                                Text(t)
+                                    .font(style.font)
+                                    .foregroundColor(style.fontColor.color)
+                                    .lineLimit(1)
+                            }
+                        }
+                        if alertItem.mergedOverflowCount > 0 {
+                            Text("and \(alertItem.mergedOverflowCount) more")
+                                .font(.system(size: (style.fontSize ?? 24) * 0.5, weight: .medium))
+                                .foregroundColor(style.fontColor.color.opacity(0.6))
+                        }
+                    }
+                } else {
+                    styledText(
+                        text: alertItem.title,
+                        style: style,
+                        geometry: geometry
+                    )
+                }
             }
         }
     }

@@ -211,18 +211,18 @@ struct MenuBarView: View {
 
     // MARK: - Trial Banner
 
-    private static let beeStingAccent = Color(red: 0.83, green: 0.08, blue: 0.70)
-    private static let beeStingBg = Color(red: 1.0, green: 0.82, blue: 0.0)
+    private static let roseCreamBg = Color(red: 0.91, green: 0.28, blue: 0.42)
+    private static let roseCreamText = Color(red: 1.0, green: 0.96, blue: 0.88)
 
     private func trialBannerView(daysRemaining: Int) -> some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(daysRemaining) day\(daysRemaining == 1 ? "" : "s") remaining")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Self.beeStingAccent)
+                    .foregroundColor(Self.roseCreamText)
                 Text("in your free trial")
                     .font(.system(size: 12))
-                    .foregroundColor(Self.beeStingAccent.opacity(0.7))
+                    .foregroundColor(Self.roseCreamText.opacity(0.7))
             }
             Spacer()
             Button(action: {
@@ -230,17 +230,17 @@ struct MenuBarView: View {
             }) {
                 Text("Upgrade")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(Self.beeStingBg)
+                    .foregroundColor(Self.roseCreamBg)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 6)
-                    .background(Self.beeStingAccent)
+                    .background(Self.roseCreamText)
                     .cornerRadius(6)
             }
             .buttonStyle(.plain)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(Self.beeStingBg.opacity(0.97))
+        .background(Self.roseCreamBg.opacity(0.95))
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)

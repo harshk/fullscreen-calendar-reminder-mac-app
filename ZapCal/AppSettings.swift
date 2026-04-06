@@ -240,7 +240,7 @@ class AppSettings: ObservableObject {
         }
 
         // Menu bar preset
-        self.menuBarPresetName = UserDefaults.standard.string(forKey: "menuBarPresetName") ?? "Rose Cream"
+        self.menuBarPresetName = UserDefaults.standard.string(forKey: "menuBarPresetName") ?? "Basic"
 
         // Apple Reminders
         self.appleRemindersEnabled = UserDefaults.standard.bool(forKey: "appleRemindersEnabled")

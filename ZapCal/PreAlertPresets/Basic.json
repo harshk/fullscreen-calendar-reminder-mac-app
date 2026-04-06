@@ -1,0 +1,68 @@
+{
+  "name" : "Basic",
+  "theme" : {
+    "backgroundColor" : {
+      "blue" : 0.96,
+      "green" : 0.96,
+      "opacity" : 1,
+      "red" : 0.96
+    },
+    "backgroundOpacity" : 0.97,
+    "countdownColor" : {
+      "blue" : 0.0,
+      "green" : 0.0,
+      "opacity" : 0.7,
+      "red" : 0.0
+    },
+    "disableButtonBackgroundColor" : {
+      "blue" : 0.0,
+      "green" : 0.0,
+      "opacity" : 0.8,
+      "red" : 0.0
+    },
+    "disableButtonTextColor" : {
+      "blue" : 1.0,
+      "green" : 1.0,
+      "opacity" : 1,
+      "red" : 1.0
+    },
+    "dismissButtonColor" : {
+      "blue" : 0.0,
+      "green" : 0.0,
+      "opacity" : 0.1,
+      "red" : 0.0
+    },
+    "dismissIconColor" : {
+      "blue" : 0.0,
+      "green" : 0.0,
+      "opacity" : 0.5,
+      "red" : 0.0
+    },
+    "id" : "default",
+    "joinButtonBackgroundColor" : {
+      "blue" : 0.0,
+      "green" : 0.0,
+      "opacity" : 1,
+      "red" : 0.0
+    },
+    "joinButtonTextColor" : {
+      "blue" : 1.0,
+      "green" : 1.0,
+      "opacity" : 1,
+      "red" : 1.0
+    },
+    "name" : "Basic",
+    "progressRingColor" : {
+      "blue" : 0.0,
+      "green" : 0.0,
+      "opacity" : 0.3,
+      "red" : 0.0
+    },
+    "titleColor" : {
+      "blue" : 0.0,
+      "green" : 0.0,
+      "opacity" : 1,
+      "red" : 0.0
+    }
+  }
+}

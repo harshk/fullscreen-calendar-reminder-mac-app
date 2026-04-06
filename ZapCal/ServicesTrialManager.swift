@@ -35,7 +35,10 @@ class TrialManager: ObservableObject {
     }
 
     private func evaluateTrialState() async {
-        // Check purchase first
+        // Ensure purchase status is up-to-date before checking.
+        // StoreManager's init fires an async task that may not have
+        // finished yet, so we explicitly await the check here.
+        await StoreManager.shared.checkPurchaseStatus()
         if StoreManager.shared.isPurchased {
             trialState = .purchased
             return

@@ -182,9 +182,11 @@ struct MenuBarView: View {
         VStack(spacing: 16) {
             Spacer()
 
-            Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 50))
-                .foregroundStyle(.green)
+            if let appIcon = NSApp.applicationIconImage {
+                Image(nsImage: appIcon)
+                    .resizable()
+                    .frame(width: 80, height: 80)
+            }
 
             Text("Thank You!")
                 .font(.system(size: 22, weight: .bold))
@@ -195,19 +197,11 @@ struct MenuBarView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
 
-            Button(action: {
+            Button("Continue") {
                 storeManager.justPurchased = false
-            }) {
-                Text("Continue")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
-                    .background(Color.green)
-                    .cornerRadius(8)
             }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 24)
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
 
             Spacer()
         }

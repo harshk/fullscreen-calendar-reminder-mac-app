@@ -103,6 +103,7 @@ struct MenuBarView: View {
             }
         }
         .frame(width: 350)
+        .clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     // MARK: - Trial Expired View

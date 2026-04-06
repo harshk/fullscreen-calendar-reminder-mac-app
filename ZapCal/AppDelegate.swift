@@ -117,6 +117,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // so the glass/vibrancy effect shows through.
         hostingView.wantsLayer = true
         hostingView.layer?.backgroundColor = .clear
+        hostingView.layer?.cornerRadius = 10
+        hostingView.layer?.masksToBounds = true
 
         let visualEffect = NSVisualEffectView(frame: NSRect(origin: .zero, size: contentSize))
         visualEffect.material = .menu
@@ -125,6 +127,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         visualEffect.wantsLayer = true
         visualEffect.layer?.cornerRadius = 10
         visualEffect.layer?.masksToBounds = true
+        visualEffect.maskImage = Self.roundedMaskImage(size: contentSize, radius: 10)
         hostingView.frame = visualEffect.bounds
         hostingView.autoresizingMask = [.width, .height]
         visualEffect.addSubview(hostingView)
@@ -551,6 +554,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func stopEventMonitor() {
         panelMonitorsActive = false
+    }
+
+    // MARK: - Visual Effect Mask
+
+    private static func roundedMaskImage(size: NSSize, radius: CGFloat) -> NSImage {
+        let image = NSImage(size: size, flipped: false) { rect in
+            let path = NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius)
+            NSColor.black.setFill()
+            path.fill()
+            return true
+        }
+        image.capInsets = NSEdgeInsets(top: radius, left: radius, bottom: radius, right: radius)
+        image.resizingMode = .stretch
+        return image
     }
 
     // MARK: - App Support Directory Migration

@@ -131,10 +131,10 @@ class PreAlertPresetManager: ObservableObject {
             }
         }
 
-        // Sort: "Coral Paper" first, then alphabetical
+        // Sort: "Rose Cream" first, then alphabetical
         presets = result.sorted {
-            if $0.name == "Coral Paper" { return true }
-            if $1.name == "Coral Paper" { return false }
+            if $0.name == "Rose Cream" { return true }
+            if $1.name == "Rose Cream" { return false }
             return $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
         }
     }

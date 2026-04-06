@@ -19,7 +19,7 @@ class ThemeService: ObservableObject {
     @Published private(set) var calendarPreAlertAssignments: [String: String] = [:]
 
     private static let defaultPresetName = "Pinka Blua FS"
-    private static let defaultPreAlertPresetName = "Coral Paper"
+    private static let defaultPreAlertPresetName = "Rose Cream"
 
     private init() {
         loadAssignments()

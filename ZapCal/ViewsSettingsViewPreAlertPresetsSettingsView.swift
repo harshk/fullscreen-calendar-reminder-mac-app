@@ -13,14 +13,14 @@ struct PreAlertPresetsSettingsView: View {
     @ObservedObject private var appleRemindersService = AppleRemindersService.shared
     @ObservedObject private var appSettings = AppSettings.shared
 
-    @State private var selectedPresetName: String = "Coral Paper"
+    @State private var selectedPresetName: String = "Rose Cream"
     @State private var workingTheme: PreAlertTheme
     @State private var showingSavedConfirmation = false
     @State private var cachedBackgroundImage: NSImage? = nil
     @State private var cachedThumbnail: NSImage? = nil
 
     init() {
-        _workingTheme = State(initialValue: PreAlertPresetManager.shared.theme(named: "Coral Paper"))
+        _workingTheme = State(initialValue: PreAlertPresetManager.shared.theme(named: "Rose Cream"))
     }
 
     private func recomputeBackgroundImage() {
@@ -47,7 +47,7 @@ struct PreAlertPresetsSettingsView: View {
             PresetListSidebar(
                 presets: presetManager.presets.map { .init(name: $0.name, isBuiltIn: presetManager.isBuiltIn($0.name)) },
                 selectedPresetName: $selectedPresetName,
-                defaultPresetName: "Coral Paper",
+                defaultPresetName: "Rose Cream",
                 assignKind: .preAlert,
                 calendars: selectedCalendars,
                 reminderLists: selectedReminderLists,

@@ -487,7 +487,7 @@ struct EventRow: View {
             if isDisabled {
                 Image(systemName: "xmark.circle")
                     .font(.system(size: 14))
-                    .foregroundColor(.red.opacity(0.7))
+                    .foregroundColor(preAlertTheme.titleColor.color.opacity(0.7))
                     .padding(.leading, 12)
                     .padding(.top, 8)
                     .popover(isPresented: $showingDisabledPopover) {

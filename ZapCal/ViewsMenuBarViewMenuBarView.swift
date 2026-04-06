@@ -358,7 +358,7 @@ struct MenuBarEventContent: View {
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             Text(time)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 12, weight: .medium))
                 .foregroundColor(theme.countdownColor.color)
                 .frame(width: 70, alignment: .trailing)
 
@@ -368,10 +368,10 @@ struct MenuBarEventContent: View {
                         Circle()
                             .fill(calendarColor)
                             .frame(width: 10, height: 10)
-                            .offset(y: 4)
+                            .offset(y: 3)
                     }
                     Text(title)
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(theme.titleColor.color)
                         .lineLimit(2)
                 }

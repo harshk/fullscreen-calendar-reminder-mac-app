@@ -179,6 +179,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             object: nil
         )
 
+        // Observe open panel requests
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleOpenPanel),
+            name: .openPanel,
+            object: nil
+        )
+
         // Observe welcome setup complete — pulse icon and open popover
         NotificationCenter.default.addObserver(
             self,
@@ -436,6 +444,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func handleDismissPopover() {
         closePanel()
+    }
+
+    @objc private func handleOpenPanel() {
+        if panel?.isVisible != true {
+            togglePanel()
+        }
     }
 
     @objc private func handleStatusItemClick() {

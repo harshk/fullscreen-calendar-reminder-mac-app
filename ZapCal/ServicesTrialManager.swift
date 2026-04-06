@@ -41,32 +41,32 @@ class TrialManager: ObservableObject {
             return
         }
 
-        // Get original purchase date from App Store receipt
-        if let installDate = await getOriginalPurchaseDate() {
-            let calendar = Calendar.current
-            let expiryDate = calendar.date(byAdding: .day, value: Self.trialDurationDays, to: installDate)!
-            let now = Date()
-
-            if now < expiryDate {
-                let remaining = calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: expiryDate)).day ?? 0
-                trialState = .active(daysRemaining: max(1, remaining))
-            } else {
-                trialState = .expired
-            }
+        // Determine install date.
+        // In DEBUG builds use a local UserDefaults date so testers can reset it.
+        // In production (App Store) use the tamper-proof receipt date.
+        let installDate: Date
+        #if DEBUG
+        installDate = getOrSetLocalInstallDate()
+        print("[TrialManager] DEBUG — using local install date: \(installDate)")
+        #else
+        if let receiptDate = await getOriginalPurchaseDate() {
+            installDate = receiptDate
         } else {
-            // Receipt unavailable (e.g. debug build) — fall back to UserDefaults
-            let installDate = getOrSetLocalInstallDate()
-            let calendar = Calendar.current
-            let expiryDate = calendar.date(byAdding: .day, value: Self.trialDurationDays, to: installDate)!
-            let now = Date()
-
-            if now < expiryDate {
-                let remaining = calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: expiryDate)).day ?? 0
-                trialState = .active(daysRemaining: max(1, remaining))
-            } else {
-                trialState = .expired
-            }
+            installDate = getOrSetLocalInstallDate()
         }
+        #endif
+
+        let calendar = Calendar.current
+        let expiryDate = calendar.date(byAdding: .day, value: Self.trialDurationDays, to: installDate)!
+        let now = Date()
+
+        if now < expiryDate {
+            let remaining = calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: expiryDate)).day ?? 0
+            trialState = .active(daysRemaining: max(1, remaining))
+        } else {
+            trialState = .expired
+        }
+        print("[TrialManager] install: \(installDate), expiry: \(expiryDate), state: \(trialState)")
     }
 
     // MARK: - App Store Receipt

@@ -82,7 +82,9 @@ struct MenuBarView: View {
             }
             .frame(height: 38)
 
-            if trialManager.trialState == .expired {
+            if storeManager.justPurchased {
+                purchaseSuccessView
+            } else if trialManager.trialState == .expired {
                 trialExpiredView
             } else {
                 if case .active(let days) = trialManager.trialState {
@@ -174,24 +176,77 @@ struct MenuBarView: View {
         Spacer().frame(height: 5)
     }
 
-    // MARK: - Trial Banner
+    // MARK: - Purchase Success View
 
-    private func trialBannerView(daysRemaining: Int) -> some View {
-        HStack {
-            Text("Trial: \(daysRemaining) day\(daysRemaining == 1 ? "" : "s") remaining")
-                .font(.system(size: 11))
-                .foregroundColor(.secondary)
+    private var purchaseSuccessView: some View {
+        VStack(spacing: 16) {
             Spacer()
-            Button("Upgrade") {
-                Task { await storeManager.purchase() }
+
+            Image(systemName: "checkmark.seal.fill")
+                .font(.system(size: 50))
+                .foregroundStyle(.green)
+
+            Text("Thank You!")
+                .font(.system(size: 22, weight: .bold))
+
+            Text("You've unlocked ZapCal forever.")
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+
+            Button(action: {
+                storeManager.justPurchased = false
+            }) {
+                Text("Continue")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Color.green)
+                    .cornerRadius(8)
             }
             .buttonStyle(.plain)
-            .font(.system(size: 11, weight: .medium))
-            .foregroundColor(.accentColor)
+            .padding(.horizontal, 24)
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 420)
+    }
+
+    // MARK: - Trial Banner
+
+    private static let beeStingAccent = Color(red: 0.83, green: 0.08, blue: 0.70)
+    private static let beeStingBg = Color(red: 1.0, green: 0.82, blue: 0.0)
+
+    private func trialBannerView(daysRemaining: Int) -> some View {
+        HStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(daysRemaining) day\(daysRemaining == 1 ? "" : "s") remaining")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Self.beeStingAccent)
+                Text("in your free trial")
+                    .font(.system(size: 12))
+                    .foregroundColor(Self.beeStingAccent.opacity(0.7))
+            }
+            Spacer()
+            Button(action: {
+                Task { await storeManager.purchase() }
+            }) {
+                Text("Upgrade")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(Self.beeStingBg)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
+                    .background(Self.beeStingAccent)
+                    .cornerRadius(6)
+            }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 4)
-        .background(Color.secondary.opacity(0.08))
+        .padding(.vertical, 8)
+        .background(Self.beeStingBg.opacity(0.97))
     }
     
     // MARK: - No Access View
@@ -753,6 +808,7 @@ extension Notification.Name {
     static let showWelcomeScreen = Notification.Name("ShowWelcomeScreen")
     static let openAddReminder = Notification.Name("OpenAddReminder")
     static let welcomeSetupComplete = Notification.Name("WelcomeSetupComplete")
+    static let openPanel = Notification.Name("OpenPanel")
 }
 
 // MARK: - Preview

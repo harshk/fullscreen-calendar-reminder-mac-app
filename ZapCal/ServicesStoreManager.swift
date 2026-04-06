@@ -20,6 +20,7 @@ class StoreManager: ObservableObject {
     @Published var isPurchased: Bool = false
     @Published var purchaseInProgress: Bool = false
     @Published var purchaseError: String?
+    @Published var justPurchased: Bool = false
 
     private var transactionListener: Task<Void, Never>?
 
@@ -76,6 +77,7 @@ class StoreManager: ObservableObject {
                 let transaction = try checkVerified(verification)
                 await transaction.finish()
                 isPurchased = true
+                justPurchased = true
                 TrialManager.shared.refreshState()
             case .userCancelled:
                 break
@@ -92,6 +94,10 @@ class StoreManager: ObservableObject {
         NSApp.setActivationPolicy(.accessory)
         purchaseInProgress = false
         print("[StoreManager] purchase() completed")
+
+        if justPurchased {
+            NotificationCenter.default.post(name: .openPanel, object: nil)
+        }
     }
 
     // MARK: - Restore

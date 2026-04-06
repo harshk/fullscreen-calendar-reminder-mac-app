@@ -476,48 +476,22 @@ struct EventRow: View {
     let event: CalendarEvent
     let isDisabled: Bool
     @ObservedObject private var settings = AppSettings.shared
-    @State private var showingDisabledPopover = false
 
     private var preAlertTheme: PreAlertTheme {
         PreAlertPresetManager.shared.theme(named: settings.menuBarPresetName)
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 0) {
-            if isDisabled {
-                Image(systemName: "xmark.circle")
-                    .font(.system(size: 14))
-                    .foregroundColor(preAlertTheme.titleColor.color.opacity(0.7))
-                    .padding(.leading, 12)
-                    .padding(.top, 8)
-                    .popover(isPresented: $showingDisabledPopover) {
-                        VStack(spacing: 8) {
-                            Text("Alerts for this event have been disabled.")
-                                .font(.caption)
-                            Button(AppStrings.reEnableAlertsForEvent) {
-                                CalendarService.shared.reEnableEvent(event.id)
-                                showingDisabledPopover = false
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.small)
-                        }
-                        .padding(10)
-                    }
-                    .onTapGesture {
-                        showingDisabledPopover.toggle()
-                    }
-            }
-
-            MenuBarEventContent(
-                time: formatTime(event.startDate),
-                title: event.title,
-                location: event.location,
-                hasVideoCall: event.videoConferenceURL != nil,
-                calendarColor: event.calendar.color,
-                joinAction: event.videoConferenceURL.map { url in { NSWorkspace.shared.open(url) } },
-                theme: preAlertTheme
-            )
-        }
+        MenuBarEventContent(
+            time: formatTime(event.startDate),
+            title: event.title,
+            location: event.location,
+            hasVideoCall: event.videoConferenceURL != nil,
+            calendarColor: event.calendar.color,
+            joinAction: event.videoConferenceURL.map { url in { NSWorkspace.shared.open(url) } },
+            theme: preAlertTheme
+        )
+        .opacity(isDisabled ? 0.4 : 1.0)
         .background(preAlertTheme.backgroundColor.color.opacity(preAlertTheme.backgroundOpacity))
         .contentShape(Rectangle())
         .onTapGesture {

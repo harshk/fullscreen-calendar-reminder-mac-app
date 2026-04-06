@@ -301,6 +301,7 @@ class CalendarService: ObservableObject {
         for config in settings.alertConfigs {
             guard config.enabled else { continue }
             for event in upcomingEvents {
+                if event.isAllDay && !settings.allDayEventAlertsEnabled { continue }
                 guard !firedEventIDs.contains(event.id) else { continue }
                 guard !alertFiredIDs[config.id, default: []].contains(event.id) else { continue }
                 let timeUntilStart = event.startDate.timeIntervalSince(now)
@@ -317,6 +318,7 @@ class CalendarService: ObservableObject {
         // after the first alarm would suppress all remaining alarms.
         if settings.eventAlarmAlertsEnabled {
             for event in upcomingEvents {
+                if event.isAllDay && !settings.allDayEventAlertsEnabled { continue }
                 // If the user clicked "Disable alerts for this event", skip all
                 // remaining alarms. This is checked inside the event loop (not as
                 // a guard on the outer loop) so that normal alarm firing doesn't

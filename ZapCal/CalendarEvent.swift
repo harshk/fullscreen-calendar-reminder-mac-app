@@ -102,12 +102,9 @@ struct CalendarEvent: Identifiable, Equatable {
     // MARK: - Computed Properties
     
     var shouldTriggerAlert: Bool {
-        // Don't trigger for all-day events
-        guard !isAllDay else { return false }
-        
         // Don't trigger for declined events
         guard participationStatus != .declined else { return false }
-        
+
         return true
     }
     

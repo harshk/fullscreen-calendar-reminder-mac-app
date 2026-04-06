@@ -94,6 +94,11 @@ class AppSettings: ObservableObject {
         didSet { UserDefaults.standard.set(calendarAlertsEnabled, forKey: "calendarAlertsEnabled") }
     }
 
+    /// Whether alerts should fire for all-day events (default: off).
+    @Published var allDayEventAlertsEnabled: Bool {
+        didSet { UserDefaults.standard.set(allDayEventAlertsEnabled, forKey: "allDayEventAlertsEnabled") }
+    }
+
     // MARK: - Alert Configs
 
     @Published var alertConfigs: [AlertConfig] {
@@ -160,6 +165,9 @@ class AppSettings: ObservableObject {
         } else {
             self.calendarAlertsEnabled = true
         }
+
+        // All-day event alerts (default false)
+        self.allDayEventAlertsEnabled = UserDefaults.standard.bool(forKey: "allDayEventAlertsEnabled")
 
         // Alert configs
         if let data = UserDefaults.standard.data(forKey: "alertConfigs"),

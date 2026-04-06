@@ -15,6 +15,8 @@ struct GeneralSettingsView: View {
             Section {
                 Toggle("Launch at Login", isOn: $settings.launchAtLogin)
 
+                Toggle("Enable Alerts for All-Day Events", isOn: $settings.allDayEventAlertsEnabled)
+
                 HStack {
                     Text("Number of Events to display in Menu Bar")
                     Spacer()

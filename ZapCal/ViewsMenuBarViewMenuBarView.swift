@@ -8,6 +8,7 @@
 import SwiftUI
 import AppKit
 import Combine
+import StoreKit
 
 // MARK: - Menu Bar List Item
 
@@ -46,6 +47,8 @@ struct MenuBarView: View {
     @ObservedObject var reminderService = ReminderService.shared
     @ObservedObject var appleRemindersService = AppleRemindersService.shared
     @ObservedObject var settings = AppSettings.shared
+    @ObservedObject var trialManager = TrialManager.shared
+    @ObservedObject var storeManager = StoreManager.shared
     @State private var showingAddReminderInfo = false
 
     private var menuBarTheme: PreAlertTheme {
@@ -67,27 +70,128 @@ struct MenuBarView: View {
                 }
                 .padding(.leading, 12)
                 Spacer()
-                Button(action: { openSettings() }) {
-                    Image(systemName: "gearshape.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(.secondary)
+                if trialManager.trialState != .expired {
+                    Button(action: { openSettings() }) {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.trailing, 12)
                 }
-                .buttonStyle(.plain)
-                .padding(.trailing, 12)
             }
             .frame(height: 38)
 
-            if !calendarService.hasAccess {
-                noAccessView
-            } else if settings.selectedCalendarIdentifiers.isEmpty {
-                noCalendarsSelectedView
+            if trialManager.trialState == .expired {
+                trialExpiredView
             } else {
-                upcomingEventsSection
-            }
+                if case .active(let days) = trialManager.trialState {
+                    trialBannerView(daysRemaining: days)
+                }
 
-            menuActions.padding(.vertical, 4)
+                if !calendarService.hasAccess {
+                    noAccessView
+                } else if settings.selectedCalendarIdentifiers.isEmpty {
+                    noCalendarsSelectedView
+                } else {
+                    upcomingEventsSection
+                }
+
+                menuActions.padding(.vertical, 4)
+            }
         }
         .frame(width: 350)
+    }
+
+    // MARK: - Trial Expired View
+
+    @ViewBuilder
+    private var trialExpiredView: some View {
+        VStack(spacing: 16) {
+            Spacer()
+
+            Image(systemName: "clock.badge.exclamationmark")
+                .font(.system(size: 40))
+                .foregroundColor(.secondary)
+
+            Text("Free Trial Expired")
+                .font(.system(size: 18, weight: .semibold))
+
+            Text("Purchase the full version to continue using ZapCal.")
+                .font(.system(size: 13))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 24)
+
+            if let product = storeManager.product {
+                Button(action: {
+                    Task { await storeManager.purchase() }
+                }) {
+                    Text("Purchase Full Version — \(product.displayPrice)")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(Color.accentColor)
+                        .cornerRadius(8)
+                }
+                .buttonStyle(.plain)
+                .padding(.horizontal, 24)
+                .disabled(storeManager.purchaseInProgress)
+            }
+
+            if storeManager.purchaseInProgress {
+                ProgressView()
+                    .controlSize(.small)
+            }
+
+            if let error = storeManager.purchaseError {
+                Text(error)
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .padding(.horizontal, 24)
+            }
+
+            Button("Restore Purchase") {
+                Task { await storeManager.restorePurchases() }
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 12))
+            .foregroundColor(.accentColor)
+
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 420)
+
+        Divider().padding(.horizontal, 10)
+
+        Button("Quit") {
+            NSApplication.shared.terminate(nil)
+        }
+        .buttonStyle(MenuRowButtonStyle())
+
+        Spacer().frame(height: 5)
+    }
+
+    // MARK: - Trial Banner
+
+    private func trialBannerView(daysRemaining: Int) -> some View {
+        HStack {
+            Text("Trial: \(daysRemaining) day\(daysRemaining == 1 ? "" : "s") remaining")
+                .font(.system(size: 11))
+                .foregroundColor(.secondary)
+            Spacer()
+            Button("Upgrade") {
+                Task { await storeManager.purchase() }
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 11, weight: .medium))
+            .foregroundColor(.accentColor)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 4)
+        .background(Color.secondary.opacity(0.08))
     }
     
     // MARK: - No Access View

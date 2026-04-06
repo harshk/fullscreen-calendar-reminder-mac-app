@@ -266,6 +266,7 @@ class CalendarService: ObservableObject {
     func checkForEventsToFire() {
         guard !AppSettings.shared.isPaused else { return }
         guard AppSettings.shared.calendarAlertsEnabled else { return }
+        guard TrialManager.shared.trialState != .expired else { return }
 
         let now = Date()
         let elapsed = now.timeIntervalSince(lastFireCheckDate)

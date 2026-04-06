@@ -77,6 +77,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Setup reminder service with model context
         let context = modelContainer.mainContext
         ReminderService.shared.setModelContext(context)
+
+        // Initialize store and trial managers
+        _ = StoreManager.shared
+        _ = TrialManager.shared
     }
     
     // MARK: - Menu Bar Setup
@@ -445,9 +449,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showRightClickMenu() {
         let menu = NSMenu()
-        let pauseTitle = AppSettings.shared.isPaused ? "Resume ZapCal Alerts" : "Pause all ZapCal Alerts"
-        menu.addItem(NSMenuItem(title: pauseTitle, action: #selector(togglePause), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ""))
+
+        if TrialManager.shared.trialState == .expired {
+            menu.addItem(NSMenuItem(title: "Free Trial Expired", action: nil, keyEquivalent: ""))
+        } else {
+            let pauseTitle = AppSettings.shared.isPaused ? "Resume ZapCal Alerts" : "Pause all ZapCal Alerts"
+            menu.addItem(NSMenuItem(title: pauseTitle, action: #selector(togglePause), keyEquivalent: ""))
+            menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ""))
+        }
+
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: ""))
         statusItem?.menu = menu

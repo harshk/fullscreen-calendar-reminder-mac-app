@@ -104,6 +104,7 @@ class ReminderService: ObservableObject {
     
     func checkForRemindersToFire() {
         guard !AppSettings.shared.isPaused else { return }
+        guard TrialManager.shared.trialState != .expired else { return }
 
         let now = Date()
         let elapsed = now.timeIntervalSince(lastFireCheckDate)

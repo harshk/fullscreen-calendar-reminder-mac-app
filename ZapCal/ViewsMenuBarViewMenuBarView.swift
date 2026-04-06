@@ -247,6 +247,13 @@ struct MenuBarView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(Self.beeStingBg.opacity(0.97))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+        )
+        .padding(.horizontal, 10)
+        .padding(.vertical, 4)
     }
     
     // MARK: - No Access View

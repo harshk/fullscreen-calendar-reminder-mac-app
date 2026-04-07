@@ -121,7 +121,7 @@ class ReminderService: ObservableObject {
             }
             for reminder in missedReminders {
                 firedReminderIDs.insert(reminder.id)
-                for config in AppSettings.shared.alertConfigs {
+                for config in AppSettings.shared.reminderAlertConfigs {
                     alertFiredIDs[config.id, default: []].insert(reminder.id)
                 }
                 modelContext?.delete(reminder)
@@ -136,14 +136,13 @@ class ReminderService: ObservableObject {
         let settings = AppSettings.shared
         var deletedAny = false
 
-        // Custom reminders fire at their exact scheduled time, not with lead time.
-        // Use the first enabled config to determine the alert style.
-        if let config = settings.alertConfigs.first(where: { $0.enabled }) {
+        for config in settings.reminderAlertConfigs {
+            guard config.enabled else { continue }
             for reminder in upcomingReminders {
                 guard !firedReminderIDs.contains(reminder.id) else { continue }
                 guard !alertFiredIDs[config.id, default: []].contains(reminder.id) else { continue }
                 let timeUntilStart = reminder.scheduledDate.timeIntervalSince(now)
-                if timeUntilStart <= 0 && timeUntilStart > -120 {
+                if timeUntilStart <= config.leadTime && timeUntilStart > -120 {
                     alertFiredIDs[config.id, default: []].insert(reminder.id)
                     fireAlert(config: config, for: reminder, deleteAfterFullScreen: &deletedAny)
                 }

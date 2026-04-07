@@ -170,7 +170,7 @@ class AppleRemindersService: ObservableObject {
         if elapsed > 10 {
             for reminder in upcomingReminders where reminder.dueDate <= now {
                 firedReminderIDs.insert(reminder.id)
-                for config in AppSettings.shared.alertConfigs {
+                for config in AppSettings.shared.reminderAlertConfigs {
                     alertFiredIDs[config.id, default: []].insert(reminder.id)
                 }
             }
@@ -179,15 +179,13 @@ class AppleRemindersService: ObservableObject {
 
         let settings = AppSettings.shared
 
-        // Fire once per reminder at its due date, using the first enabled
-        // config to determine the alert style. Reminders should not follow
-        // the multi-config alert schedule.
-        if let config = settings.alertConfigs.first(where: { $0.enabled }) {
+        for config in settings.reminderAlertConfigs {
+            guard config.enabled else { continue }
             for reminder in upcomingReminders {
                 guard !firedReminderIDs.contains(reminder.id) else { continue }
                 guard !alertFiredIDs[config.id, default: []].contains(reminder.id) else { continue }
                 let timeUntilDue = reminder.dueDate.timeIntervalSince(now)
-                if timeUntilDue <= 0 && timeUntilDue > -120 {
+                if timeUntilDue <= config.leadTime && timeUntilDue > -120 {
                     alertFiredIDs[config.id, default: []].insert(reminder.id)
                     fireAlert(config: config, for: reminder)
                 }

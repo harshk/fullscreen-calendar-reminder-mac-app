@@ -7,8 +7,52 @@
 
 import SwiftUI
 
+enum AlertsSubTab: String, CaseIterable, Identifiable {
+    case calendar = "Calendar Alerts"
+    case reminders = "Reminder Alerts"
+    var id: String { rawValue }
+}
+
 struct AlertsSettingsView: View {
     @ObservedObject var settings = AppSettings.shared
+    @State private var selectedSubTab: AlertsSubTab = .calendar
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Picker("", selection: $selectedSubTab) {
+                ForEach(AlertsSubTab.allCases) { tab in
+                    Text(tab.rawValue).tag(tab)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 4)
+
+            switch selectedSubTab {
+            case .calendar:
+                AlertConfigListView(
+                    configs: Binding(
+                        get: { settings.alertConfigs },
+                        set: { settings.alertConfigs = $0 }
+                    )
+                )
+            case .reminders:
+                AlertConfigListView(
+                    configs: Binding(
+                        get: { settings.reminderAlertConfigs },
+                        set: { settings.reminderAlertConfigs = $0 }
+                    )
+                )
+            }
+        }
+    }
+}
+
+// MARK: - Reusable Alert Config List
+
+struct AlertConfigListView: View {
+    @Binding var configs: [AlertConfig]
     @State private var deleteAlertIndex: Int? = nil
     @State private var editAlertIndex: Int? = nil
 
@@ -16,7 +60,7 @@ struct AlertsSettingsView: View {
         VStack(spacing: 0) {
             HStack {
                 Button {
-                    settings.alertConfigs.append(AlertConfig())
+                    configs.append(AlertConfig())
                 } label: {
                     Label("Add Alert", systemImage: "plus.circle")
                 }
@@ -26,55 +70,54 @@ struct AlertsSettingsView: View {
             .padding(.top, 12)
             .padding(.bottom, 4)
 
-        Form {
-            ForEach(Array(settings.alertConfigs.enumerated()), id: \.element.id) { index, config in
-                Section {
-                    Toggle("Enable", isOn: Binding(
-                        get: { config.enabled },
-                        set: { settings.alertConfigs[index].enabled = $0 }
-                    ))
-
-                    if config.enabled {
-                        AlertStylePicker(selection: Binding(
-                            get: { config.style },
-                            set: { settings.alertConfigs[index].style = $0 }
+            Form {
+                ForEach(Array(configs.enumerated()), id: \.element.id) { index, config in
+                    Section {
+                        Toggle("Enable", isOn: Binding(
+                            get: { config.enabled },
+                            set: { configs[index].enabled = $0 }
                         ))
 
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Alert Settings")
-                                Text(alertSettingsSummary(for: config))
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                            }
-                            Spacer()
-                            Button("Edit") {
-                                editAlertIndex = index
+                        if config.enabled {
+                            AlertStylePicker(selection: Binding(
+                                get: { config.style },
+                                set: { configs[index].style = $0 }
+                            ))
+
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Alert Settings")
+                                    Text(alertSettingsSummary(for: config))
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                }
+                                Spacer()
+                                Button("Edit") {
+                                    editAlertIndex = index
+                                }
                             }
                         }
-                    }
-                } header: {
-                    HStack {
-                        Text("Alert \(index + 1)")
-                            .font(.headline)
-                        if settings.alertConfigs.count > 1 {
-                            Button {
-                                deleteAlertIndex = index
-                            } label: {
-                                Image(systemName: "trash")
-                                    .font(.caption)
-                                    .foregroundColor(.red)
+                    } header: {
+                        HStack {
+                            Text("Alert \(index + 1)")
+                                .font(.headline)
+                            if configs.count > 1 {
+                                Button {
+                                    deleteAlertIndex = index
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .font(.caption)
+                                        .foregroundColor(.red)
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
                         }
                     }
                 }
             }
-
+            .formStyle(.grouped)
+            .padding()
         }
-        .formStyle(.grouped)
-        .padding()
-        } // VStack
         .alert("Delete Alert?", isPresented: Binding(
             get: { deleteAlertIndex != nil },
             set: { if !$0 { deleteAlertIndex = nil } }
@@ -82,7 +125,7 @@ struct AlertsSettingsView: View {
             Button("Cancel", role: .cancel) { deleteAlertIndex = nil }
             Button("Delete", role: .destructive) {
                 if let index = deleteAlertIndex {
-                    settings.alertConfigs.remove(at: index)
+                    configs.remove(at: index)
                 }
                 deleteAlertIndex = nil
             }
@@ -98,8 +141,8 @@ struct AlertsSettingsView: View {
             if let index = editAlertIndex {
                 AlertSettingsSheet(
                     config: Binding(
-                        get: { settings.alertConfigs[index] },
-                        set: { settings.alertConfigs[index] = $0 }
+                        get: { configs[index] },
+                        set: { configs[index] = $0 }
                     )
                 )
             }

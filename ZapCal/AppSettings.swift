@@ -139,6 +139,18 @@ class AppSettings: ObservableObject {
         didSet { UserDefaults.standard.set(menuBarPresetName, forKey: "menuBarPresetName") }
     }
 
+    // MARK: - Reminder Alert Configs
+
+    @Published var reminderAlertConfigs: [AlertConfig] {
+        didSet { saveReminderAlertConfigs() }
+    }
+
+    private func saveReminderAlertConfigs() {
+        if let data = try? JSONEncoder().encode(reminderAlertConfigs) {
+            UserDefaults.standard.set(data, forKey: "reminderAlertConfigs")
+        }
+    }
+
     /// Whether Apple Reminders integration is enabled.
     @Published var appleRemindersEnabled: Bool {
         didSet { UserDefaults.standard.set(appleRemindersEnabled, forKey: "appleRemindersEnabled") }
@@ -241,6 +253,16 @@ class AppSettings: ObservableObject {
 
         // Menu bar preset
         self.menuBarPresetName = UserDefaults.standard.string(forKey: "menuBarPresetName") ?? "Basic"
+
+        // Reminder alert configs (default: single full-screen alert at due time)
+        if let data = UserDefaults.standard.data(forKey: "reminderAlertConfigs"),
+           let configs = try? JSONDecoder().decode([AlertConfig].self, from: data) {
+            self.reminderAlertConfigs = configs
+        } else {
+            self.reminderAlertConfigs = [
+                AlertConfig(style: .fullScreen, leadTime: 0)
+            ]
+        }
 
         // Apple Reminders
         self.appleRemindersEnabled = UserDefaults.standard.bool(forKey: "appleRemindersEnabled")

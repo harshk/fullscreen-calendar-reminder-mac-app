@@ -30,7 +30,6 @@ class CalendarService: ObservableObject {
     /// Tracks which event alarm dates have already triggered, keyed by "eventID_alarmTimestamp".
     private var alarmFiredIDs = Set<String>()
     private var pollingTimer: Timer?
-    private var fireCheckTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
     private var lastFireCheckDate = Date()
     
@@ -241,24 +240,14 @@ class CalendarService: ObservableObject {
             }
         }
 
-        // Check if any events need to fire every 1 second (cheap operation)
-        fireCheckTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                self?.checkForEventsToFire()
-            }
-        }
-
         Task {
             await fetchUpcomingEvents()
-            checkForEventsToFire()
         }
     }
 
     func stopPolling() {
         pollingTimer?.invalidate()
         pollingTimer = nil
-        fireCheckTimer?.invalidate()
-        fireCheckTimer = nil
     }
     
     // MARK: - Alert Triggering
@@ -272,10 +261,10 @@ class CalendarService: ObservableObject {
         let elapsed = now.timeIntervalSince(lastFireCheckDate)
         lastFireCheckDate = now
 
-        // If more than 10 seconds elapsed since the last check, the system was
-        // likely asleep (timer fires every 1s). Silently mark all past events
+        // If more than 2 minutes elapsed since the last check, the system was
+        // likely asleep (timer fires every ~60s). Silently mark all past events
         // and all past alarms as fired so they don't trigger alerts.
-        if elapsed > 10 {
+        if elapsed > 120 {
             for event in upcomingEvents {
                 // Mark events whose start time has passed
                 if event.startDate <= now {

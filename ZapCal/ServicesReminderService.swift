@@ -16,7 +16,6 @@ class ReminderService: ObservableObject {
     @Published var upcomingReminders: [CustomReminder] = []
     
     private var modelContext: ModelContext?
-    private var pollingTimer: Timer?
     private var firedReminderIDs = Set<UUID>()
     private var alertFiredIDs = [UUID: Set<UUID>]()
     private var lastFireCheckDate = Date()
@@ -26,7 +25,6 @@ class ReminderService: ObservableObject {
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
         loadReminders()
-        startPolling()
     }
     
     // MARK: - CRUD Operations
@@ -81,25 +79,6 @@ class ReminderService: ObservableObject {
         loadReminders()
     }
     
-    // MARK: - Polling
-    
-    func startPolling() {
-        stopPolling()
-        
-        pollingTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                self?.checkForRemindersToFire()
-            }
-        }
-        
-        checkForRemindersToFire()
-    }
-    
-    func stopPolling() {
-        pollingTimer?.invalidate()
-        pollingTimer = nil
-    }
-    
     // MARK: - Alert Triggering
     
     func checkForRemindersToFire() {
@@ -110,10 +89,10 @@ class ReminderService: ObservableObject {
         let elapsed = now.timeIntervalSince(lastFireCheckDate)
         lastFireCheckDate = now
 
-        // If more than 10 seconds elapsed since the last check, the system was
-        // likely asleep (timer fires every 1s). Silently mark all past-due
+        // If more than 2 minutes elapsed since the last check, the system was
+        // likely asleep (timer fires every ~60s). Silently mark all past-due
         // reminders as fired and delete them without showing alerts.
-        if elapsed > 10 {
+        if elapsed > 120 {
             let missedReminders = upcomingReminders.filter { reminder in
                 !firedReminderIDs.contains(reminder.id) &&
                 reminder.scheduledDate <= now &&

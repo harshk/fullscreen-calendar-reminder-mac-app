@@ -1,45 +1,32 @@
 //
 //  AlertMergeBuffer.swift
 //  ZapCal
-//
 
 import Foundation
 import SwiftUI
 
-/// Buffers alerts that fire within a 10-second window and merges them
-/// into a single presentation. Full-screen alerts take precedence over
-/// mini alerts when mixed.
+/// Collects alerts submitted by all three services during a single check cycle,
+/// then presents them (merged if needed) when the coordinator calls flush().
 @MainActor
 class AlertMergeBuffer {
     static let shared = AlertMergeBuffer()
 
     private var pendingItems: [(item: AlertItem, style: AlertStyle, duration: Double)] = []
-    private var mergeTimer: Timer?
-    private static let mergeWindowSeconds: TimeInterval = 10
 
     private init() {}
 
-    /// Submit an alert to the buffer. It will be presented (possibly merged
-    /// with others) after the merge window expires.
+    /// Submit an alert to the buffer. It will be presented when flush() is called.
     func submit(item: AlertItem, style: AlertStyle, duration: Double) {
         // Don't add duplicates
         let id = item.id
         guard !pendingItems.contains(where: { $0.item.id == id }) else { return }
 
         pendingItems.append((item, style, duration))
-
-        if mergeTimer == nil {
-            mergeTimer = Timer.scheduledTimer(withTimeInterval: Self.mergeWindowSeconds, repeats: false) { [weak self] _ in
-                Task { @MainActor in self?.flush() }
-            }
-        }
     }
 
-    /// Immediately present all buffered alerts (called when merge window expires).
-    private func flush() {
-        mergeTimer?.invalidate()
-        mergeTimer = nil
-
+    /// Present all buffered alerts (called by AlertCheckCoordinator after all
+    /// services have checked in).
+    func flush() {
         guard !pendingItems.isEmpty else { return }
 
         let items = pendingItems.map(\.item)
@@ -100,8 +87,6 @@ class AlertMergeBuffer {
 
     /// Clear the buffer (e.g. on clock change or pause).
     func reset() {
-        mergeTimer?.invalidate()
-        mergeTimer = nil
         pendingItems.removeAll()
     }
 }

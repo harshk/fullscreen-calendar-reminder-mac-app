@@ -24,7 +24,6 @@ class AppleRemindersService: ObservableObject {
     private var firedReminderIDs = Set<String>()
     private var alertFiredIDs = [UUID: Set<String>]()
     private var pollingTimer: Timer?
-    private var fireCheckTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
     private var lastFireCheckDate = Date()
 
@@ -136,23 +135,14 @@ class AppleRemindersService: ObservableObject {
             }
         }
 
-        fireCheckTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                self?.checkForRemindersToFire()
-            }
-        }
-
         Task {
             await fetchUpcomingReminders()
-            checkForRemindersToFire()
         }
     }
 
     func stopPolling() {
         pollingTimer?.invalidate()
         pollingTimer = nil
-        fireCheckTimer?.invalidate()
-        fireCheckTimer = nil
     }
 
     // MARK: - Alert Triggering
@@ -167,7 +157,8 @@ class AppleRemindersService: ObservableObject {
         lastFireCheckDate = now
 
         // Sleep detection — silently mark all past reminders as fired
-        if elapsed > 10 {
+        // (timer fires every ~60s, so 2+ minutes gap means system slept)
+        if elapsed > 120 {
             for reminder in upcomingReminders where reminder.dueDate <= now {
                 firedReminderIDs.insert(reminder.id)
                 for config in AppSettings.shared.reminderAlertConfigs {

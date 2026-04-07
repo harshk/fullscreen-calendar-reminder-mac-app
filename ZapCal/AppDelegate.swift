@@ -81,6 +81,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Initialize store and trial managers
         _ = StoreManager.shared
         _ = TrialManager.shared
+
+        // Start the single fire-check timer that drives all three services
+        AlertCheckCoordinator.shared.start()
     }
     
     // MARK: - Menu Bar Setup

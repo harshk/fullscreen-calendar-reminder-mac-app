@@ -30,7 +30,9 @@ ZapCal is a macOS menu bar application that displays customizable full-screen al
 22. [Memory & Performance](#22-memory--performance)
 23. [Video Conference URL Detection](#23-video-conference-url-detection)
 24. [Migration Logic](#24-migration-logic)
-25. [File & Code Organization](#25-file--code-organization)
+25. [Free Trial & In-App Purchase](#25-free-trial--in-app-purchase)
+26. [About ZapCal Screen](#26-about-zapcal-screen)
+27. [File & Code Organization](#27-file--code-organization)
 
 ---
 
@@ -56,7 +58,7 @@ ZapCal is a macOS menu bar application that displays customizable full-screen al
 ### Activation Policy
 
 - **`.accessory`**: Default state. App is menu-bar-only, no dock icon.
-- **`.regular`**: Temporarily set when settings window, manage reminders window, or welcome screen is shown (makes dock icon appear so windows are interactable).
+- **`.regular`**: Temporarily set when settings window, manage reminders window, welcome screen, or About window is shown (makes dock icon appear so windows are interactable). Also set temporarily during IAP purchase flow (required for StoreKit sheet).
 - Toggled back to `.accessory` when all windows close.
 
 ---
@@ -81,7 +83,8 @@ ZapCal is a macOS menu bar application that displays customizable full-screen al
   - Custom reminders show: orange bell icon, time, reminder title
   - Apple Reminders show: reminder list name, time, title
   - Limited to `numberOfEventsInMenuBar` items (default 50, max 99)
-- **Actions**: "Add ZapCal Reminder" button, "Manage Reminders" button, "Open Settings", "About"
+- **Actions**: "Add ZapCal Reminder" button, "Manage Reminders" button, "Open Settings", "About ZapCal"
+- **Disabled events**: Events with alerts disabled are shown at 40% opacity (dimmed). Right-click context menu offers "Re-enable alerts" / "Disable alerts" toggle.
 - **Empty states**: Message for no calendar access or no calendars selected
 
 ### Panel Show/Dismiss
@@ -94,8 +97,12 @@ ZapCal is a macOS menu bar application that displays customizable full-screen al
 
 Right-clicking the menu bar icon shows:
 - "Pause all ZapCal Alerts" / "Resume ZapCal Alerts"
-- "Open Settings"
-- "Quit ZapCal"
+- "Settings"
+- Separator
+- "About ZapCal"
+- "Quit"
+
+When the trial is expired, only "Free Trial Expired" (disabled) and "Quit" are shown.
 
 ---
 
@@ -142,7 +149,7 @@ Right-clicking the menu bar icon shows:
 
 **File**: `ServicesCalendarService.swift` (method: `checkForEventsToFire`)
 
-The fire check timer runs every **1 second**. Each tick:
+The fire check runs at each **minute boundary** (synchronized to clock second = 0), coordinated by `AlertCheckCoordinator`. Each tick:
 
 ### Step 1: Sleep Detection
 
@@ -184,20 +191,23 @@ Instead of showing alerts immediately, fired alerts are submitted to `AlertMerge
 
 ---
 
-## 5. Alert Merge Buffer
+## 5. Alert Merge Buffer & Minute-Boundary Checks
 
-**File**: `AlertMergeBuffer.swift`
+**Files**: `AlertMergeBuffer.swift`, `ServicesAlertCheckCoordinator.swift`
 
 ### Purpose
 
 When multiple events start at the same time (e.g., two meetings at 10:00 AM), the merge buffer coalesces them into a single merged alert instead of showing them one by one.
 
-### Merge Window
+### Synchronized Minute-Boundary Checks
 
-- **Duration**: **10 seconds**
-- When the first alert is submitted, a 10-second timer starts
-- Any alerts submitted within that 10-second window are batched together
-- After 10 seconds, `flush()` evaluates all pending items
+The `AlertCheckCoordinator` fires checks at minute boundaries (synchronized to clock second = 0):
+
+1. Each minute boundary calls `tick()` which invokes all three services' check methods sequentially (CalendarService, ReminderService, AppleRemindersService)
+2. Immediately calls `AlertMergeBuffer.shared.flush()` after all services have reported
+3. Reschedules the next check for the start of the next minute
+
+This deterministic timing eliminates the old 10-second merge window, ensuring all simultaneous alerts are collected and flushed together in a single coordinated pass.
 
 ### Flush Logic
 
@@ -647,7 +657,7 @@ getPreAlertTheme(for calendarIdentifier):
     if calendarPreAlertAssignments[calendarID] exists:
         return that preset's theme
     else:
-        return default preset theme ("Coral Paper" for mini)
+        return default preset theme ("Rose Cream" for mini)
 ```
 
 ### Persistence
@@ -685,14 +695,19 @@ struct AlertConfig: Codable, Identifiable {
 
 ### Default Configs
 
-Two default configs are created on first launch:
+**Calendar alert configs** (`alertConfigs`) — two defaults on first launch:
 1. **Mini alert**: enabled, `.mini` style, 60s lead time, 15s duration, snooze [60, 300, 900]
 2. **Full-screen alert**: enabled, `.fullScreen` style, 0s lead time (fires at event start)
+
+**Reminder alert configs** (`reminderAlertConfigs`) — one default on first launch:
+1. **Full-screen alert**: enabled, `.fullScreen` style, 0s lead time (fires at due time)
+
+Calendar events and reminders (both custom and Apple Reminders) use separate alert config arrays, allowing different timing and style settings for each.
 
 ### How Multiple Configs Work
 
 - Each config fires independently for each event
-- Example with defaults: A meeting at 10:00 AM triggers:
+- Example with calendar defaults: A meeting at 10:00 AM triggers:
   - Mini banner at 9:59 AM (60s before)
   - Full-screen alert at 10:00 AM (0s before)
 - Each config has its own `alertFiredIDs` tracking set
@@ -715,7 +730,10 @@ Two default configs are created on first launch:
    - Snooze button durations (3 configurable, in minutes)
 
 2. **Alerts** (`AlertsSettingsView.swift`):
-   - List of AlertConfigs with enable/disable toggles
+   - Segmented picker with **Calendar** and **Reminders** sub-tabs
+   - Calendar sub-tab manages `alertConfigs` (for calendar events)
+   - Reminders sub-tab manages `reminderAlertConfigs` (for custom and Apple Reminders)
+   - Each sub-tab: list of AlertConfigs with enable/disable toggles
    - Each config shows summary: style, lead time, duration
    - Modal sheet for editing individual config details
    - Add/remove alert configs
@@ -864,8 +882,9 @@ Two default configs are created on first launch:
 | `eventAlarmAlertStyle` | AlertStyle | .mini | Style for alarm alerts |
 | `eventAlarmAlertDuration` | Double | 15 | Duration for alarm mini banners |
 | `snoozeDurations` | [Double] | [60, 300, 900] | Snooze options in seconds |
-| `menuBarPresetName` | String | "Coral Paper" | Preset for menu bar styling |
-| `alertConfigs` | JSON | (2 defaults) | Encoded AlertConfig array |
+| `menuBarPresetName` | String | "Rose Cream" | Preset for menu bar styling |
+| `alertConfigs` | JSON | (2 defaults) | Encoded AlertConfig array for calendar events |
+| `reminderAlertConfigs` | JSON | (1 default) | Encoded AlertConfig array for reminders |
 | `selectedCalendarIdentifiers` | JSON | [] | Enabled calendar IDs |
 | `selectedReminderListIdentifiers` | JSON | [] | Enabled reminder list IDs |
 | `firedEventIDs` | [String] | [] | Globally disabled event IDs |
@@ -990,7 +1009,87 @@ Converts legacy per-calendar theme storage to the preset-based system:
 
 ---
 
-## 25. File & Code Organization
+## 25. Free Trial & In-App Purchase
+
+**Files**: `ServicesTrialManager.swift`, `ServicesStoreManager.swift`
+
+### Trial System
+
+- **Duration**: 7-day free trial from first launch
+- **Start date source**: In production, uses App Store receipt `originalPurchaseDate` (tamper-proof). Falls back to local UserDefaults date if receipt unavailable. In DEBUG builds, uses local UserDefaults date for testing.
+- **Remaining days**: Calculated at midnight boundaries using `Calendar.dateComponents`
+
+### Trial States
+
+| State | Description |
+|-------|-------------|
+| `loading` | Initial state while checking receipt/purchase status |
+| `active(daysRemaining)` | Trial active, shows days remaining in menu bar panel |
+| `expired` | Trial ended, app locked to purchase screen |
+| `purchased` | Full version unlocked via IAP |
+
+### Trial Expired Behavior
+
+When the trial expires:
+- Menu bar panel shows `trialExpiredView` instead of the event list
+- Shows app icon, "Free Trial Expired" message, price/purchase button, and restore purchase option
+- Settings gear button is hidden
+- Right-click menu shows only "Free Trial Expired" (disabled) and "Quit"
+- Alerts stop firing
+
+### In-App Purchase
+
+- **Product ID**: `spotlessmindsoftware.ZapCal.fullversion`
+- **Framework**: StoreKit 2
+
+### Purchase Flow
+
+1. User taps purchase button in the trial expired view
+2. Menu bar panel dismisses
+3. App activation policy changes to `.regular` (required for StoreKit sheet)
+4. 200ms delay for cleanup
+5. `product.purchase()` shows Apple's system purchase sheet
+6. On success: transaction verified, finished, `isPurchased = true`, TrialManager refreshed
+7. App returns to `.accessory` activation policy
+8. Shows "Thank You!" confirmation screen in the menu bar panel
+9. Purchase status monitored continuously via `Transaction.updates` listener
+
+### Purchase Restoration
+
+- `AppStore.sync()` syncs with the App Store
+- Re-checks entitlements for product ID match
+- TrialManager state refreshed to `.purchased` if valid
+
+### Purchase State Persistence
+
+- Purchase status checked on every launch via `Transaction.currentEntitlement(for:)`
+- Persists across app restarts without additional UserDefaults storage
+
+---
+
+## 26. About ZapCal Screen
+
+**File**: `ViewsAboutView.swift`
+
+### Screen Content
+
+- **App icon**: 128x128 pixels, from `NSApp.applicationIconImage`
+- **App name**: "ZapCal" in 24pt bold
+- **Version**: "Version X.Y.Z (buildNumber)" in 12pt secondary color
+- **Company**: "by Spotless Mind Software" in 14pt medium weight
+- **Contact**: "Feedback & Questions:" label with clickable mailto link to `spotlessmindsoftware@gmail.com`
+
+### Access
+
+- **Menu bar panel**: "About ZapCal" button above "Quit" in the panel footer
+- **Right-click menu**: "About ZapCal" menu item above "Quit"
+- Opens as a standalone window (320px wide, titled, closable)
+- Window is reused across open/close cycles (same pattern as other managed windows)
+- Dock icon shown while About window is open, hidden when closed
+
+---
+
+## 27. File & Code Organization
 
 ### Services (Stateful Singletons)
 
@@ -1005,6 +1104,9 @@ Converts legacy per-calendar theme storage to the preset-based system:
 | `ThemeService` | Calendar-to-preset assignment mapping |
 | `PresetManager` | Full-screen preset loading and persistence |
 | `PreAlertPresetManager` | Mini preset loading and persistence |
+| `StoreManager` | In-app purchase management (StoreKit 2) |
+| `TrialManager` | 7-day free trial tracking and state |
+| `AlertCheckCoordinator` | Minute-boundary synchronized alert check scheduling |
 
 ### Models
 
@@ -1035,5 +1137,6 @@ Full_Screen_Calendar_ReminderApp
 │   └── MenuBarPresetView
 ├── WelcomeView (onboarding flow)
 ├── ManageRemindersView (reminder list)
-└── AddReminderView (reminder creation form)
+├── AddReminderView (reminder creation form)
+└── AboutView (app info, company, contact)
 ```

@@ -169,6 +169,11 @@ struct MenuBarView: View {
 
         Divider().padding(.horizontal, 10)
 
+        Button("About ZapCal") {
+            NotificationCenter.default.post(name: .openAbout, object: nil)
+        }
+        .buttonStyle(MenuRowButtonStyle())
+
         Button("Quit") {
             NSApplication.shared.terminate(nil)
         }
@@ -409,6 +414,11 @@ struct MenuBarView: View {
 
             Divider()
                 .padding(.horizontal, 10)
+
+            Button("About ZapCal") {
+                NotificationCenter.default.post(name: .openAbout, object: nil)
+            }
+            .buttonStyle(MenuRowButtonStyle())
 
             Button("Quit") {
                 NSApplication.shared.terminate(nil)
@@ -810,6 +820,7 @@ extension Notification.Name {
     static let showWelcomeScreen = Notification.Name("ShowWelcomeScreen")
     static let openAddReminder = Notification.Name("OpenAddReminder")
     static let welcomeSetupComplete = Notification.Name("WelcomeSetupComplete")
+    static let openAbout = Notification.Name("OpenAbout")
     static let openPanel = Notification.Name("OpenPanel")
 }
 

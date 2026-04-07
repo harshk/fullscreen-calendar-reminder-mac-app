@@ -21,6 +21,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var manageRemindersWindow: NSWindow?
     private var welcomeWindow: NSWindow?
     private var addReminderWindow: NSWindow?
+    private var aboutWindow: NSWindow?
     private var eventMonitor: Any?
     private var localEventMonitor: Any?
     private var welcomeSetupCompleted = false
@@ -177,6 +178,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             object: nil
         )
 
+        // Observe open about requests
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(openAbout),
+            name: .openAbout,
+            object: nil
+        )
+
         // Observe dismiss popover requests
         NotificationCenter.default.addObserver(
             self,
@@ -275,6 +284,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         } else if closedWindow == addReminderWindow {
             // No extra state to reset
+        } else if closedWindow == aboutWindow {
+            // No extra state to reset
         } else {
             return
         }
@@ -285,7 +296,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let manageVisible = manageRemindersWindow != closedWindow && manageRemindersWindow?.isVisible == true
         let welcomeVisible = welcomeWindow != closedWindow && welcomeWindow?.isVisible == true
         let addReminderVisible = addReminderWindow != closedWindow && addReminderWindow?.isVisible == true
-        if !settingsVisible && !manageVisible && !welcomeVisible && !addReminderVisible {
+        let aboutVisible = aboutWindow != closedWindow && aboutWindow?.isVisible == true
+        if !settingsVisible && !manageVisible && !welcomeVisible && !addReminderVisible && !aboutVisible {
             NSApp.setActivationPolicy(.accessory)
         }
     }
@@ -314,6 +326,33 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.center()
         window.isReleasedWhenClosed = false
         self.settingsWindow = window
+
+        NSApp.setActivationPolicy(.regular)
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    @objc private func openAbout() {
+        closePanel()
+
+        if let aboutWindow = aboutWindow {
+            NSApp.setActivationPolicy(.regular)
+            aboutWindow.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 320, height: 300),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "About ZapCal"
+        window.contentView = NSHostingView(rootView: AboutView())
+        window.center()
+        window.isReleasedWhenClosed = false
+        self.aboutWindow = window
 
         NSApp.setActivationPolicy(.regular)
         window.makeKeyAndOrderFront(nil)
@@ -479,6 +518,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         menu.addItem(NSMenuItem.separator())
+        menu.addItem(NSMenuItem(title: "About ZapCal", action: #selector(openAbout), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: ""))
         statusItem?.menu = menu
         statusItem?.button?.performClick(nil)

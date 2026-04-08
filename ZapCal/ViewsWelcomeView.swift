@@ -564,11 +564,12 @@ struct WelcomeView: View {
         onGrant: @escaping () -> Void,
         onOpenSettings: @escaping () -> Void
     ) -> some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .top, spacing: 12) {
             Image(systemName: granted ? "checkmark.circle.fill" : icon)
                 .font(.system(size: 24))
                 .foregroundColor(granted ? .green : iconColor)
                 .frame(width: 32)
+                .offset(y: 2)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)

@@ -195,7 +195,7 @@ struct CalendarEvent: Identifiable, Equatable {
         CalendarEvent(
             id: "mock-event-1",
             title: "Team Meeting",
-            startDate: Date().addingTimeInterval(3600),
+            startDate: Date().addingTimeInterval(60),
             location: "Conference Room A",
             notes: "Discuss Q2 planning",
             videoConferenceURL: URL(string: "https://zoom.us/j/123456789")

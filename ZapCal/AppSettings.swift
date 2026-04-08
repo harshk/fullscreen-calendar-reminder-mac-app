@@ -254,7 +254,7 @@ class AppSettings: ObservableObject {
         // Menu bar preset
         self.menuBarPresetName = UserDefaults.standard.string(forKey: "menuBarPresetName") ?? "Basic"
 
-        // Reminder alert configs (default: single full-screen alert at due time)
+        // Reminder alert configs (default: single subtle alert at due time, 5 min duration)
         if let data = UserDefaults.standard.data(forKey: "reminderAlertConfigs"),
            let configs = try? JSONDecoder().decode([AlertConfig].self, from: data) {
             self.reminderAlertConfigs = configs

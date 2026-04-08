@@ -199,7 +199,7 @@ struct PresetsSettingsView: View {
             Text("Select Element")
                 .font(.headline)
 
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 5), spacing: 4) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 4), spacing: 4) {
                 Button(action: { selectedElement = nil }) {
                     VStack(spacing: 2) {
                         Image(systemName: "photo")
@@ -209,6 +209,7 @@ struct PresetsSettingsView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 4)
+                    .padding(.horizontal, 6)
                     .background(selectedElement == nil ? Color.accentColor.opacity(0.2) : Color.clear)
                     .cornerRadius(6)
                     .overlay(
@@ -229,6 +230,7 @@ struct PresetsSettingsView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 4)
+                        .padding(.horizontal, 6)
                         .background(selectedElement == element ? Color.accentColor.opacity(0.2) : Color.clear)
                         .cornerRadius(6)
                         .overlay(

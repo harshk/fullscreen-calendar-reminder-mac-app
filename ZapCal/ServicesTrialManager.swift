@@ -34,7 +34,23 @@ class TrialManager: ObservableObject {
         }
     }
 
+    /// TestFlight builds have a sandbox receipt but are NOT debug builds.
+    private var isTestFlight: Bool {
+        #if DEBUG
+        return false
+        #else
+        return Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+        #endif
+    }
+
     private func evaluateTrialState() async {
+        // TestFlight users bypass trial/purchase entirely.
+        if isTestFlight {
+            print("[TrialManager] TestFlight build detected — bypassing trial")
+            trialState = .purchased
+            return
+        }
+
         // Ensure purchase status is up-to-date before checking.
         // StoreManager's init fires an async task that may not have
         // finished yet, so we explicitly await the check here.

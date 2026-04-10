@@ -1067,10 +1067,11 @@ When the trial expires:
 
 ### TestFlight Bypass
 
-- **Detection**: `Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"` AND `#if !DEBUG`
-- **Behavior**: TestFlight builds skip trial evaluation entirely and set `trialState = .purchased`
+- **Detection**: Uses StoreKit 2 `AppTransaction.shared` to check `transaction.environment == .sandbox` (guarded by `#if !DEBUG`)
+- **Behavior**: TestFlight builds (sandbox environment) skip trial evaluation entirely and set `trialState = .purchased`
 - **Debug builds**: Unaffected — Xcode debug builds go through the normal trial/purchase flow so the full IAP experience can be tested locally via the StoreKit configuration file
-- **Production builds**: Unaffected — App Store builds use the real trial and purchase logic
+- **Production builds**: Unaffected — App Store builds (production environment) use the real trial and purchase logic
+- **Why not receipt URL or provisioning profile?**: On macOS, TestFlight builds use `receipt` (not `sandboxReceipt`) as the receipt filename, and Apple strips `embedded.provisionprofile` from TestFlight builds. `AppTransaction.environment` is the only reliable detection method on macOS.
 
 ---
 

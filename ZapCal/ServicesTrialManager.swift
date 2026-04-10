@@ -8,6 +8,9 @@
 import Foundation
 import StoreKit
 import Combine
+import os
+
+private let logger = Logger(subsystem: "spotlessmindsoftware.ZapCal", category: "TrialManager")
 
 enum TrialState: Equatable {
     case loading
@@ -34,21 +37,30 @@ class TrialManager: ObservableObject {
         }
     }
 
-    /// TestFlight builds include an embedded provisioning profile that
-    /// Apple strips from App Store builds. DEBUG builds are excluded so
-    /// the full purchase flow can be tested locally in Xcode.
-    private var isTestFlight: Bool {
+    /// Checks AppTransaction environment to detect TestFlight (sandbox)
+    /// vs App Store (production). DEBUG builds are excluded so the full
+    /// purchase flow can be tested locally in Xcode.
+    private func checkIsTestFlight() async -> Bool {
         #if DEBUG
         return false
         #else
-        return Bundle.main.path(forResource: "embedded", ofType: "provisionprofile") != nil
+        guard let result = try? await AppTransaction.shared else { return false }
+        switch result {
+        case .verified(let transaction):
+            let env = transaction.environment
+            logger.notice("AppTransaction environment: \(env.rawValue, privacy: .public)")
+            return env == .sandbox
+        case .unverified:
+            return false
+        }
         #endif
     }
 
     private func evaluateTrialState() async {
         // TestFlight users bypass trial/purchase entirely.
+        let isTestFlight = await checkIsTestFlight()
         if isTestFlight {
-            print("[TrialManager] TestFlight build detected — bypassing trial")
+            logger.notice("TestFlight build detected — bypassing trial")
             trialState = .purchased
             return
         }

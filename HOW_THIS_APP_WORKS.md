@@ -1065,6 +1065,13 @@ When the trial expires:
 - Purchase status checked on every launch via `Transaction.currentEntitlement(for:)`
 - Persists across app restarts without additional UserDefaults storage
 
+### TestFlight Bypass
+
+- **Detection**: `Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"` AND `#if !DEBUG`
+- **Behavior**: TestFlight builds skip trial evaluation entirely and set `trialState = .purchased`
+- **Debug builds**: Unaffected — Xcode debug builds go through the normal trial/purchase flow so the full IAP experience can be tested locally via the StoreKit configuration file
+- **Production builds**: Unaffected — App Store builds use the real trial and purchase logic
+
 ---
 
 ## 26. About ZapCal Screen

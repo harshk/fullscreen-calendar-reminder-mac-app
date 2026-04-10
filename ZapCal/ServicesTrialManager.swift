@@ -34,12 +34,14 @@ class TrialManager: ObservableObject {
         }
     }
 
-    /// TestFlight builds have a sandbox receipt but are NOT debug builds.
+    /// TestFlight builds include an embedded provisioning profile that
+    /// Apple strips from App Store builds. DEBUG builds are excluded so
+    /// the full purchase flow can be tested locally in Xcode.
     private var isTestFlight: Bool {
         #if DEBUG
         return false
         #else
-        return Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
+        return Bundle.main.path(forResource: "embedded", ofType: "provisionprofile") != nil
         #endif
     }
 

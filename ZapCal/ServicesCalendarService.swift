@@ -303,16 +303,15 @@ class CalendarService: ObservableObject {
         }
 
         // Event alarm alerts — fire at the exact time a calendar alarm is set.
-        // NOTE: Do NOT gate on firedEventIDs here — each alarm is tracked
-        // independently via alarmFiredIDs, and adding the event to firedEventIDs
-        // after the first alarm would suppress all remaining alarms.
+        // Each alarm is tracked independently via alarmFiredIDs so multiple
+        // alarms on the same event all fire. fireAlarmAlert does not add to
+        // firedEventIDs, so normal alarm firing does not suppress later alarms.
+        // The firedEventIDs guard below exists only to honor the user-facing
+        // "Disable alerts for this event" action, which blocks both
+        // config-based and alarm-based alerts for the event.
         if settings.eventAlarmAlertsEnabled {
             for event in upcomingEvents {
                 if event.isAllDay && !settings.allDayEventAlertsEnabled { continue }
-                // If the user clicked "Disable alerts for this event", skip all
-                // remaining alarms. This is checked inside the event loop (not as
-                // a guard on the outer loop) so that normal alarm firing doesn't
-                // add to firedEventIDs and suppress subsequent alarms.
                 guard !firedEventIDs.contains(event.id) else { continue }
                 for alarmDate in event.alarmDates {
                     let alarmKey = "\(event.id)_\(alarmDate.timeIntervalSinceReferenceDate)"

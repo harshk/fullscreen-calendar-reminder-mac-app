@@ -9,7 +9,7 @@ A comprehensive, human-readable test plan for ZapCal's alert system. Each test l
 - **Mini alert / pre-alert** — banner panel (top-right, 460×108) with a countdown. Auto-dismisses after `miniDuration` (0 = persist until event starts).
 - **Full-screen alert** — overlay window covering every screen at `.screenSaver` level. Queued; one shown at a time. Supports snooze.
 - **Merged alert** — a single alert that represents 2+ events that all fire inside the same minute boundary. If any merged item is full-screen, the merged alert is full-screen.
-- **Disable for event** — adds the event to `firedEventIDs`; blocks future config-based alerts for that event but not alarm alerts.
+- **Disable for event** — adds the event to `firedEventIDs`; blocks *all* future alerts for that event (both config-based alerts and event alarm alerts).
 - **Fire window** — an alert fires when `timeUntilStart <= leadTime && timeUntilStart > -120` (2-minute grace period past start).
 
 ## Default Baseline
@@ -213,10 +213,15 @@ Every test should be run from a clean state: re-enable any disabled events, resu
 **Steps:** Right-click event → "Disable alerts for this event".
 **Expected:** No alerts of any config-based type will fire for this event.
 
-### 6.3 Disabled event still shows alarm alerts
-**Preconditions:** Event with an `EKAlarm` set (e.g., 10 minutes before). Event disabled via 6.2. `eventAlarmAlertsEnabled = true`.
-**Steps:** Wait until T−10:00.
-**Expected:** Event alarm alert STILL fires (disable only affects config-based alerts). Document this behavior.
+### 6.3 Disabled event suppresses alarm alerts
+**Preconditions:** Event with an `EKAlarm` set (e.g., 10 minutes before). `eventAlarmAlertsEnabled = true`. Disable the event via 6.2 BEFORE T−10:00.
+**Steps:** Wait until T−10:00 and through the event start.
+**Expected:** No alarm alert fires. No config-based mini or full-screen fires either. Disabling an event blocks both alert families. Enforced by the `firedEventIDs` guard in the alarm loop of `checkForEventsToFire()`.
+
+### 6.3a Disable mid-alarm-sequence
+**Preconditions:** Event with two alarms (−10 min, −5 min). At T−10 the first alarm fires normally. Between T−10 and T−5, user clicks "Disable alerts for this event" on the alarm banner or via the menu bar right-click.
+**Steps:** Wait until T−5.
+**Expected:** Second alarm does NOT fire. Any pending config-based alerts also do not fire. Re-enabling before T−5 restores firing.
 
 ### 6.4 Re-enable clears all tracking
 **Preconditions:** Event previously disabled; alert already fired on a different config; alarm already fired.
@@ -238,7 +243,10 @@ Every test should be run from a clean state: re-enable any disabled events, resu
 
 ---
 
-## 7. Event Alarm Alerts (Independent Path)
+## 7. Event Alarm Alerts
+
+Alarm alerts fire from a separate code path than config-based alerts (tracked in `alarmFiredIDs` keyed by `"eventID_alarmTimestamp"`). They are **not** independent of user-disable: the `firedEventIDs` guard at the top of the alarm loop suppresses all remaining alarms once the user disables the event (see 6.3).
+
 
 ### 7.1 Single alarm fires
 **Preconditions:** Event with one `EKAlarm` (−15 min). `eventAlarmAlertsEnabled = true`, style `.mini`.
@@ -706,6 +714,7 @@ A 10-minute sanity pass before every release:
 - [ ] 6.1 Disable from mini suppresses full-screen
 - [ ] 6.4 Re-enable re-fires alerts
 - [ ] 7.3 Alarm + config alerts all fire for same event
+- [ ] 6.3 Disabling an event suppresses its alarm alerts
 - [ ] 8.1 Recurring event fires both days
 - [ ] 9.1 All-day events skip alerts by default
 - [ ] 11.1 Deleted event disappears and does not alert

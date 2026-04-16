@@ -14,6 +14,9 @@ rm -rf "$LEGACY_CONTAINER/Application Support/Full Screen Calendar Reminder/"
 # Clear sandboxed UserDefaults
 rm -f "$CONTAINER/Preferences/spotlessmindsoftware.ZapCal.plist"
 
+# Flush cfprefsd so it doesn't rewrite the plist from its in-memory cache
+killall cfprefsd 2>/dev/null
+
 # Also clear via defaults command in case of cached plist
 defaults delete spotlessmindsoftware.ZapCal 2>/dev/null
 

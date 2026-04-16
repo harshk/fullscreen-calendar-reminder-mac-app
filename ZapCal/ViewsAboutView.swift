@@ -46,7 +46,7 @@ struct AboutView: View {
         .frame(width: 320)
     }
 }
-
+ 
 #Preview {
     AboutView()
 }

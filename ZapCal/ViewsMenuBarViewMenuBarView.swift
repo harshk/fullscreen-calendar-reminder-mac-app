@@ -134,7 +134,7 @@ struct MenuBarView: View {
                 Button(action: {
                     Task { await storeManager.purchase() }
                 }) {
-                    Text("Upgrade — \(product.displayPrice)")
+                    Text("Purchase — \(product.displayPrice)")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(Self.roseCreamBg)
                         .frame(maxWidth: .infinity)
@@ -236,7 +236,7 @@ struct MenuBarView: View {
             Button(action: {
                 Task { await storeManager.purchase() }
             }) {
-                Text("Upgrade")
+                Text("Purchase")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(Self.roseCreamBg)
                     .padding(.horizontal, 16)

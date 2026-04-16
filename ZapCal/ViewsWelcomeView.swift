@@ -595,7 +595,7 @@ struct WelcomeView: View {
                 .controlSize(.large)
             } else {
                 Button(action: { onGrant() }) {
-                    Text("Grant")
+                    Text("Next")
                         .font(.custom("SF Pro Rounded", size: 16).weight(.medium))
                 }
                 .buttonStyle(.borderedProminent)

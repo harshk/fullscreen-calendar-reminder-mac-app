@@ -343,6 +343,7 @@ From `CalendarEvent` construction:
 if eventAlarmAlertsEnabled:
     for each event:
         if event.isAllDay AND NOT allDayEventAlertsEnabled: skip
+        if event.id IN firedEventIDs: skip (user disabled this event)
         for each alarmDate in event.alarmDates:
             timeUntilAlarm = alarmDate - now
             dedupKey = "eventID_alarmTimestamp"
@@ -354,17 +355,18 @@ if eventAlarmAlertsEnabled:
 ```
 
 Key points:
-- **Independent deduplication**: Uses `alarmFiredIDs` (separate from `firedEventIDs` and `alertFiredIDs`)
-- **Multiple alarms per event**: Each alarm fires independently (e.g., 15-min and 5-min alarms both fire)
+- **Per-alarm deduplication**: Uses `alarmFiredIDs` (separate from `alertFiredIDs` so each alarm fires regardless of config firings)
+- **Multiple alarms per event**: Each alarm fires independently (e.g., 15-min and 5-min alarms both fire). `fireAlarmAlert` does NOT add the event to `firedEventIDs`, so normal alarm firing does not suppress subsequent alarms on the same event.
 - **Dedup key format**: `"eventID_alarmTimestampAsTimeIntervalSinceReferenceDate"`
 - **Style**: Configurable as `.mini` or `.fullScreen` via `eventAlarmAlertStyle` setting
 - **Duration**: Configurable via `eventAlarmAlertDuration` (default 15 seconds, applies to mini style)
 
 ### Relationship with Config-Based Alerts
 
-- Event alarm alerts do NOT check `firedEventIDs` - they always fire if the alarm time is reached
-- "Disable alerts for this event" on a config-based alert does NOT prevent alarm-based alerts from firing
-- They use completely separate tracking sets
+- Event alarm alerts use their own `alarmFiredIDs` tracking set for per-alarm dedup
+- However, the per-event `firedEventIDs` guard IS consulted before processing a given event's alarm list. This means **"Disable alerts for this event" suppresses both config-based AND alarm-based alerts for that event.**
+- If the user disables an event mid-alarm-sequence (e.g., after the 10-min alarm fires but before the 5-min alarm), subsequent alarms are also suppressed.
+- Re-enabling the event via `reEnableEvent(eventID)` clears all tracking and allows both alert families to fire again.
 
 ---
 
@@ -411,10 +413,11 @@ Key points:
 
 ### Disable Alerts for Event
 
-- Available on mini banners as a "Disable alerts" button
+- Available on mini banners as a "Disable alerts" button, and via right-click context menu on upcoming events in the menu bar
 - Adds the event ID to `firedEventIDs` in CalendarService
-- This blocks ALL future config-based alerts for that event across all configs
-- Does NOT block alarm-based alerts
+- Blocks ALL future config-based alerts for that event across all configs
+- Also blocks ALL future event alarm alerts for that event (checked before iterating the event's `alarmDates` in `checkForEventsToFire()`)
+- If applied mid-alarm-sequence (between two alarms on the same event), remaining alarms are suppressed
 - Persisted to UserDefaults
 
 ### Re-Enable Alerts for Event
@@ -776,7 +779,7 @@ Calendar events and reminders (both custom and Apple Reminders) use separate ale
    - Requests Calendar access (EventKit)
    - Requests Reminders access (EventKit)
    - Both permission buttons shown simultaneously
-   - "Grant Access" buttons trigger system permission dialogs
+   - "Next" buttons trigger system permission dialogs (labeled "Next" rather than "Grant" so the flow reads as a wizard step — the system dialog itself handles the grant/deny wording)
    - "Skip" option available (shows menu bar info screen instead)
 
 2. **"You're All Set" Screen**:
@@ -851,7 +854,7 @@ Calendar events and reminders (both custom and Apple Reminders) use separate ale
 - **Tracking set**: `alarmFiredIDs: Set<String>`
 - **Key**: `"eventID_alarmTimestamp"` (alarm's timeIntervalSinceReferenceDate)
 - **Purpose**: Allows multiple alarms per event to fire independently while preventing duplicates
-- **Independent**: Not affected by `firedEventIDs`
+- **Note**: Alarm firing itself does not add to `firedEventIDs`, so one alarm firing does not block the next. However, the outer loop does consult `firedEventIDs` so the user's "Disable alerts for this event" action blocks all remaining alarms for that event.
 
 ### Pre-Alert Deduplication
 
@@ -1028,11 +1031,19 @@ Converts legacy per-calendar theme storage to the preset-based system:
 | `expired` | Trial ended, app locked to purchase screen |
 | `purchased` | Full version unlocked via IAP |
 
+### Trial Active Behavior
+
+While the trial is active (`.active(daysRemaining)`):
+- A banner at the top of the menu bar panel displays "X days remaining in your free trial"
+- The banner includes a **"Purchase"** button (compact, no price shown) that invokes the same purchase flow as the expired view
+- Rest of the menu bar UI (event list, settings gear, right-click actions) remains fully available
+- Alerts fire normally
+
 ### Trial Expired Behavior
 
 When the trial expires:
 - Menu bar panel shows `trialExpiredView` instead of the event list
-- Shows app icon, "Free Trial Expired" message, price/purchase button, and restore purchase option
+- Shows app icon, "Free Trial Expired" message, a prominent **"Purchase — {displayPrice}"** button (full-width, shows localized price), and a "Restore Purchase" option
 - Settings gear button is hidden
 - Right-click menu shows only "Free Trial Expired" (disabled) and "Quit"
 - Alerts stop firing

@@ -130,22 +130,20 @@ struct MenuBarView: View {
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 24)
 
-            if let product = storeManager.product {
-                Button(action: {
-                    Task { await storeManager.purchase() }
-                }) {
-                    Text("Purchase — \(product.displayPrice)")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(Self.roseCreamBg)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                        .background(Self.roseCreamText)
-                        .cornerRadius(8)
-                }
-                .buttonStyle(.plain)
-                .padding(.horizontal, 24)
-                .disabled(storeManager.purchaseInProgress)
+            Button(action: {
+                Task { await storeManager.purchase() }
+            }) {
+                Text(storeManager.product.map { "Purchase — \($0.displayPrice)" } ?? "Purchase")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Self.roseCreamBg)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(Self.roseCreamText)
+                    .cornerRadius(8)
             }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 24)
+            .disabled(storeManager.purchaseInProgress)
 
             if storeManager.purchaseInProgress {
                 ProgressView()

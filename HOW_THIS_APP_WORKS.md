@@ -1044,6 +1044,7 @@ While the trial is active (`.active(daysRemaining)`):
 When the trial expires:
 - Menu bar panel shows `trialExpiredView` instead of the event list
 - Shows app icon, "Free Trial Expired" message, a prominent **"Purchase — {displayPrice}"** button (full-width, shows localized price), and a "Restore Purchase" option
+- The Purchase button is always rendered, even if the StoreKit product failed to load. When `storeManager.product` is `nil`, the label falls back to "Purchase" (no price). Tapping the button invokes `storeManager.purchase()`, which retries `loadProduct()` internally before attempting the purchase, and surfaces any failure via `purchaseError`. This guarantees the user (and App Review) always has a visible in-app path to buy, even on transient StoreKit fetch failures.
 - Settings gear button is hidden
 - Right-click menu shows only "Free Trial Expired" (disabled) and "Quit"
 - Alerts stop firing

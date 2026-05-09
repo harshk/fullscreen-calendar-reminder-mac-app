@@ -102,6 +102,8 @@ struct MenuBarView: View {
                 menuActions.padding(.vertical, 4)
             }
         }
+        .padding(.top, 6)
+        .padding(.bottom, 6)
         .frame(width: 350)
         .clipShape(RoundedRectangle(cornerRadius: 10))
     }
@@ -113,9 +115,11 @@ struct MenuBarView: View {
         VStack(spacing: 16) {
             Spacer()
 
-            Image(systemName: "clock.badge.exclamationmark")
-                .font(.system(size: 40))
-                .foregroundColor(.secondary)
+            if let appIcon = NSApp.applicationIconImage {
+                Image(nsImage: appIcon)
+                    .resizable()
+                    .frame(width: 64, height: 64)
+            }
 
             Text("Free Trial Expired")
                 .font(.system(size: 18, weight: .semibold))
@@ -130,12 +134,12 @@ struct MenuBarView: View {
                 Button(action: {
                     Task { await storeManager.purchase() }
                 }) {
-                    Text("Purchase Full Version — \(product.displayPrice)")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white)
+                    Text("Upgrade — \(product.displayPrice)")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(Self.roseCreamBg)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
-                        .background(Color.accentColor)
+                        .background(Self.roseCreamText)
                         .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
@@ -165,7 +169,7 @@ struct MenuBarView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 420)
+        .frame(height: 380)
 
         Divider().padding(.horizontal, 10)
 
@@ -178,8 +182,6 @@ struct MenuBarView: View {
             NSApplication.shared.terminate(nil)
         }
         .buttonStyle(MenuRowButtonStyle())
-
-        Spacer().frame(height: 5)
     }
 
     // MARK: - Purchase Success View

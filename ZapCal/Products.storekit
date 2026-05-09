@@ -34,7 +34,7 @@
     "_askToBuyEnabled" : false,
     "_billingGracePeriodEnabled" : false,
     "_billingIssuesEnabled" : false,
-    "_disableDialogs" : false,
+    "_disableDialogs" : true,
     "_failTransactionsEnabled" : false,
     "_locale" : "en_US",
     "_renewalBillingIssuesEnabled" : false,

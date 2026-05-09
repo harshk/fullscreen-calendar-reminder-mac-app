@@ -50,28 +50,32 @@ class StoreManager: ObservableObject {
     // MARK: - Purchase
 
     func purchase() async {
+        // Retry loading product if it hasn't loaded yet
+        if product == nil {
+            print("[StoreManager] purchase() — product is nil, retrying loadProduct()...")
+            await loadProduct()
+        }
         guard let product else {
-            print("[StoreManager] purchase() — product is nil, aborting")
+            print("[StoreManager] purchase() — product still nil after retry, aborting")
+            purchaseError = "Unable to load product. Please check your internet connection and try again."
             return
         }
         purchaseInProgress = true
         purchaseError = nil
 
-        // Dismiss the menu bar panel so it doesn't block the StoreKit sheet.
-        NotificationCenter.default.post(name: .dismissPopover, object: nil)
-
-        // StoreKit's purchase sheet needs the app to be .regular so it can
-        // present a confirmation dialog. Menu-bar-only (.accessory) has no
-        // key window for the sheet to attach to.
+        // StoreKit needs .regular activation policy with a key window to
+        // present its confirmation dialog. Switch policy but keep the menu
+        // bar panel open so it serves as the window context.
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
 
-        // Small delay to let the panel dismiss and activation policy take effect.
-        try? await Task.sleep(nanoseconds: 200_000_000)
+        // Give the activation policy change time to take effect.
+        try? await Task.sleep(nanoseconds: 300_000_000)
 
         print("[StoreManager] calling product.purchase()...")
         do {
             let result = try await product.purchase()
+            print("[StoreManager] purchase result: \(result)")
             switch result {
             case .success(let verification):
                 let transaction = try checkVerified(verification)
@@ -80,11 +84,11 @@ class StoreManager: ObservableObject {
                 justPurchased = true
                 TrialManager.shared.refreshState()
             case .userCancelled:
-                break
+                print("[StoreManager] user cancelled")
             case .pending:
                 purchaseError = "Purchase is pending approval."
             @unknown default:
-                break
+                print("[StoreManager] unknown result")
             }
         } catch {
             print("[StoreManager] purchase error: \(error)")
@@ -96,6 +100,8 @@ class StoreManager: ObservableObject {
         print("[StoreManager] purchase() completed")
 
         if justPurchased {
+            NotificationCenter.default.post(name: .dismissPopover, object: nil)
+            try? await Task.sleep(nanoseconds: 300_000_000)
             NotificationCenter.default.post(name: .openPanel, object: nil)
         }
     }
